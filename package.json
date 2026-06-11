@@ -7,10 +7,12 @@
     "packages/*"
   ],
   "scripts": {
+    "api:dev": "npm --workspace @band-practice-room/api run dev",
+    "api:typecheck": "npm --workspace @band-practice-room/api run typecheck",
     "scraper:naver:poc": "npm --workspace @band-practice-room/scraper run naver:poc",
     "scraper:typecheck": "npm --workspace @band-practice-room/scraper run typecheck"
   },
   "engines": {
-    "node": ">=18"
+    "node": ">=20"
   }
 }
