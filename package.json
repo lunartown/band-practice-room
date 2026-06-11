@@ -1,0 +1,16 @@
+{
+  "name": "band-practice-room",
+  "version": "0.1.0",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "scraper:naver:poc": "npm --workspace @band-practice-room/scraper run naver:poc"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
+
