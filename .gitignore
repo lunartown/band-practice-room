@@ -1,0 +1,23 @@
+# dependencies
+node_modules/
+
+# build outputs
+dist/
+build/
+coverage/
+
+# environment
+.env
+.env.*
+!.env.example
+
+# logs
+*.log
+
+# system
+.DS_Store
+
+# local tools
+venv/
+.venv/
+
