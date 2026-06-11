@@ -7,10 +7,10 @@
     "packages/*"
   ],
   "scripts": {
-    "scraper:naver:poc": "npm --workspace @band-practice-room/scraper run naver:poc"
+    "scraper:naver:poc": "npm --workspace @band-practice-room/scraper run naver:poc",
+    "scraper:typecheck": "npm --workspace @band-practice-room/scraper run typecheck"
   },
   "engines": {
     "node": ">=18"
   }
 }
-

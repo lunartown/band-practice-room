@@ -4,7 +4,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "naver:poc": "tsx src/prototype-naver.ts"
+    "naver:poc": "tsx src/prototype-naver.ts",
+    "typecheck": "tsc --noEmit -p tsconfig.json"
   },
   "dependencies": {
     "playwright": "^1.53.0",
@@ -15,4 +16,3 @@
     "typescript": "^5.4.0"
   }
 }
-
