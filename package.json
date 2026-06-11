@@ -8,7 +8,9 @@
   ],
   "scripts": {
     "api:dev": "npm --workspace @band-practice-room/api run dev",
+    "api:start": "npm --workspace @band-practice-room/api run start",
     "api:typecheck": "npm --workspace @band-practice-room/api run typecheck",
+    "db:migrate": "npm --workspace @band-practice-room/api run db:migrate",
     "scraper:naver:poc": "npm --workspace @band-practice-room/scraper run naver:poc",
     "scraper:typecheck": "npm --workspace @band-practice-room/scraper run typecheck"
   },
