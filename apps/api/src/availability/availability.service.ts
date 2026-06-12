@@ -62,7 +62,7 @@ export class AvailabilityService {
           AND s.date = $2::date
           AND s.status = 'available'
           AND r.name = ANY($3::text[])
-        ORDER BY r.name, s.start_time
+        ORDER BY array_position($3::text[], r.name), s.start_time
       `,
       [defaultTarget.id, date, roomNames],
     );
