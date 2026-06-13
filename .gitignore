@@ -11,13 +11,27 @@ coverage/
 .env.*
 !.env.example
 
-# logs
-*.log
-
-# system
-.DS_Store
-
-# local tools
+# python
 venv/
 .venv/
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# logs / temp
+*.log
+*.tmp
+
+# local private workspace
+_local/*
+!_local/.gitkeep
 
