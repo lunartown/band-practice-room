@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+<style>
+  *{box-sizing:border-box;}
+  body{margin:0;-webkit-font-smoothing:antialiased;}
+</style>
+</helmet>
+
+<div style="min-height:100vh;background:#e8eaed;padding:44px 44px 96px;font-family:Pretendard,-apple-system,BlinkMacSystemFont,sans-serif;color:#191f28;">
+
+  <!-- ===== PAGE HEADER ===== -->
+  <div style="max-width:1480px;margin:0 auto 40px;">
+    <div style="font-size:13px;font-weight:700;color:oklch(0.52 0.13 150);letter-spacing:0.01em;">합주실 빈 시간 검색 · 모바일 웹앱 시안</div>
+    <h1 style="font-size:33px;font-weight:800;letter-spacing:-0.04em;margin:8px 0 0;line-height:1.1;">홍대 · 합정 · 신촌 합주실 예약 가능 시간</h1>
+    <p style="font-size:15px;color:#6b7684;margin:11px 0 0;max-width:660px;line-height:1.55;letter-spacing:-0.01em;">랜딩 없이 첫 화면이 곧 검색 결과. 조건 칩으로 좁히고, 날짜·시간 기준으로 빈 슬롯을 스캔한 뒤 외부 예약으로 바로 넘어가는 흐름입니다.</p>
+    <div style="display:flex;align-items:center;gap:18px;margin-top:20px;flex-wrap:wrap;">
+      <div style="display:flex;align-items:center;gap:7px;font-size:12.5px;font-weight:600;color:#4e5968;"><span style="width:8px;height:8px;border-radius:50%;background:oklch(0.64 0.18 150);"></span>실시간 확인</div>
+      <div style="display:flex;align-items:center;gap:7px;font-size:12.5px;font-weight:600;color:#4e5968;"><span style="width:8px;height:8px;border-radius:50%;background:oklch(0.82 0.15 85);"></span>확인 필요</div>
+      <div style="display:flex;align-items:center;gap:7px;font-size:12.5px;font-weight:600;color:#4e5968;"><span style="width:8px;height:8px;border-radius:50%;background:#c4cad2;"></span>오래됨 (stale)</div>
+      <div style="width:1px;height:14px;background:#cdd1d6;"></div>
+      <div style="font-size:12.5px;font-weight:600;color:#868e96;">Pretendard · 372×806 · iOS</div>
+    </div>
+  </div>
+
+  <!-- ===== SECTION 01 ===== -->
+  <div style="max-width:1480px;margin:0 auto 26px;">
+    <div style="font-size:12px;font-weight:800;letter-spacing:0.06em;color:oklch(0.55 0.13 150);">SECTION 01</div>
+    <div style="font-size:22px;font-weight:800;letter-spacing:-0.03em;margin-top:4px;">핵심 화면 &amp; 상태</div>
+    <div style="font-size:13.5px;color:#868e96;margin-top:3px;">검색 결과 → 필터 시트 → 결과 없음 → 데이터 일부 stale</div>
+  </div>
+
+  <div style="display:flex;flex-wrap:wrap;gap:40px;row-gap:52px;margin-bottom:64px;">
+
+    <!-- FRAME 01 : 결과 있음 -->
+    <div style="display:flex;flex-direction:column;gap:13px;">
+      <div style="width:372px;">
+        <div style="display:flex;align-items:baseline;gap:8px;"><span style="font-size:12px;font-weight:800;background:#fff;border:1px solid #d0d4d9;padding:2px 7px;border-radius:6px;">01</span><span style="font-size:14.5px;font-weight:700;letter-spacing:-0.02em;">검색 결과</span></div>
+        <div style="font-size:12.5px;color:#868e96;margin-top:4px;">날짜 섹션 중심 · 결과 있음</div>
+      </div>
+      <div style="width:372px;height:806px;background:#fff;border-radius:44px;border:1px solid #d4d7dc;box-shadow:0 18px 50px -16px rgba(20,28,42,0.28);overflow:hidden;position:relative;display:flex;flex-direction:column;">
+        <div style="height:44px;flex:0 0 auto;display:flex;align-items:center;justify-content:space-between;padding:0 26px;"><span style="font-size:14px;font-weight:700;letter-spacing:-0.02em;">9:41</span><span style="width:17px;height:11px;border:1.5px solid #191f28;border-radius:3px;"></span></div>
+        <div style="flex:0 0 auto;background:#fff;">
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:6px 18px 8px;">
+            <div style="font-size:18px;font-weight:800;letter-spacing:-0.04em;">빈 합주실</div>
+            <div style="display:flex;align-items:center;gap:5px;"><span style="width:5px;height:5px;border-radius:50%;background:oklch(0.64 0.18 150);"></span><span style="font-size:11.5px;color:#8b95a1;font-weight:500;">9:24 업데이트</span></div>
+          </div>
+          <div style="display:flex;align-items:center;gap:7px;padding:2px 18px 12px;">
+            <span style="display:inline-flex;align-items:center;gap:4px;font-size:12.5px;font-weight:700;color:oklch(0.46 0.12 150);background:oklch(0.96 0.03 150);padding:7px 11px;border-radius:9px;letter-spacing:-0.02em;white-space:nowrap;">홍대·합정·신촌<span style="font-size:9px;opacity:0.7;">▾</span></span>
+            <span style="display:inline-flex;align-items:center;gap:4px;font-size:12.5px;font-weight:600;color:#4e5968;background:#f2f4f6;padding:7px 11px;border-radius:9px;letter-spacing:-0.02em;white-space:nowrap;">오늘~30일<span style="font-size:9px;color:#adb5bd;">▾</span></span>
+            <span style="display:inline-flex;align-items:center;gap:4px;font-size:12.5px;font-weight:600;color:#4e5968;background:#f2f4f6;padding:7px 11px;border-radius:9px;letter-spacing:-0.02em;white-space:nowrap;">2명<span style="font-size:9px;color:#adb5bd;">▾</span></span>
+            <span style="margin-left:auto;display:inline-flex;align-items:center;gap:5px;font-size:12.5px;font-weight:700;color:#fff;background:#191f28;padding:7px 12px;border-radius:9px;white-space:nowrap;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M3 6h18M6 12h12M10 18h4" stroke="#fff" stroke-width="2.4" stroke-linecap="round"/></svg>필터</span>
+          </div>
+        </div>
+        <div style="flex:0 0 auto;display:flex;align-items:center;justify-content:space-between;padding:9px 18px;background:#f9fafb;border-top:1px solid #f2f4f6;border-bottom:1px solid #f2f4f6;">
+          <span style="font-size:12px;color:#6b7684;font-weight:600;">빈 시간 <b style="color:#191f28;">9건</b></span>
+          <span style="display:inline-flex;align-items:center;gap:3px;font-size:11.5px;color:#4e5968;font-weight:600;">빠른 시간순<span style="font-size:9px;color:#adb5bd;">▾</span></span>
+        </div>
+        <div style="flex:1 1 auto;overflow:hidden;background:#fff;">
+          <sc-for list="{{ daysV1 }}" as="day" hint-placeholder-count="3">
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:11px 18px 8px;background:#fff;border-top:1px solid #f2f4f6;">
+              <span style="font-size:12.5px;font-weight:700;letter-spacing:-0.02em;">{{ day.label }}</span>
+              <span style="font-size:11px;font-weight:600;color:#adb5bd;">{{ day.count }}</span>
+            </div>
+            <sc-for list="{{ day.slots }}" as="slot" hint-placeholder-count="3">
+              <dc-import name="SlotRow" style="display:block;width:100%;" time="{{ slot.time }}" duration="{{ slot.duration }}" venue="{{ slot.venue }}" room="{{ slot.room }}" area="{{ slot.area }}" price="{{ slot.price }}" fresh-text="{{ slot.freshText }}" dot-color="{{ slot.dotColor }}" fresh-text-color="{{ slot.freshTextColor }}" hint-size="100%,66px"></dc-import>
+            </sc-for>
+          </sc-for>
+        </div>
+      </div>
+    </div>
+
+    <!-- FRAME 02 : 필터 시트 -->
+    <div style="display:flex;flex-direction:column;gap:13px;">
+      <div style="width:372px;">
+        <div style="display:flex;align-items:baseline;gap:8px;"><span style="font-size:12px;font-weight:800;background:#fff;border:1px solid #d0d4d9;padding:2px 7px;border-radius:6px;">02</span><span style="font-size:14.5px;font-weight:700;letter-spacing:-0.02em;">필터 Bottom Sheet</span></div>
+        <div style="font-size:12.5px;color:#868e96;margin-top:4px;">하단에서 열리는 조건 패널</div>
+      </div>
+      <div style="width:372px;height:806px;background:#fff;border-radius:44px;border:1px solid #d4d7dc;box-shadow:0 18px 50px -16px rgba(20,28,42,0.28);overflow:hidden;position:relative;display:flex;flex-direction:column;">
+        <div style="height:44px;flex:0 0 auto;display:flex;align-items:center;justify-content:space-between;padding:0 26px;"><span style="font-size:14px;font-weight:700;letter-spacing:-0.02em;">9:41</span><span style="width:17px;height:11px;border:1.5px solid #191f28;border-radius:3px;"></span></div>
+        <div style="flex:0 0 auto;background:#fff;">
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:6px 18px 8px;">
+            <div style="font-size:18px;font-weight:800;letter-spacing:-0.04em;">빈 합주실</div>
+            <div style="display:flex;align-items:center;gap:5px;"><span style="width:5px;height:5px;border-radius:50%;background:oklch(0.64 0.18 150);"></span><span style="font-size:11.5px;color:#8b95a1;font-weight:500;">9:24 업데이트</span></div>
+          </div>
+          <div style="display:flex;align-items:center;gap:7px;padding:2px 18px 12px;">
+            <span style="display:inline-flex;align-items:center;gap:4px;font-size:12.5px;font-weight:700;color:oklch(0.46 0.12 150);background:oklch(0.96 0.03 150);padding:7px 11px;border-radius:9px;letter-spacing:-0.02em;white-space:nowrap;">홍대·합정·신촌<span style="font-size:9px;opacity:0.7;">▾</span></span>
+            <span style="display:inline-flex;align-items:center;gap:4px;font-size:12.5px;font-weight:600;color:#4e5968;background:#f2f4f6;padding:7px 11px;border-radius:9px;letter-spacing:-0.02em;white-space:nowrap;">오늘~30일<span style="font-size:9px;color:#adb5bd;">▾</span></span>
+            <span style="display:inline-flex;align-items:center;gap:4px;font-size:12.5px;font-weight:600;color:#4e5968;background:#f2f4f6;padding:7px 11px;border-radius:9px;letter-spacing:-0.02em;white-space:nowrap;">2명<span style="font-size:9px;color:#adb5bd;">▾</span></span>
+            <span style="margin-left:auto;display:inline-flex;align-items:center;gap:5px;font-size:12.5px;font-weight:700;color:#fff;background:oklch(0.6 0.16 150);padding:7px 12px;border-radius:9px;white-space:nowrap;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M3 6h18M6 12h12M10 18h4" stroke="#fff" stroke-width="2.4" stroke-linecap="round"/></svg>필터</span>
+          </div>
+        </div>
+        <div style="flex:1 1 auto;overflow:hidden;background:#f9fafb;position:relative;">
+          <div style="padding:10px 18px;opacity:0.55;">
+            <div style="font-size:12.5px;font-weight:700;padding:6px 0 8px;">오늘 · 6/15 (일)</div>
+            <div style="height:1px;background:#f2f4f6;"></div>
+            <div style="height:56px;"></div>
+            <div style="height:1px;background:#f2f4f6;"></div>
+            <div style="height:56px;"></div>
+          </div>
+          <!-- dim -->
+          <div style="position:absolute;inset:0;background:rgba(17,22,31,0.5);"></div>
+          <!-- sheet -->
+          <div style="position:absolute;left:0;right:0;bottom:0;height:90%;background:#fff;border-radius:24px 24px 0 0;box-shadow:0 -12px 44px rgba(0,0,0,0.2);display:flex;flex-direction:column;overflow:hidden;">
+            <div style="flex:0 0 auto;display:flex;justify-content:center;padding:10px 0 2px;"><div style="width:38px;height:4px;border-radius:2px;background:#dde1e6;"></div></div>
+            <div style="flex:0 0 auto;display:flex;align-items:center;justify-content:space-between;padding:8px 20px 13px;border-bottom:1px solid #f2f4f6;"><span style="font-size:17px;font-weight:800;letter-spacing:-0.03em;">필터</span><span style="font-size:13px;font-weight:600;color:#8b95a1;">초기화</span></div>
+            <div style="flex:1 1 auto;overflow:hidden;padding:2px 20px;">
+              <div style="font-size:13px;font-weight:700;margin:15px 0 9px;letter-spacing:-0.02em;">지역 생활권</div>
+              <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                <span style="display:inline-flex;align-items:center;gap:5px;font-size:13px;font-weight:700;color:oklch(0.44 0.12 150);background:oklch(0.96 0.03 150);border:1.5px solid oklch(0.72 0.13 150);padding:8px 13px;border-radius:11px;"><svg width="12" height="12" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7" stroke="oklch(0.48 0.13 150)" stroke-width="3.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>홍대</span>
+                <span style="display:inline-flex;align-items:center;gap:5px;font-size:13px;font-weight:700;color:oklch(0.44 0.12 150);background:oklch(0.96 0.03 150);border:1.5px solid oklch(0.72 0.13 150);padding:8px 13px;border-radius:11px;"><svg width="12" height="12" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7" stroke="oklch(0.48 0.13 150)" stroke-width="3.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>합정</span>
+                <span style="font-size:13px;font-weight:600;color:#4e5968;background:#f2f4f6;border:1.5px solid transparent;padding:8px 13px;border-radius:11px;">신촌</span>
+              </div>
+              <div style="font-size:13px;font-weight:700;margin:18px 0 9px;letter-spacing:-0.02em;">날짜 범위</div>
+              <div style="display:flex;background:#f2f4f6;border-radius:12px;padding:4px;gap:4px;">
+                <div style="flex:1;text-align:center;padding:9px 0;font-size:13px;font-weight:700;border-radius:9px;color:#8b95a1;">오늘</div>
+                <div style="flex:1;text-align:center;padding:9px 0;font-size:13px;font-weight:700;border-radius:9px;color:#8b95a1;">7일</div>
+                <div style="flex:1;text-align:center;padding:9px 0;font-size:13px;font-weight:700;border-radius:9px;color:#191f28;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,0.1);">30일</div>
+              </div>
+              <div style="font-size:13px;font-weight:700;margin:18px 0 9px;letter-spacing:-0.02em;">시작 ~ 종료 시간</div>
+              <div style="display:flex;align-items:center;gap:9px;">
+                <div style="flex:1;display:flex;justify-content:space-between;align-items:center;border:1.5px solid #e8ebee;border-radius:11px;padding:11px 13px;font-size:14px;font-weight:700;">14:00<span style="font-size:9px;color:#adb5bd;">▾</span></div>
+                <span style="color:#adb5bd;font-weight:700;">~</span>
+                <div style="flex:1;display:flex;justify-content:space-between;align-items:center;border:1.5px solid #e8ebee;border-radius:11px;padding:11px 13px;font-size:14px;font-weight:700;">24:00<span style="font-size:9px;color:#adb5bd;">▾</span></div>
+              </div>
+              <div style="display:flex;gap:7px;margin-top:9px;">
+                <span style="font-size:12px;font-weight:600;color:#8b95a1;background:#f2f4f6;padding:6px 11px;border-radius:8px;">오전</span>
+                <span style="font-size:12px;font-weight:600;color:#8b95a1;background:#f2f4f6;padding:6px 11px;border-radius:8px;">오후</span>
+                <span style="font-size:12px;font-weight:700;color:oklch(0.46 0.12 150);background:oklch(0.96 0.03 150);padding:6px 11px;border-radius:8px;">저녁</span>
+                <span style="font-size:12px;font-weight:600;color:#8b95a1;background:#f2f4f6;padding:6px 11px;border-radius:8px;">밤</span>
+              </div>
+              <div style="display:flex;gap:24px;margin-top:18px;">
+                <div style="flex:1;">
+                  <div style="font-size:13px;font-weight:700;margin-bottom:9px;letter-spacing:-0.02em;">인원</div>
+                  <div style="display:flex;align-items:center;justify-content:space-between;border:1.5px solid #e8ebee;border-radius:12px;padding:7px 9px;">
+                    <div style="width:30px;height:30px;border-radius:8px;background:#f2f4f6;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;color:#8b95a1;">−</div>
+                    <span style="font-size:15px;font-weight:800;">2명</span>
+                    <div style="width:30px;height:30px;border-radius:8px;background:oklch(0.96 0.03 150);display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;color:oklch(0.46 0.12 150);">+</div>
+                  </div>
+                </div>
+              </div>
+              <div style="display:flex;align-items:center;justify-content:space-between;margin:20px 0 11px;"><span style="font-size:13px;font-weight:700;letter-spacing:-0.02em;">가격 범위 (1시간)</span><span style="font-size:12.5px;font-weight:700;color:#4e5968;">₩10,000 ~ ₩22,000</span></div>
+              <div style="position:relative;height:4px;background:#e8ebee;border-radius:2px;margin:14px 10px 0;">
+                <div style="position:absolute;left:6%;right:34%;top:0;bottom:0;background:oklch(0.6 0.16 150);border-radius:2px;"></div>
+                <div style="position:absolute;left:6%;top:50%;transform:translate(-50%,-50%);width:20px;height:20px;border-radius:50%;background:#fff;border:2.5px solid oklch(0.6 0.16 150);box-shadow:0 1px 4px rgba(0,0,0,0.18);"></div>
+                <div style="position:absolute;left:66%;top:50%;transform:translate(-50%,-50%);width:20px;height:20px;border-radius:50%;background:#fff;border:2.5px solid oklch(0.6 0.16 150);box-shadow:0 1px 4px rgba(0,0,0,0.18);"></div>
+              </div>
+              <div style="display:flex;align-items:center;justify-content:space-between;padding:20px 0 4px;">
+                <div><div style="font-size:14px;font-weight:700;letter-spacing:-0.02em;">오래된 정보(stale) 포함</div><div style="font-size:11.5px;color:#8b95a1;margin-top:2px;">갱신 6시간 초과 슬롯도 함께 보기</div></div>
+                <div style="width:46px;height:27px;border-radius:14px;background:#dde1e6;position:relative;flex:0 0 auto;"><div style="position:absolute;top:2.5px;left:2.5px;width:22px;height:22px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,0.2);"></div></div>
+              </div>
+            </div>
+            <div style="flex:0 0 auto;display:flex;gap:10px;padding:12px 20px 24px;border-top:1px solid #f2f4f6;background:#fff;">
+              <div style="flex:0 0 auto;display:flex;align-items:center;justify-content:center;padding:0 18px;height:50px;border-radius:13px;background:#f2f4f6;font-size:15px;font-weight:700;color:#4e5968;">초기화</div>
+              <div style="flex:1 1 auto;display:flex;align-items:center;justify-content:center;height:50px;border-radius:13px;background:oklch(0.6 0.16 150);font-size:15px;font-weight:800;color:#fff;letter-spacing:-0.02em;">결과 234건 보기</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- FRAME 03 : 결과 없음 -->
+    <div style="display:flex;flex-direction:column;gap:13px;">
+      <div style="width:372px;">
+        <div style="display:flex;align-items:baseline;gap:8px;"><span style="font-size:12px;font-weight:800;background:#fff;border:1px solid #d0d4d9;padding:2px 7px;border-radius:6px;">03</span><span style="font-size:14.5px;font-weight:700;letter-spacing:-0.02em;">결과 없음</span></div>
+        <div style="font-size:12.5px;color:#868e96;margin-top:4px;">빈 슬롯 0건 · 조건 완화 유도</div>
+      </div>
+      <div style="width:372px;height:806px;background:#fff;border-radius:44px;border:1px solid #d4d7dc;box-shadow:0 18px 50px -16px rgba(20,28,42,0.28);overflow:hidden;position:relative;display:flex;flex-direction:column;">
+        <div style="height:44px;flex:0 0 auto;display:flex;align-items:center;justify-content:space-between;padding:0 26px;"><span style="font-size:14px;font-weight:700;letter-spacing:-0.02em;">9:41</span><span style="width:17px;height:11px;border:1.5px solid #191f28;border-radius:3px;"></span></div>
+        <div style="flex:0 0 auto;background:#fff;">
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:6px 18px 8px;">
+            <div style="font-size:18px;font-weight:800;letter-spacing:-0.04em;">빈 합주실</div>
+            <div style="display:flex;align-items:center;gap:5px;"><span style="width:5px;height:5px;border-radius:50%;background:oklch(0.64 0.18 150);"></span><span style="font-size:11.5px;color:#8b95a1;font-weight:500;">9:24 업데이트</span></div>
+          </div>
+          <div style="display:flex;align-items:center;gap:7px;padding:2px 18px 12px;">
+            <span style="display:inline-flex;align-items:center;gap:4px;font-size:12.5px;font-weight:700;color:oklch(0.46 0.12 150);background:oklch(0.96 0.03 150);padding:7px 11px;border-radius:9px;letter-spacing:-0.02em;white-space:nowrap;">홍대·신촌<span style="font-size:9px;opacity:0.7;">▾</span></span>
+            <span style="display:inline-flex;align-items:center;gap:4px;font-size:12.5px;font-weight:600;color:#4e5968;background:#f2f4f6;padding:7px 11px;border-radius:9px;letter-spacing:-0.02em;white-space:nowrap;">오늘<span style="font-size:9px;color:#adb5bd;">▾</span></span>
+            <span style="display:inline-flex;align-items:center;gap:4px;font-size:12.5px;font-weight:600;color:#4e5968;background:#f2f4f6;padding:7px 11px;border-radius:9px;letter-spacing:-0.02em;white-space:nowrap;">6명<span style="font-size:9px;color:#adb5bd;">▾</span></span>
+            <span style="margin-left:auto;display:inline-flex;align-items:center;gap:5px;font-size:12.5px;font-weight:700;color:#fff;background:#191f28;padding:7px 12px;border-radius:9px;white-space:nowrap;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M3 6h18M6 12h12M10 18h4" stroke="#fff" stroke-width="2.4" stroke-linecap="round"/></svg>필터</span>
+          </div>
+        </div>
+        <div style="flex:0 0 auto;display:flex;align-items:center;justify-content:space-between;padding:9px 18px;background:#f9fafb;border-top:1px solid #f2f4f6;border-bottom:1px solid #f2f4f6;">
+          <span style="font-size:12px;color:#6b7684;font-weight:600;">빈 시간 <b style="color:#191f28;">0건</b></span>
+          <span style="display:inline-flex;align-items:center;gap:3px;font-size:11.5px;color:#4e5968;font-weight:600;">빠른 시간순<span style="font-size:9px;color:#adb5bd;">▾</span></span>
+        </div>
+        <div style="flex:1 1 auto;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:0 38px;text-align:center;">
+          <div style="width:66px;height:66px;border-radius:20px;background:#f2f4f6;display:flex;align-items:center;justify-content:center;margin-bottom:18px;"><svg width="30" height="30" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="#adb5bd" stroke-width="2"/><path d="M20 20l-3.8-3.8" stroke="#adb5bd" stroke-width="2" stroke-linecap="round"/></svg></div>
+          <div style="font-size:16.5px;font-weight:800;letter-spacing:-0.03em;">조건에 맞는 빈 시간이 없어요</div>
+          <div style="font-size:13px;color:#8b95a1;margin-top:8px;line-height:1.55;">날짜·인원·가격 조건을 조금만 넓히면<br>예약 가능한 시간이 나올 수 있어요</div>
+          <div style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:24px;">
+            <span style="display:inline-flex;align-items:center;gap:4px;font-size:12.5px;font-weight:700;color:oklch(0.44 0.12 150);background:oklch(0.96 0.03 150);border:1px solid oklch(0.88 0.05 150);padding:8px 12px;border-radius:10px;">날짜 30일로 넓히기</span>
+            <span style="display:inline-flex;align-items:center;gap:4px;font-size:12.5px;font-weight:700;color:oklch(0.44 0.12 150);background:oklch(0.96 0.03 150);border:1px solid oklch(0.88 0.05 150);padding:8px 12px;border-radius:10px;">인원 6 → 4명</span>
+            <span style="display:inline-flex;align-items:center;gap:4px;font-size:12.5px;font-weight:700;color:oklch(0.44 0.12 150);background:oklch(0.96 0.03 150);border:1px solid oklch(0.88 0.05 150);padding:8px 12px;border-radius:10px;">합정 추가</span>
+            <span style="display:inline-flex;align-items:center;gap:4px;font-size:12.5px;font-weight:700;color:#6b7684;background:#f2f4f6;border:1px solid #e8ebee;padding:8px 12px;border-radius:10px;">오래된 정보 포함</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- FRAME 04 : stale 섞임 -->
+    <div style="display:flex;flex-direction:column;gap:13px;">
+      <div style="width:372px;">
+        <div style="display:flex;align-items:baseline;gap:8px;"><span style="font-size:12px;font-weight:800;background:#fff;border:1px solid #d0d4d9;padding:2px 7px;border-radius:6px;">04</span><span style="font-size:14.5px;font-weight:700;letter-spacing:-0.02em;">일부 데이터 오래됨</span></div>
+        <div style="font-size:12.5px;color:#868e96;margin-top:4px;">stale 배너 + 회색 슬롯 혼재</div>
+      </div>
+      <div style="width:372px;height:806px;background:#fff;border-radius:44px;border:1px solid #d4d7dc;box-shadow:0 18px 50px -16px rgba(20,28,42,0.28);overflow:hidden;position:relative;display:flex;flex-direction:column;">
+        <div style="height:44px;flex:0 0 auto;display:flex;align-items:center;justify-content:space-between;padding:0 26px;"><span style="font-size:14px;font-weight:700;letter-spacing:-0.02em;">9:41</span><span style="width:17px;height:11px;border:1.5px solid #191f28;border-radius:3px;"></span></div>
+        <div style="flex:0 0 auto;background:#fff;">
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:6px 18px 8px;">
+            <div style="font-size:18px;font-weight:800;letter-spacing:-0.04em;">빈 합주실</div>
+            <div style="display:flex;align-items:center;gap:5px;"><span style="width:5px;height:5px;border-radius:50%;background:oklch(0.82 0.15 85);"></span><span style="font-size:11.5px;color:#8b95a1;font-weight:500;">6시간 전 동기화</span></div>
+          </div>
+          <div style="display:flex;align-items:center;gap:7px;padding:2px 18px 12px;">
+            <span style="display:inline-flex;align-items:center;gap:4px;font-size:12.5px;font-weight:700;color:oklch(0.46 0.12 150);background:oklch(0.96 0.03 150);padding:7px 11px;border-radius:9px;letter-spacing:-0.02em;white-space:nowrap;">홍대·합정·신촌<span style="font-size:9px;opacity:0.7;">▾</span></span>
+            <span style="display:inline-flex;align-items:center;gap:4px;font-size:12.5px;font-weight:600;color:#4e5968;background:#f2f4f6;padding:7px 11px;border-radius:9px;letter-spacing:-0.02em;white-space:nowrap;">오늘~30일<span style="font-size:9px;color:#adb5bd;">▾</span></span>
+            <span style="display:inline-flex;align-items:center;gap:4px;font-size:12.5px;font-weight:600;color:#4e5968;background:#f2f4f6;padding:7px 11px;border-radius:9px;letter-spacing:-0.02em;white-space:nowrap;">2명<span style="font-size:9px;color:#adb5bd;">▾</span></span>
+            <span style="margin-left:auto;display:inline-flex;align-items:center;gap:5px;font-size:12.5px;font-weight:700;color:#fff;background:#191f28;padding:7px 12px;border-radius:9px;white-space:nowrap;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M3 6h18M6 12h12M10 18h4" stroke="#fff" stroke-width="2.4" stroke-linecap="round"/></svg>필터</span>
+          </div>
+        </div>
+        <div style="flex:0 0 auto;display:flex;align-items:center;gap:10px;padding:11px 18px;background:oklch(0.97 0.035 85);border-top:1px solid oklch(0.9 0.06 85);border-bottom:1px solid oklch(0.9 0.06 85);">
+          <span style="width:8px;height:8px;border-radius:50%;background:oklch(0.78 0.15 85);flex:0 0 auto;"></span>
+          <div style="flex:1 1 auto;min-width:0;"><div style="font-size:12.5px;font-weight:700;color:oklch(0.45 0.09 80);letter-spacing:-0.02em;">일부 정보가 오래됐어요</div><div style="font-size:11px;color:oklch(0.55 0.07 80);margin-top:1px;">마지막 동기화 6시간 전 · stale 2건 포함</div></div>
+          <span style="flex:0 0 auto;font-size:12px;font-weight:700;color:oklch(0.45 0.09 80);background:#fff;border:1px solid oklch(0.85 0.07 85);padding:6px 11px;border-radius:9px;">새로고침</span>
+        </div>
+        <div style="flex:1 1 auto;overflow:hidden;background:#fff;">
+          <sc-for list="{{ daysStale }}" as="day" hint-placeholder-count="2">
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:11px 18px 8px;background:#fff;border-top:1px solid #f2f4f6;">
+              <span style="font-size:12.5px;font-weight:700;letter-spacing:-0.02em;">{{ day.label }}</span>
+              <span style="font-size:11px;font-weight:600;color:#adb5bd;">{{ day.count }}</span>
+            </div>
+            <sc-for list="{{ day.slots }}" as="slot" hint-placeholder-count="3">
+              <dc-import name="SlotRow" style="display:block;width:100%;" time="{{ slot.time }}" duration="{{ slot.duration }}" venue="{{ slot.venue }}" room="{{ slot.room }}" area="{{ slot.area }}" price="{{ slot.price }}" fresh-text="{{ slot.freshText }}" dot-color="{{ slot.dotColor }}" fresh-text-color="{{ slot.freshTextColor }}" hint-size="100%,66px"></dc-import>
+            </sc-for>
+          </sc-for>
+          <div style="display:flex;align-items:center;justify-content:center;gap:6px;padding:13px;font-size:12px;font-weight:600;color:#8b95a1;border-top:1px solid #f2f4f6;background:#fafbfc;">오래된 결과 2건 표시 중<span style="color:oklch(0.5 0.12 150);font-weight:700;">· 숨기기</span></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ===== SECTION 02 ===== -->
+  <div style="max-width:1480px;margin:0 auto 26px;">
+    <div style="font-size:12px;font-weight:800;letter-spacing:0.06em;color:oklch(0.55 0.13 150);">SECTION 02</div>
+    <div style="font-size:22px;font-weight:800;letter-spacing:-0.03em;margin-top:4px;">결과 리스트 레이아웃 비교</div>
+    <div style="font-size:13.5px;color:#868e96;margin-top:3px;">같은 데이터, 다른 그룹핑 — 어떤 스캔 방식이 가장 빠른지</div>
+  </div>
+
+  <div style="display:flex;flex-wrap:wrap;gap:40px;row-gap:52px;margin-bottom:64px;">
+
+    <!-- V1 날짜 중심 -->
+    <div style="display:flex;flex-direction:column;gap:13px;">
+      <div style="width:372px;">
+        <div style="display:flex;align-items:baseline;gap:8px;"><span style="font-size:12px;font-weight:800;background:oklch(0.6 0.16 150);color:#fff;padding:2px 7px;border-radius:6px;">A</span><span style="font-size:14.5px;font-weight:700;letter-spacing:-0.02em;">날짜 섹션 중심</span><span style="font-size:11px;font-weight:700;color:oklch(0.5 0.12 150);background:oklch(0.96 0.03 150);padding:2px 7px;border-radius:5px;">기본안</span></div>
+        <div style="font-size:12.5px;color:#868e96;margin-top:4px;">언제 갈지 정한 사람에게 최적</div>
+      </div>
+      <div style="width:372px;height:806px;background:#fff;border-radius:44px;border:1px solid #d4d7dc;box-shadow:0 18px 50px -16px rgba(20,28,42,0.28);overflow:hidden;position:relative;display:flex;flex-direction:column;">
+        <div style="height:44px;flex:0 0 auto;display:flex;align-items:center;justify-content:space-between;padding:0 26px;"><span style="font-size:14px;font-weight:700;letter-spacing:-0.02em;">9:41</span><span style="width:17px;height:11px;border:1.5px solid #191f28;border-radius:3px;"></span></div>
+        <div style="flex:0 0 auto;display:flex;align-items:center;justify-content:space-between;padding:8px 18px 12px;border-bottom:1px solid #f2f4f6;">
+          <span style="font-size:13px;font-weight:800;letter-spacing:-0.02em;">날짜순</span>
+          <span style="font-size:11.5px;color:#8b95a1;font-weight:600;">홍대·합정·신촌 · 9건</span>
+        </div>
+        <div style="flex:1 1 auto;overflow:hidden;background:#fff;">
+          <sc-for list="{{ daysV1 }}" as="day" hint-placeholder-count="3">
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:11px 18px 8px;background:#fff;border-top:1px solid #f2f4f6;">
+              <span style="font-size:12.5px;font-weight:700;letter-spacing:-0.02em;">{{ day.label }}</span>
+              <span style="font-size:11px;font-weight:600;color:#adb5bd;">{{ day.count }}</span>
+            </div>
+            <sc-for list="{{ day.slots }}" as="slot" hint-placeholder-count="3">
+              <dc-import name="SlotRow" style="display:block;width:100%;" time="{{ slot.time }}" duration="{{ slot.duration }}" venue="{{ slot.venue }}" room="{{ slot.room }}" area="{{ slot.area }}" price="{{ slot.price }}" fresh-text="{{ slot.freshText }}" dot-color="{{ slot.dotColor }}" fresh-text-color="{{ slot.freshTextColor }}" hint-size="100%,66px"></dc-import>
+            </sc-for>
+          </sc-for>
+        </div>
+      </div>
+    </div>
+
+    <!-- V2 시간대 중심 -->
+    <div style="display:flex;flex-direction:column;gap:13px;">
+      <div style="width:372px;">
+        <div style="display:flex;align-items:baseline;gap:8px;"><span style="font-size:12px;font-weight:800;background:#191f28;color:#fff;padding:2px 7px;border-radius:6px;">B</span><span style="font-size:14.5px;font-weight:700;letter-spacing:-0.02em;">시간대 중심</span></div>
+        <div style="font-size:12.5px;color:#868e96;margin-top:4px;">"오늘 저녁 아무 데나" 식 탐색</div>
+      </div>
+      <div style="width:372px;height:806px;background:#fff;border-radius:44px;border:1px solid #d4d7dc;box-shadow:0 18px 50px -16px rgba(20,28,42,0.28);overflow:hidden;position:relative;display:flex;flex-direction:column;">
+        <div style="height:44px;flex:0 0 auto;display:flex;align-items:center;justify-content:space-between;padding:0 26px;"><span style="font-size:14px;font-weight:700;letter-spacing:-0.02em;">9:41</span><span style="width:17px;height:11px;border:1.5px solid #191f28;border-radius:3px;"></span></div>
+        <div style="flex:0 0 auto;display:flex;align-items:center;justify-content:space-between;padding:8px 18px 12px;border-bottom:1px solid #f2f4f6;">
+          <span style="font-size:13px;font-weight:800;letter-spacing:-0.02em;">오늘 · 6/15 (일)</span>
+          <span style="font-size:11.5px;color:#8b95a1;font-weight:600;">시간대별 6건</span>
+        </div>
+        <div style="flex:1 1 auto;overflow:hidden;background:#fff;">
+          <sc-for list="{{ timeGroups }}" as="group" hint-placeholder-count="4">
+            <div style="display:flex;border-top:1px solid #f2f4f6;">
+              <div style="flex:0 0 70px;padding:14px 0 14px 18px;">
+                <div style="font-size:18px;font-weight:800;letter-spacing:-0.04em;line-height:1;">{{ group.time }}</div>
+                <div style="font-size:10.5px;font-weight:600;color:#adb5bd;margin-top:5px;">{{ group.meta }}</div>
+              </div>
+              <div style="flex:1 1 auto;min-width:0;border-left:1px solid #f2f4f6;">
+                <sc-for list="{{ group.slots }}" as="s" hint-placeholder-count="2">
+                  <div style="display:flex;align-items:center;gap:10px;padding:11px 18px 11px 14px;border-bottom:1px solid #f5f6f7;">
+                    <div style="flex:1 1 auto;min-width:0;">
+                      <div style="font-size:13px;font-weight:600;color:#333d4b;letter-spacing:-0.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ s.venue }}</div>
+                      <div style="display:flex;align-items:center;gap:6px;margin-top:3px;line-height:1;"><span style="font-size:11px;color:#8b95a1;">{{ s.room }} · {{ s.area }}</span><span style="width:5px;height:5px;border-radius:50%;background:{{ s.dotColor }};"></span><span style="font-size:10.5px;font-weight:500;color:{{ s.freshTextColor }};">{{ s.freshText }}</span></div>
+                    </div>
+                    <div style="font-size:13px;font-weight:700;color:#191f28;white-space:nowrap;">{{ s.price }}</div>
+                    <div style="font-size:11.5px;font-weight:700;color:#fff;background:oklch(0.6 0.16 150);padding:5px 10px;border-radius:8px;">예약</div>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+    </div>
+
+    <!-- V3 합주실 묶음 (보조) -->
+    <div style="display:flex;flex-direction:column;gap:13px;">
+      <div style="width:372px;">
+        <div style="display:flex;align-items:baseline;gap:8px;"><span style="font-size:12px;font-weight:800;background:#fff;border:1px solid #d0d4d9;color:#868e96;padding:2px 7px;border-radius:6px;">C</span><span style="font-size:14.5px;font-weight:700;letter-spacing:-0.02em;">합주실별 묶음</span><span style="font-size:11px;font-weight:700;color:#868e96;background:#eceef0;padding:2px 7px;border-radius:5px;">보조안</span></div>
+        <div style="font-size:12.5px;color:#868e96;margin-top:4px;">특정 합주실 선호가 강할 때만</div>
+      </div>
+      <div style="width:372px;height:806px;background:#fff;border-radius:44px;border:1px solid #d4d7dc;box-shadow:0 18px 50px -16px rgba(20,28,42,0.28);overflow:hidden;position:relative;display:flex;flex-direction:column;">
+        <div style="height:44px;flex:0 0 auto;display:flex;align-items:center;justify-content:space-between;padding:0 26px;"><span style="font-size:14px;font-weight:700;letter-spacing:-0.02em;">9:41</span><span style="width:17px;height:11px;border:1.5px solid #191f28;border-radius:3px;"></span></div>
+        <div style="flex:0 0 auto;display:flex;align-items:center;justify-content:space-between;padding:8px 18px 12px;border-bottom:1px solid #f2f4f6;">
+          <span style="font-size:13px;font-weight:800;letter-spacing:-0.02em;">합주실 3곳</span>
+          <span style="font-size:11.5px;color:#8b95a1;font-weight:600;">빈 시간 묶어보기</span>
+        </div>
+        <div style="flex:1 1 auto;overflow:hidden;background:#fff;">
+          <sc-for list="{{ venuesV3 }}" as="v" hint-placeholder-count="3">
+            <div style="padding:15px 18px;border-top:1px solid #f2f4f6;">
+              <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;">
+                <div style="min-width:0;"><div style="font-size:14px;font-weight:700;color:#191f28;letter-spacing:-0.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ v.name }}</div>
+                <div style="display:flex;align-items:center;gap:6px;margin-top:4px;line-height:1;"><span style="font-size:11.5px;color:#8b95a1;">{{ v.area }}</span><span style="width:5px;height:5px;border-radius:50%;background:{{ v.dotColor }};"></span><span style="font-size:11px;font-weight:500;color:{{ v.freshTextColor }};">{{ v.freshText }}</span></div></div>
+                <div style="font-size:12.5px;font-weight:700;color:#191f28;white-space:nowrap;flex:0 0 auto;">{{ v.price }}</div>
+              </div>
+              <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:11px;">
+                <sc-for list="{{ v.times }}" as="t" hint-placeholder-count="4">
+                  <span style="font-size:11.5px;font-weight:700;color:oklch(0.44 0.12 150);background:oklch(0.96 0.03 150);border:1px solid oklch(0.9 0.05 150);padding:6px 10px;border-radius:9px;">{{ t }}</span>
+                </sc-for>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ===== SECTION 03 ===== -->
+  <div style="max-width:1480px;margin:0 auto 26px;">
+    <div style="font-size:12px;font-weight:800;letter-spacing:0.06em;color:oklch(0.55 0.13 150);">SECTION 03</div>
+    <div style="font-size:22px;font-weight:800;letter-spacing:-0.03em;margin-top:4px;">다크 변형</div>
+    <div style="font-size:13.5px;color:#868e96;margin-top:3px;">어두운 합주실/무대 환경, 밤 시간대 사용 대응</div>
+  </div>
+
+  <div style="display:flex;flex-wrap:wrap;gap:40px;">
+    <div style="display:flex;flex-direction:column;gap:13px;">
+      <div style="width:372px;">
+        <div style="display:flex;align-items:baseline;gap:8px;"><span style="font-size:12px;font-weight:800;background:#191f28;color:#fff;padding:2px 7px;border-radius:6px;">D</span><span style="font-size:14.5px;font-weight:700;letter-spacing:-0.02em;">검색 결과 · 다크</span></div>
+        <div style="font-size:12.5px;color:#868e96;margin-top:4px;">기본안(A)의 다크 테마</div>
+      </div>
+      <div style="width:372px;height:806px;background:#16181d;border-radius:44px;border:1px solid #2a2e36;box-shadow:0 18px 50px -16px rgba(20,28,42,0.4);overflow:hidden;position:relative;display:flex;flex-direction:column;">
+        <div style="height:44px;flex:0 0 auto;display:flex;align-items:center;justify-content:space-between;padding:0 26px;"><span style="font-size:14px;font-weight:700;letter-spacing:-0.02em;color:#f1f3f5;">9:41</span><span style="width:17px;height:11px;border:1.5px solid #f1f3f5;border-radius:3px;"></span></div>
+        <div style="flex:0 0 auto;background:#16181d;">
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:6px 18px 8px;">
+            <div style="font-size:18px;font-weight:800;letter-spacing:-0.04em;color:#f1f3f5;">빈 합주실</div>
+            <div style="display:flex;align-items:center;gap:5px;"><span style="width:5px;height:5px;border-radius:50%;background:oklch(0.7 0.18 150);"></span><span style="font-size:11.5px;color:#868e96;font-weight:500;">9:24 업데이트</span></div>
+          </div>
+          <div style="display:flex;align-items:center;gap:7px;padding:2px 18px 12px;">
+            <span style="display:inline-flex;align-items:center;gap:4px;font-size:12.5px;font-weight:700;color:oklch(0.82 0.13 150);background:oklch(0.32 0.07 150);padding:7px 11px;border-radius:9px;letter-spacing:-0.02em;white-space:nowrap;">홍대·합정·신촌<span style="font-size:9px;opacity:0.7;">▾</span></span>
+            <span style="display:inline-flex;align-items:center;gap:4px;font-size:12.5px;font-weight:600;color:#c5cbd3;background:#23262d;padding:7px 11px;border-radius:9px;letter-spacing:-0.02em;white-space:nowrap;">오늘~30일<span style="font-size:9px;color:#6b7280;">▾</span></span>
+            <span style="display:inline-flex;align-items:center;gap:4px;font-size:12.5px;font-weight:600;color:#c5cbd3;background:#23262d;padding:7px 11px;border-radius:9px;letter-spacing:-0.02em;white-space:nowrap;">2명<span style="font-size:9px;color:#6b7280;">▾</span></span>
+            <span style="margin-left:auto;display:inline-flex;align-items:center;gap:5px;font-size:12.5px;font-weight:700;color:#16181d;background:#f1f3f5;padding:7px 12px;border-radius:9px;white-space:nowrap;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M3 6h18M6 12h12M10 18h4" stroke="#16181d" stroke-width="2.4" stroke-linecap="round"/></svg>필터</span>
+          </div>
+        </div>
+        <div style="flex:0 0 auto;display:flex;align-items:center;justify-content:space-between;padding:9px 18px;background:#1b1e24;border-top:1px solid #23262d;border-bottom:1px solid #23262d;">
+          <span style="font-size:12px;color:#868e96;font-weight:600;">빈 시간 <b style="color:#f1f3f5;">9건</b></span>
+          <span style="display:inline-flex;align-items:center;gap:3px;font-size:11.5px;color:#c5cbd3;font-weight:600;">빠른 시간순<span style="font-size:9px;color:#6b7280;">▾</span></span>
+        </div>
+        <div style="flex:1 1 auto;overflow:hidden;background:#16181d;">
+          <sc-for list="{{ daysV1 }}" as="day" hint-placeholder-count="3">
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:11px 18px 8px;background:#16181d;border-top:1px solid #23262d;">
+              <span style="font-size:12.5px;font-weight:700;letter-spacing:-0.02em;color:#f1f3f5;">{{ day.label }}</span>
+              <span style="font-size:11px;font-weight:600;color:#6b7280;">{{ day.count }}</span>
+            </div>
+            <sc-for list="{{ day.slots }}" as="slot" hint-placeholder-count="3">
+              <div style="display:flex;align-items:center;gap:12px;padding:13px 18px;background:#16181d;border-bottom:1px solid #23262d;">
+                <div style="flex:0 0 50px;"><div style="font-size:16px;font-weight:700;color:#f1f3f5;letter-spacing:-0.03em;line-height:1.05;">{{ slot.time }}</div><div style="font-size:11px;font-weight:500;color:#6b7280;margin-top:3px;">{{ slot.duration }}</div></div>
+                <div style="flex:1 1 auto;min-width:0;"><div style="font-size:13.5px;font-weight:600;color:#dfe3e8;letter-spacing:-0.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ slot.venue }}</div><div style="display:flex;align-items:center;gap:6px;margin-top:4px;line-height:1;"><span style="font-size:11.5px;color:#868e96;">{{ slot.room }} · {{ slot.area }}</span><span style="width:5px;height:5px;border-radius:50%;background:{{ slot.dotColor }};"></span><span style="font-size:11px;font-weight:500;color:#868e96;">{{ slot.freshText }}</span></div></div>
+                <div style="flex:0 0 auto;display:flex;flex-direction:column;align-items:flex-end;gap:6px;"><div style="font-size:13.5px;font-weight:700;color:#f1f3f5;letter-spacing:-0.02em;">{{ slot.price }}</div><div style="font-size:12px;font-weight:700;color:#fff;background:oklch(0.6 0.16 150);padding:5px 11px;border-radius:8px;">예약</div></div>
+              </div>
+            </sc-for>
+          </sc-for>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  renderVals() {
+    const G = 'oklch(0.64 0.18 150)';
+    const Y = 'oklch(0.82 0.15 85)';
+    const S = '#c4cad2';
+    const greenTxt = 'oklch(0.5 0.12 150)';
+    const grayTxt = '#8b95a1';
+    const staleTxt = '#b6bdc6';
+    const map = {
+      fresh:  [G, greenTxt],
+      recent: [G, grayTxt],
+      aging:  [Y, grayTxt],
+      stale:  [S, staleTxt],
+    };
+    const slot = (time, duration, venue, room, area, price, fresh, freshText) => {
+      const [dotColor, freshTextColor] = map[fresh];
+      return { time, duration, venue, room, area, price, freshText, dotColor, freshTextColor };
+    };
+
+    const daysV1 = [
+      { label: '오늘 · 6/15 (일)', count: '4곳', slots: [
+        slot('14:00', '2시간', '그라운드 합주실 홍대 본점', 'A룸', '홍대', '₩32,000', 'fresh', '3분 전 확인'),
+        slot('16:00', '2시간', '그루브 합주실', '스튜디오 A', '신촌', '₩36,000', 'recent', '12분 전'),
+        slot('18:00', '1시간', '그라운드 합주실 합정 1호점', '2관', '합정', '₩14,000', 'recent', '20분 전'),
+        slot('20:00', '2시간', '그라운드 합주실 홍대 본점', '라이브룸', '홍대', '₩40,000', 'aging', '1시간 전'),
+      ]},
+      { label: '내일 · 6/16 (월)', count: '3곳', slots: [
+        slot('10:00', '2시간', '그루브 합주실', '스튜디오 B', '신촌', '₩36,000', 'fresh', '5분 전 확인'),
+        slot('13:00', '3시간', '그라운드 합주실 합정 1호점', '1관', '합정', '₩42,000', 'recent', '15분 전'),
+        slot('19:00', '2시간', '그라운드 합주실 홍대 본점', 'B룸', '홍대', '₩32,000', 'recent', '30분 전'),
+      ]},
+      { label: '6/17 (화)', count: '2곳', slots: [
+        slot('11:00', '2시간', '그라운드 합주실 홍대 본점', 'A룸', '홍대', '₩32,000', 'fresh', '방금 확인'),
+        slot('15:00', '2시간', '그루브 합주실', '스튜디오 A', '신촌', '₩36,000', 'aging', '2시간 전'),
+      ]},
+    ];
+
+    const daysStale = [
+      { label: '오늘 · 6/15 (일)', count: '4곳', slots: [
+        slot('14:00', '2시간', '그라운드 합주실 홍대 본점', 'A룸', '홍대', '₩32,000', 'fresh', '3분 전 확인'),
+        slot('16:00', '2시간', '그루브 합주실', '스튜디오 A', '신촌', '₩36,000', 'recent', '18분 전'),
+        slot('18:00', '1시간', '그라운드 합주실 합정 1호점', '2관', '합정', '₩14,000', 'stale', '6시간 전 · 오래됨'),
+        slot('21:00', '2시간', '그루브 합주실', '스튜디오 B', '신촌', '₩36,000', 'stale', '8시간 전 · 오래됨'),
+      ]},
+      { label: '내일 · 6/16 (월)', count: '2곳', slots: [
+        slot('10:00', '2시간', '그라운드 합주실 홍대 본점', '라이브룸', '홍대', '₩40,000', 'recent', '25분 전'),
+        slot('14:00', '3시간', '그라운드 합주실 합정 1호점', '1관', '합정', '₩42,000', 'stale', '7시간 전 · 오래됨'),
+      ]},
+    ];
+
+    const tslot = (venue, room, area, price, fresh, freshText) => {
+      const [dotColor, freshTextColor] = map[fresh];
+      return { venue, room, area, price, freshText, dotColor, freshTextColor };
+    };
+    const timeGroups = [
+      { time: '14:00', meta: '2시간', slots: [
+        tslot('그라운드 합주실 홍대 본점', 'A룸', '홍대', '₩32,000', 'fresh', '3분 전'),
+        tslot('그루브 합주실', '스튜디오 A', '신촌', '₩36,000', 'recent', '12분 전'),
+      ]},
+      { time: '16:00', meta: '2시간', slots: [
+        tslot('그라운드 합주실 합정 1호점', '1관', '합정', '₩28,000', 'recent', '20분 전'),
+      ]},
+      { time: '18:00', meta: '2시간', slots: [
+        tslot('그라운드 합주실 홍대 본점', '라이브룸', '홍대', '₩40,000', 'aging', '1시간 전'),
+        tslot('그루브 합주실', '스튜디오 B', '신촌', '₩36,000', 'recent', '15분 전'),
+      ]},
+      { time: '20:00', meta: '2시간', slots: [
+        tslot('그라운드 합주실 합정 1호점', '2관', '합정', '₩28,000', 'fresh', '4분 전'),
+      ]},
+    ];
+
+    const venuesV3 = [
+      { name: '그라운드 합주실 홍대 본점', area: '홍대', price: '₩16,000/시간', dotColor: G, freshTextColor: greenTxt, freshText: '3분 전 확인', times: ['오늘 14시', '오늘 20시', '내일 11시', '내일 19시'] },
+      { name: '그라운드 합주실 합정 1호점', area: '합정', price: '₩14,000/시간', dotColor: G, freshTextColor: grayTxt, freshText: '20분 전', times: ['오늘 18시', '내일 13시', '내일 16시'] },
+      { name: '그루브 합주실', area: '신촌', price: '₩18,000/시간', dotColor: Y, freshTextColor: grayTxt, freshText: '1시간 전', times: ['오늘 16시', '내일 10시', '내일 15시'] },
+    ];
+
+    return { daysV1, daysStale, timeGroups, venuesV3 };
+  }
+}
+</script>
+</body>
+</html>
