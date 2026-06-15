@@ -99,6 +99,7 @@
       "status": "AVAILABLE",
       "price": 15000,
       "priceSource": "SCRAPED",
+      "scrapedAt": "2026-06-15T09:00:00.000Z",
       "studio": {
         "id": 1,
         "name": "마포 합주실",
@@ -121,6 +122,7 @@
       "status": "UNAVAILABLE",
       "price": null,
       "priceSource": "UNKNOWN",
+      "scrapedAt": "2026-06-15T09:00:00.000Z",
       "studio": {
         "id": 1,
         "name": "마포 합주실",
@@ -168,6 +170,7 @@
 - 중복되는 `studio`, `room` 정보가 응답 크기 문제를 만들면 `studios`, `rooms`, `slots`를 분리한 normalized response로 바꾼다.
 - `status = AVAILABLE`, `UNAVAILABLE`은 기본 응답에 포함한다.
 - `status = UNKNOWN`은 기본 응답에서 제외한다.
+- `scrapedAt`은 해당 슬롯 상태를 마지막으로 확인한 시각이다.
 - `bookingUrl`은 우선 `room_sources.url` 기준으로 반환한다.
 - 기본 정렬은 `date ASC`, `startTime ASC`, `studio.name ASC`, `room.name ASC`이다.
 - 초기 API는 페이지네이션 없이 최대 30일 범위를 한 번에 반환한다.
