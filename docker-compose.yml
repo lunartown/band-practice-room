@@ -1,0 +1,20 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: band-practice-room-postgres
+    environment:
+      POSTGRES_DB: band_practice_room
+      POSTGRES_USER: band_practice_room
+      POSTGRES_PASSWORD: band_practice_room
+    ports:
+      - "15432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U band_practice_room -d band_practice_room"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  postgres-data:

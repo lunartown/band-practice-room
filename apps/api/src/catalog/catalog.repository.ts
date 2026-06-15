@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { DatabaseService } from '../database/database.service.js';
 
 export interface AreaRow {
@@ -18,7 +18,7 @@ export interface StudioRow {
 
 @Injectable()
 export class CatalogRepository {
-  constructor(private readonly database: DatabaseService) {}
+  constructor(@Inject(DatabaseService) private readonly database: DatabaseService) {}
 
   async findActiveAreas() {
     const result = await this.database.query<AreaRow>(`

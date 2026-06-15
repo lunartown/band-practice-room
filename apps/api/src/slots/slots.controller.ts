@@ -1,11 +1,11 @@
-import { Controller, Get, Query } from '@nestjs/common';
+import { Controller, Get, Inject, Query } from '@nestjs/common';
 import { parseOptionalPositiveInteger } from '../shared/id.js';
 import { validateDateRange } from './date-range.js';
 import { SlotsService } from './slots.service.js';
 
 @Controller('slots')
 export class SlotsController {
-  constructor(private readonly slotsService: SlotsService) {}
+  constructor(@Inject(SlotsService) private readonly slotsService: SlotsService) {}
 
   @Get()
   getSlots(

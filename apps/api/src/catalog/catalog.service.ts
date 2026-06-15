@@ -1,10 +1,13 @@
-import { HttpStatus, Injectable } from '@nestjs/common';
+import { HttpStatus, Inject, Injectable } from '@nestjs/common';
 import { ApiError } from '../shared/api-error.js';
 import { CatalogRepository, StudioRow } from './catalog.repository.js';
 
 @Injectable()
 export class CatalogService {
-  constructor(private readonly catalogRepository: CatalogRepository) {}
+  constructor(
+    @Inject(CatalogRepository)
+    private readonly catalogRepository: CatalogRepository,
+  ) {}
 
   async getAreas() {
     const areas = await this.catalogRepository.findActiveAreas();

@@ -4,7 +4,7 @@ import pg from 'pg';
 const { Pool } = pg;
 
 export const defaultDatabaseUrl =
-  'postgres://band_practice_room:band_practice_room@localhost:5432/band_practice_room';
+  'postgres://band_practice_room:band_practice_room@localhost:15432/band_practice_room';
 
 @Injectable()
 export class DatabaseService implements OnModuleDestroy {

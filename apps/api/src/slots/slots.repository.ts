@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { DatabaseService } from '../database/database.service.js';
 
 export interface SlotRow {
@@ -30,7 +30,7 @@ export interface SlotFilters {
 
 @Injectable()
 export class SlotsRepository {
-  constructor(private readonly database: DatabaseService) {}
+  constructor(@Inject(DatabaseService) private readonly database: DatabaseService) {}
 
   async findSlots(filters: SlotFilters) {
     const params: unknown[] = [filters.dateFrom, filters.dateTo];

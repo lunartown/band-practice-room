@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { CatalogService } from '../catalog/catalog.service.js';
 import { formatTime, toIsoString } from '../shared/time.js';
 import { SlotFilters, SlotRow, SlotsRepository } from './slots.repository.js';
@@ -6,7 +6,9 @@ import { SlotFilters, SlotRow, SlotsRepository } from './slots.repository.js';
 @Injectable()
 export class SlotsService {
   constructor(
+    @Inject(SlotsRepository)
     private readonly slotsRepository: SlotsRepository,
+    @Inject(CatalogService)
     private readonly catalogService: CatalogService,
   ) {}
 
