@@ -14,10 +14,11 @@
 
 ## 2. 엔드포인트 목록
 
-| Method | Path   | 설명               |
-| ------ | ------ | ------------------ |
-| GET    | /areas | 지역 목록 조회     |
-| GET    | /slots | 날짜 범위 슬롯 조회 |
+| Method | Path     | 설명               |
+| ------ | -------- | ------------------ |
+| GET    | /areas   | 지역 목록 조회     |
+| GET    | /studios | 합주실 목록 조회   |
+| GET    | /slots   | 날짜 범위 슬롯 조회 |
 
 ## 3. GET /areas
 
@@ -34,7 +35,34 @@
 }
 ```
 
-## 4. GET /slots
+## 4. GET /studios
+
+활성화된 합주실 목록을 반환한다. 필터 시트의 합주실 선택 목록에 사용한다.
+
+**Query Parameters**
+
+| Parameter | Type   | Required | Description  |
+| --------- | ------ | -------- | ------------ |
+| areaId    | number |          | 지역 ID 필터 |
+
+**Response 200**
+
+```json
+{
+  "studios": [
+    {
+      "id": 1,
+      "slug": "mapo-studio",
+      "name": "마포 합주실",
+      "primaryAreaId": 1,
+      "areaIds": [1, 2],
+      "address": "서울시 마포구 ..."
+    }
+  ]
+}
+```
+
+## 5. GET /slots
 
 날짜 범위와 선택적 지역/합주실 조건으로 슬롯을 반환한다.
 
@@ -54,6 +82,8 @@
 - `dateFrom`, `dateTo`는 양끝 포함 기준 최대 30일이다.
 - 예: `2026-06-15`부터 30일 범위는 `2026-07-14`까지다.
 - `dateFrom`은 오늘보다 과거일 수 없다.
+- `areaId`는 `studio_areas.area_id` 기준으로 필터링한다.
+- `studioId`와 `areaId`를 함께 보내면 두 조건을 모두 만족하는 슬롯만 반환한다.
 
 **Response 200**
 
@@ -121,7 +151,17 @@
 }
 ```
 
-## 5. 설계 메모
+**Error Codes**
+
+| HTTP | Code               | Description                         |
+| ---- | ------------------ | ----------------------------------- |
+| 400  | MISSING_PARAMETER  | 필수 query parameter가 없음         |
+| 400  | INVALID_DATE       | 날짜 형식이 `YYYY-MM-DD`가 아님     |
+| 400  | INVALID_DATE_RANGE | 날짜 범위가 정책에 맞지 않음        |
+| 404  | AREA_NOT_FOUND     | 존재하지 않거나 비활성 지역 ID      |
+| 404  | STUDIO_NOT_FOUND   | 존재하지 않거나 비활성 합주실 ID    |
+
+## 6. 설계 메모
 
 - `slots`는 검색 결과용 read model이므로 flat 배열로 반환한다.
 - flat 구조는 클라이언트가 날짜, 시간, 지역, 합주실 기준으로 자유롭게 그룹핑하기 쉽다.
@@ -129,3 +169,5 @@
 - `status = AVAILABLE`, `UNAVAILABLE`은 기본 응답에 포함한다.
 - `status = UNKNOWN`은 기본 응답에서 제외한다.
 - `bookingUrl`은 우선 `room_sources.url` 기준으로 반환한다.
+- 기본 정렬은 `date ASC`, `startTime ASC`, `studio.name ASC`, `room.name ASC`이다.
+- 초기 API는 페이지네이션 없이 최대 30일 범위를 한 번에 반환한다.
