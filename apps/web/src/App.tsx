@@ -14,9 +14,20 @@ interface Filters {
   people: number;
 }
 
+function todayString() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+function addDays(dateStr: string, days: number) {
+  const d = new Date(dateStr + 'T00:00:00');
+  d.setDate(d.getDate() + days);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
 const defaultFilters: Filters = {
-  dateFrom: '2026-06-15',
-  dateTo: '2026-07-14',
+  dateFrom: todayString(),
+  dateTo: addDays(todayString(), 29),
   timePreset: 'all',
   includeStale: true,
   people: 2,
@@ -60,7 +71,7 @@ export function App() {
   const availableSlots = visibleSlots.filter((slot) => slot.status === 'AVAILABLE');
   const staleCount = visibleSlots.filter((slot) => slot.freshness === 'stale').length;
   const groupedSlots = groupByDate(visibleSlots);
-  const selectedAreaNames = filters.areaId ? areas.filter((area) => area.id === filters.areaId).map((area) => area.name).join('·') : '홍대·합정·신촌';
+  const selectedAreaNames = filters.areaId ? areas.filter((area) => area.id === filters.areaId).map((area) => area.name).join('·') : '전체 지역';
 
   return (
     <main className="app-shell">
@@ -132,10 +143,10 @@ function EmptyState({ setFilters }: { setFilters: React.Dispatch<React.SetStateA
     <div className="empty-state">
       <div className="empty-icon">⌕</div>
       <h2>조건에 맞는 빈 시간이 없습니다</h2>
-      <p>시간대를 넓히거나 생활권을 추가해보세요</p>
+      <p>시간대를 넓히거나 지역을 추가해보세요</p>
       <div className="empty-actions">
         <button onClick={() => setFilters((value) => ({ ...value, timePreset: 'all' }))}>시간 전체로 보기</button>
-        <button onClick={() => setFilters((value) => ({ ...value, areaId: undefined }))}>생활권 전체로 보기</button>
+        <button onClick={() => setFilters((value) => ({ ...value, areaId: undefined }))}>지역 전체로 보기</button>
         <button onClick={() => setFilters((value) => ({ ...value, includeStale: true }))}>오래된 정보 포함</button>
       </div>
     </div>
@@ -167,7 +178,7 @@ function FilterSheet({
           <button onClick={() => onChange(defaultFilters)}>초기화</button>
         </header>
         <div className="sheet-body">
-          <FilterGroup title="지역 생활권">
+          <FilterGroup title="지역">
             <button className={!filters.areaId ? 'selected' : ''} onClick={() => onChange((value) => ({ ...value, areaId: undefined, studioId: undefined }))}>전체</button>
             {areas.map((area) => (
               <button key={area.id} className={filters.areaId === area.id ? 'selected' : ''} onClick={() => onChange((value) => ({ ...value, areaId: area.id, studioId: undefined }))}>{area.name}</button>
@@ -176,7 +187,7 @@ function FilterSheet({
           <FilterGroup title="날짜 범위">
             <button className="selected">30일</button>
             <button onClick={() => onChange((value) => ({ ...value, dateTo: value.dateFrom }))}>오늘</button>
-            <button onClick={() => onChange((value) => ({ ...value, dateTo: '2026-06-21' }))}>7일</button>
+            <button onClick={() => onChange((value) => ({ ...value, dateTo: addDays(value.dateFrom, 7) }))}>7일</button>
           </FilterGroup>
           <FilterGroup title="시간대">
             {[

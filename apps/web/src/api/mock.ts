@@ -12,9 +12,15 @@ export const studios: Studio[] = [
   { id: 3, slug: 'groove-sinchon', name: '그루브 합주실', primaryAreaId: 3, primaryAreaName: '신촌', areaIds: [3], address: '서울시 서대문구' },
 ];
 
-const today = '2026-06-15';
-const tomorrow = '2026-06-16';
-const afterTomorrow = '2026-06-17';
+function dateStr(offset: number) {
+  const d = new Date();
+  d.setDate(d.getDate() + offset);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+const today = dateStr(0);
+const tomorrow = dateStr(1);
+const afterTomorrow = dateStr(2);
 
 const slot = (
   id: number,
@@ -54,18 +60,23 @@ const slot = (
   };
 };
 
+function nowKst(offsetMinutes: number) {
+  const d = new Date(Date.now() - offsetMinutes * 60 * 1000);
+  return d.toISOString().replace('Z', '+09:00');
+}
+
 const slots: Slot[] = [
-  slot(1, today, '14:00', '16:00', 1, 1, 'A룸', 32000, 'fresh', '2026-06-15T09:21:00+09:00'),
-  slot(2, today, '16:00', '18:00', 3, 2, '스튜디오 A', 36000, 'recent', '2026-06-15T09:12:00+09:00'),
-  slot(3, today, '18:00', '19:00', 2, 3, '2관', 14000, 'recent', '2026-06-15T09:04:00+09:00'),
-  slot(4, today, '20:00', '22:00', 1, 4, '라이브룸', 40000, 'aging', '2026-06-15T08:24:00+09:00'),
-  slot(5, today, '21:00', '23:00', 3, 5, '스튜디오 B', 36000, 'stale', '2026-06-15T01:24:00+09:00'),
-  slot(6, tomorrow, '10:00', '12:00', 3, 6, '스튜디오 B', 36000, 'fresh', '2026-06-15T09:19:00+09:00'),
-  slot(7, tomorrow, '13:00', '16:00', 2, 7, '1관', 42000, 'recent', '2026-06-15T09:09:00+09:00'),
-  slot(8, tomorrow, '19:00', '21:00', 1, 8, 'B룸', 32000, 'recent', '2026-06-15T08:54:00+09:00'),
-  slot(9, afterTomorrow, '11:00', '13:00', 1, 1, 'A룸', 32000, 'fresh', '2026-06-15T09:24:00+09:00'),
-  slot(10, afterTomorrow, '15:00', '17:00', 3, 2, '스튜디오 A', 36000, 'aging', '2026-06-15T07:24:00+09:00'),
-  slot(11, today, '18:00', '20:00', 3, 2, '스튜디오 A', 0, 'fresh', '2026-06-15T09:24:00+09:00', 'UNAVAILABLE'),
+  slot(1, today, '14:00', '16:00', 1, 1, 'A룸', 32000, 'fresh', nowKst(3)),
+  slot(2, today, '16:00', '18:00', 3, 2, '스튜디오 A', 36000, 'recent', nowKst(12)),
+  slot(3, today, '18:00', '19:00', 2, 3, '2관', 14000, 'recent', nowKst(20)),
+  slot(4, today, '20:00', '22:00', 1, 4, '라이브룸', 40000, 'aging', nowKst(60)),
+  slot(5, today, '21:00', '23:00', 3, 5, '스튜디오 B', 36000, 'stale', nowKst(480)),
+  slot(6, tomorrow, '10:00', '12:00', 3, 6, '스튜디오 B', 36000, 'fresh', nowKst(5)),
+  slot(7, tomorrow, '13:00', '16:00', 2, 7, '1관', 42000, 'recent', nowKst(15)),
+  slot(8, tomorrow, '19:00', '21:00', 1, 8, 'B룸', 32000, 'recent', nowKst(30)),
+  slot(9, afterTomorrow, '11:00', '13:00', 1, 1, 'A룸', 32000, 'fresh', nowKst(0)),
+  slot(10, afterTomorrow, '15:00', '17:00', 3, 2, '스튜디오 A', 36000, 'aging', nowKst(120)),
+  slot(11, today, '18:00', '20:00', 3, 2, '스튜디오 A', 0, 'fresh', nowKst(0), 'UNAVAILABLE'),
 ];
 
 export async function getMockAreas() {
