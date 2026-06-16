@@ -74,6 +74,8 @@ export function FilterSheet({ areas, filters, resultCount, onClose, onChange }: 
 
   // 수동 시간 선택: 윈도우가 정확히 하나일 때만 드롭다운에 반영하고, 바꾸면 단일 커스텀 윈도우로 대체한다.
   const single = filters.timeWindows.length === 1 ? filters.timeWindows[0] : null;
+  const fromVal = single?.from ?? '';
+  const toVal = single?.to ?? '';
 
   function setManual(part: 'from' | 'to', value: string) {
     const from = part === 'from' ? value : single?.from ?? '';
@@ -82,6 +84,7 @@ export function FilterSheet({ areas, filters, resultCount, onClose, onChange }: 
       set({ timeWindows: [] });
       return;
     }
+    if (from && to && from >= to) return; // 역전 방지 (UI에서도 차단)
     set({ timeWindows: [{ from: from || '00:00', to: to || '24:00' }] });
   }
 
@@ -164,22 +167,22 @@ export function FilterSheet({ areas, filters, resultCount, onClose, onChange }: 
             <h3>선호 시간대</h3>
             <div className="time-range-row">
               <select
-                value={single?.from ?? ''}
+                value={fromVal}
                 onChange={(e) => setManual('from', e.target.value)}
               >
                 <option value="">시작 시간</option>
                 {TIME_OPTIONS.slice(0, -1).map((t) => (
-                  <option key={t} value={t}>{t}</option>
+                  <option key={t} value={t} disabled={!!toVal && t >= toVal}>{t}</option>
                 ))}
               </select>
               <span className="time-sep">~</span>
               <select
-                value={single?.to ?? ''}
+                value={toVal}
                 onChange={(e) => setManual('to', e.target.value)}
               >
                 <option value="">종료 시간</option>
                 {TIME_OPTIONS.slice(1).map((t) => (
-                  <option key={t} value={t}>{t}</option>
+                  <option key={t} value={t} disabled={!!fromVal && t <= fromVal}>{t}</option>
                 ))}
               </select>
             </div>
