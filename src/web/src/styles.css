@@ -75,6 +75,11 @@
   --sp-fine: 6px;   /* tolerated half-step for tight chip gaps */
   --gutter: 18px;   /* horizontal page gutter */
 
+  /* --- Touch targets --- */
+  --tap: 44px;        /* discrete controls (steppers, nav, icon buttons) */
+  --tap-chip: 40px;   /* dense wrapping chips (≥ AA, compromise for density) */
+  --tap-min: 24px;    /* inline affordances where 44 is infeasible (WCAG AA) */
+
   /* --- Radius --- */
   --r-sm: 8px;
   --r-md: 10px;
@@ -195,7 +200,10 @@ button {
 
 .chip,
 .filter-button {
-  min-height: 34px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: var(--tap-chip);
   border-radius: var(--r-md);
   padding: var(--sp-2) var(--sp-3);
   background: var(--surface-sunken);
@@ -203,6 +211,10 @@ button {
   font-size: var(--fs-xs);
   font-weight: var(--fw-bold);
   white-space: nowrap;
+}
+
+.filter-button {
+  min-width: var(--tap-chip);
 }
 
 .chip.strong {
@@ -321,6 +333,7 @@ button {
   display: inline-flex;
   align-items: center;
   gap: var(--sp-1);
+  min-height: var(--tap-chip);
   padding: var(--sp-2) var(--sp-3);
   border-radius: var(--r-md);
   font-size: var(--fs-sm);
@@ -470,6 +483,9 @@ button {
 
 .empty-actions button,
 .filter-chips button {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--tap-chip);
   border-radius: var(--r-md);
   padding: var(--sp-2) var(--sp-3);
   background: var(--surface-sunken);
@@ -557,6 +573,10 @@ button {
 }
 
 .filter-sheet header button {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--tap);
+  padding: 0 var(--sp-1);
   background: transparent;
   color: var(--text-3);
   font-size: var(--fs-sm);
@@ -637,6 +657,9 @@ button {
 }
 
 .preset-chips button {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--tap-chip);
   font-size: var(--fs-xs);
   font-weight: var(--fw-semibold);
   padding: var(--sp-fine) var(--sp-3);
@@ -665,9 +688,12 @@ button {
 }
 
 .people-control button {
-  width: 32px;
-  height: 32px;
-  border-radius: var(--r-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--tap);
+  height: var(--tap);
+  border-radius: var(--r-md);
   background: var(--surface-sunken);
   color: var(--text-2);
   font-size: var(--fs-xl);
@@ -748,7 +774,8 @@ button {
   justify-content: space-between;
   gap: var(--sp-2);
   width: 100%;
-  padding: var(--sp-3);
+  min-height: var(--tap);
+  padding: var(--sp-2) var(--sp-3);
   border-radius: var(--r-sm);
   background: transparent;
   color: var(--text-1);
@@ -792,9 +819,9 @@ button {
 }
 
 .calendar-nav button {
-  width: 30px;
-  height: 30px;
-  border-radius: var(--r-sm);
+  width: var(--tap);
+  height: var(--tap);
+  border-radius: var(--r-md);
   background: var(--surface-sunken);
   color: var(--text-2);
   font-size: var(--fs-xl);
@@ -879,11 +906,16 @@ button {
 }
 
 .cal-chip button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: var(--tap-min);
+  min-height: var(--tap-min);
+  margin: calc(var(--sp-1) * -1) calc(var(--sp-1) * -1) calc(var(--sp-1) * -1) 0;
   background: transparent;
   color: var(--accent-strong);
   font-size: var(--fs-md);
   line-height: 1;
-  padding: 0 var(--sp-px);
 }
 
 /* ============================================================

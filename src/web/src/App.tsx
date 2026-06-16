@@ -10,7 +10,7 @@ import { buildAvailability } from './lib/availability';
 import { dateLabel } from './lib/date';
 
 type PopoverKind = 'duration' | 'date' | 'area';
-const POP_WIDTH: Record<PopoverKind, number> = { duration: 168, date: 300, area: 220 };
+const POP_WIDTH: Record<PopoverKind, number> = { duration: 168, date: 340, area: 220 };
 interface PopoverState {
   kind: PopoverKind;
   top: number;
