@@ -351,9 +351,10 @@ button {
 }
 
 .review-badges {
-  display: inline-flex;
+  display: flex;
   flex-wrap: wrap;
   gap: var(--sp-1);
+  margin-top: var(--sp-1);
 }
 
 .review-badge {

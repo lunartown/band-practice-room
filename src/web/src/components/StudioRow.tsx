@@ -28,16 +28,16 @@ export function StudioRow({ studio }: StudioRowProps) {
             {reviewCount != null && reviewCount > 0 && (
               <span className="studio-reviews">리뷰 {reviewCount}</span>
             )}
-            {badges.length > 0 && (
-              <span className="review-badges">
-                {badges.map((word) => (
-                  <span key={word} className="review-badge">
-                    {word}
-                  </span>
-                ))}
-              </span>
-            )}
           </div>
+          {badges.length > 0 && (
+            <div className="review-badges">
+              {badges.map((word) => (
+                <span key={word} className="review-badge">
+                  {word}
+                </span>
+              ))}
+            </div>
+          )}
         </div>
         <div className="studio-price">{studio.priceLabel}</div>
       </div>
