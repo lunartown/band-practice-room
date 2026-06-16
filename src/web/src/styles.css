@@ -309,12 +309,16 @@ button {
    Studio row (합주실 단위)
    ============================================================ */
 .studio-row {
-  display: flex;
-  align-items: flex-start;
-  gap: var(--sp-3);
   padding: var(--sp-4) var(--gutter);
   background: var(--surface);
   border-bottom: 1px solid var(--border-subtle);
+}
+
+/* 헤더: 썸네일 | 이름·지역 | 가격 — 썸네일 높이가 이름·지역 영역과 맞는다 */
+.studio-head {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
 }
 
 .studio-avatar {
@@ -338,17 +342,18 @@ button {
   display: block;
 }
 
-/* 썸네일 오른쪽: 이름·지역·뱃지·시간칩이 한 칼럼으로 정렬되는 본문 */
-.studio-body {
+.studio-name-area {
   flex: 1 1 auto;
   min-width: 0;
 }
 
-.studio-title {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: var(--sp-3);
+.studio-price {
+  flex: 0 0 auto;
+  align-self: center;
+  color: var(--text-2);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-bold);
+  white-space: nowrap;
 }
 
 .studio-name {
@@ -360,14 +365,6 @@ button {
   font-size: var(--fs-md);
   font-weight: var(--fw-bold);
   line-height: 1.25;
-}
-
-.studio-price {
-  flex: 0 0 auto;
-  color: var(--text-2);
-  font-size: var(--fs-sm);
-  font-weight: var(--fw-bold);
-  white-space: nowrap;
 }
 
 .studio-meta {
@@ -393,7 +390,7 @@ button {
   display: flex;
   flex-wrap: wrap;
   gap: var(--sp-1);
-  margin-top: var(--sp-2);
+  margin-top: var(--sp-3);
 }
 
 .review-badge {
