@@ -146,15 +146,26 @@ function buildStudios(slots: Slot[], minDuration: number): StudioAvailability[] 
       byRoom.set(slot.room.id, list);
     }
 
-    const starts = new Set<number>();
+    // 방마다 독립적으로 시작 시각 → 칩으로 변환한다. 범위 칩은 한 방의 연속
+    // 구간 안에서만 접혀야 하므로(서로 다른 방의 시작 시각을 한 Set에 합쳐서
+    // 접으면 어떤 방도 제공하지 않는 연속 구간이 만들어진다), 칩 변환을 방 단위로
+    // 하고 합주실 레벨에서는 동일한 칩만 중복 제거해 합친다.
+    const chipByKey = new Map<string, AvailabilityChip>();
     for (const roomSlots of byRoom.values()) {
+      const starts = new Set<number>();
       for (const run of contiguousRuns(roomSlots)) {
         for (const h of validStartHours(run, minDuration)) starts.add(h);
       }
+      for (const chip of startsToChips([...starts], minDuration)) {
+        const key = chip.kind === 'single' ? `s:${chip.start}` : `r:${chip.start}-${chip.end}`;
+        chipByKey.set(key, chip);
+      }
     }
-    if (starts.size === 0) continue;
+    if (chipByKey.size === 0) continue;
 
-    const chips = startsToChips([...starts], minDuration);
+    const chips = [...chipByKey.values()].sort(
+      (a, b) => a.start.localeCompare(b.start) || a.kind.localeCompare(b.kind),
+    );
     const studio = studioSlots[0].studio;
     const prices = studioSlots.map((s) => s.room.pricePerHour ?? s.price ?? 0);
 
