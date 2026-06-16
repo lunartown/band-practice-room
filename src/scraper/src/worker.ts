@@ -1,6 +1,6 @@
 import { query } from './db.js';
 import { NaverReservationScraper } from './naver/scraper.js';
-import type { AvailabilitySlot } from './naver/types.js';
+import type { AvailabilitySlot, ScrapeRoom } from './naver/types.js';
 
 const MAX_ATTEMPTS = 5;
 const SUCCESS_REQUEUE_MINUTES = 60;
@@ -21,12 +21,14 @@ interface StudioSourceRow {
   studio_id: string;
   source_id: string;
   url: string | null;
+  external_key: string | null;
   studio_name: string;
 }
 
 interface RoomRow {
   id: string;
   name: string;
+  biz_item_id: string;
 }
 
 export async function runOnce(): Promise<boolean> {
@@ -36,14 +38,21 @@ export async function runOnce(): Promise<boolean> {
   if (!job) return false;
 
   const source = await getStudioSource(job.studio_source_id);
-  if (!source || !source.url) {
-    await failJob(job.id, 'studio_source URL이 없습니다', 'UNKNOWN');
+  if (!source || !source.url || !source.external_key) {
+    await failJob(job.id, 'studio_source URL/식별자가 없습니다', 'UNKNOWN');
     return true;
   }
 
-  const rooms = await getRooms(source.studio_id);
+  const businessTypeId = parseBusinessTypeId(source.url);
+  if (businessTypeId === null) {
+    await failJob(job.id, `URL에서 businessTypeId 파싱 실패: ${source.url}`, 'UNKNOWN');
+    return true;
+  }
+
+  const rooms = await getMappedRooms(source.studio_id, source.source_id);
   if (rooms.length === 0) {
-    await failJob(job.id, '등록된 방이 없습니다', 'UNKNOWN');
+    // 네이버 매핑(room_sources)이 없는 스튜디오 → 수집 대상 아님. 재시도해도 의미 없음.
+    await failJob(job.id, '네이버에 매핑된 방이 없습니다', 'UNKNOWN');
     return true;
   }
 
@@ -51,50 +60,62 @@ export async function runOnce(): Promise<boolean> {
   console.log(`[worker] 수집 시작: ${source.studio_name} (${job.date_from} ~ ${job.date_to})`);
 
   try {
-    const dates = getDatesInRange(job.date_from, job.date_to);
-    const roomNames = rooms.map((r) => r.name);
     const roomIdByName = new Map(rooms.map((r) => [r.name, r.id]));
+    const scrapeRooms: ScrapeRoom[] = rooms.map((r) => ({
+      roomName: r.name,
+      bizItemId: r.biz_item_id,
+    }));
 
-    const scraper = new NaverReservationScraper({
-      headless: process.env.HEADLESS !== 'false',
-      debug: process.env.DEBUG === 'true',
-    });
-
-    const dateResults = await scraper.scrape(
-      { studioSourceId: job.studio_source_id, studioName: source.studio_name, url: source.url },
-      dates,
-      roomNames,
+    const scraper = new NaverReservationScraper({ debug: process.env.DEBUG === 'true' });
+    const result = await scraper.scrape(
+      {
+        studioSourceId: job.studio_source_id,
+        studioName: source.studio_name,
+        businessId: source.external_key,
+        businessTypeId,
+        rooms: scrapeRooms,
+      },
+      job.date_from,
+      job.date_to,
     );
 
-    let totalSlots = 0;
-    let totalRooms = 0;
-    const allSlots: AvailabilitySlot[] = [];
+    const erroredRooms = result.rooms.filter((r) => r.error);
+    if (erroredRooms.length === result.rooms.length) {
+      // 모든 방 실패 → 작업 실패로 간주하고 재시도 경로로 보낸다.
+      throw new Error(`모든 방 수집 실패 (예: ${erroredRooms[0]?.error})`);
+    }
 
-    for (const dateResult of dateResults) {
-      for (const roomResult of dateResult.rooms) {
-        if (roomResult.error) continue;
-        if (roomResult.slots.length > 0) totalRooms++;
-        allSlots.push(...roomResult.slots);
-        totalSlots += roomResult.slots.length;
-      }
+    let totalSlots = 0;
+    let roomsWithSlots = 0;
+    const allSlots: AvailabilitySlot[] = [];
+    for (const roomResult of result.rooms) {
+      if (roomResult.error) continue;
+      if (roomResult.slots.length > 0) roomsWithSlots++;
+      allSlots.push(...roomResult.slots);
+      totalSlots += roomResult.slots.length;
     }
 
     await upsertSlots(allSlots, roomIdByName);
 
+    const status = erroredRooms.length > 0 ? 'PARTIAL' : 'SUCCESS';
     await createScrapeRun({
       jobId: job.id,
       studioId: source.studio_id,
       sourceId: source.source_id,
       dateFrom: job.date_from,
       dateTo: job.date_to,
-      status: 'SUCCESS',
+      status,
       startedAt,
-      roomsFound: totalRooms,
+      roomsFound: roomsWithSlots,
       slotsFound: totalSlots,
+      errorMessage: erroredRooms.length ? `방 ${erroredRooms.length}개 실패` : undefined,
     });
 
     await requeueJob(job.id, SUCCESS_REQUEUE_MINUTES);
-    console.log(`[worker] 수집 완료: ${source.studio_name} / 슬롯 ${totalSlots}건`);
+    console.log(
+      `[worker] 수집 완료(${status}): ${source.studio_name} / 슬롯 ${totalSlots}건` +
+        (erroredRooms.length ? ` / 방 ${erroredRooms.length}개 실패` : ''),
+    );
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     const errorKind = classifyError(message);
@@ -118,8 +139,17 @@ export async function runOnce(): Promise<boolean> {
   return true;
 }
 
+// URL 의 /booking/{N}/ 세그먼트가 businessTypeId (보통 10, 일부 13).
+function parseBusinessTypeId(url: string): number | null {
+  const m = url.match(/\/booking\/(\d+)\//);
+  return m ? Number(m[1]) : null;
+}
+
 async function provisionJobs() {
-  await query(`
+  // PENDING/RUNNING 잡이 있거나, 최근(6시간 내) 영구 FAILED 한 스튜디오는 재생성하지 않는다.
+  // → 일시 장애로 죽은 잡을 곧바로 되살려 백오프를 무력화하던 문제를 막는다.
+  await query(
+    `
     INSERT INTO scrape_jobs (studio_source_id, date_from, date_to, status, priority)
     SELECT
       ss.id,
@@ -133,9 +163,14 @@ async function provisionJobs() {
     WHERE NOT EXISTS (
       SELECT 1 FROM scrape_jobs j
       WHERE j.studio_source_id = ss.id
-        AND j.status IN ('PENDING', 'RUNNING')
+        AND (
+          j.status IN ('PENDING', 'RUNNING')
+          OR (j.status = 'FAILED' AND j.updated_at > NOW() - INTERVAL '6 hours')
+        )
     )
-  `, [JOB_DATE_SPAN_DAYS]);
+  `,
+    [JOB_DATE_SPAN_DAYS],
+  );
 }
 
 async function claimJob(): Promise<JobRow | null> {
@@ -159,22 +194,30 @@ async function claimJob(): Promise<JobRow | null> {
 }
 
 async function getStudioSource(studioSourceId: string): Promise<StudioSourceRow | null> {
-  const result = await query<StudioSourceRow>(`
-    SELECT ss.studio_id, ss.source_id, ss.url, st.name AS studio_name
+  const result = await query<StudioSourceRow>(
+    `
+    SELECT ss.studio_id, ss.source_id, ss.url, ss.external_key, st.name AS studio_name
     FROM studio_sources ss
     INNER JOIN studios st ON st.id = ss.studio_id
     WHERE ss.id = $1
-  `, [studioSourceId]);
+  `,
+    [studioSourceId],
+  );
   return result.rows[0] ?? null;
 }
 
-async function getRooms(studioId: string): Promise<RoomRow[]> {
-  const result = await query<RoomRow>(`
-    SELECT id, name
-    FROM rooms
-    WHERE studio_id = $1 AND is_active = true
-    ORDER BY id ASC
-  `, [studioId]);
+// 네이버 bizItemId 가 매핑된(room_sources 가 있는) 활성 방만 가져온다.
+async function getMappedRooms(studioId: string, sourceId: string): Promise<RoomRow[]> {
+  const result = await query<RoomRow>(
+    `
+    SELECT r.id, r.name, rs.external_key AS biz_item_id
+    FROM rooms r
+    INNER JOIN room_sources rs ON rs.room_id = r.id AND rs.source_id = $2
+    WHERE r.studio_id = $1 AND r.is_active = true AND rs.external_key IS NOT NULL
+    ORDER BY r.id ASC
+  `,
+    [studioId, sourceId],
+  );
   return result.rows;
 }
 
@@ -187,15 +230,20 @@ async function upsertSlots(
     if (!roomId) continue;
 
     const status = slot.status.toUpperCase();
-    await query(`
+    const priceSource = slot.price !== null ? 'SCRAPED' : 'UNKNOWN';
+    await query(
+      `
       INSERT INTO slots (room_id, date, start_time, end_time, status, price, price_source, scraped_at)
-      VALUES ($1, $2, $3, $4, $5, NULL, 'UNKNOWN', NOW())
+      VALUES ($1, $2, $3, $4, $5, $6, $7, NOW())
       ON CONFLICT (room_id, date, start_time) DO UPDATE SET
         end_time = EXCLUDED.end_time,
         status = EXCLUDED.status,
+        price = EXCLUDED.price,
         price_source = EXCLUDED.price_source,
         scraped_at = EXCLUDED.scraped_at
-    `, [roomId, slot.date, slot.startTime, slot.endTime, status]);
+    `,
+      [roomId, slot.date, slot.startTime, slot.endTime, status, slot.price, priceSource],
+    );
   }
 }
 
@@ -212,47 +260,58 @@ async function createScrapeRun(params: {
   errorKind?: string;
   errorMessage?: string;
 }): Promise<void> {
-  await query(`
+  await query(
+    `
     INSERT INTO scrape_runs
       (job_id, studio_id, source_id, date_from, date_to, status, started_at, finished_at,
        rooms_found, slots_found, error_kind, error_message)
     VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), $8, $9, $10, $11)
-  `, [
-    params.jobId,
-    params.studioId,
-    params.sourceId,
-    params.dateFrom,
-    params.dateTo,
-    params.status,
-    params.startedAt.toISOString(),
-    params.roomsFound ?? null,
-    params.slotsFound ?? null,
-    params.errorKind ?? null,
-    params.errorMessage ?? null,
-  ]);
+  `,
+    [
+      params.jobId,
+      params.studioId,
+      params.sourceId,
+      params.dateFrom,
+      params.dateTo,
+      params.status,
+      params.startedAt.toISOString(),
+      params.roomsFound ?? null,
+      params.slotsFound ?? null,
+      params.errorKind ?? null,
+      params.errorMessage ?? null,
+    ],
+  );
 }
 
 async function requeueJob(jobId: string, delayMinutes: number): Promise<void> {
-  await query(`
+  // 성공 시 attempts 를 0 으로 되돌린다. (리셋하지 않으면 성공이 누적돼도
+  // attempts 가 계속 늘어 결국 MAX_ATTEMPTS 를 넘겨 잡이 영구 실패하던 버그)
+  await query(
+    `
     UPDATE scrape_jobs
     SET
       status = 'PENDING',
+      attempts = 0,
       date_from = (NOW() AT TIME ZONE 'Asia/Seoul')::date,
       date_to = (NOW() AT TIME ZONE 'Asia/Seoul')::date + $1::integer,
       run_after = NOW() + ($2 || ' minutes')::interval,
       updated_at = NOW()
     WHERE id = $3
-  `, [JOB_DATE_SPAN_DAYS, delayMinutes, jobId]);
+  `,
+    [JOB_DATE_SPAN_DAYS, delayMinutes, jobId],
+  );
 }
 
 async function failJob(jobId: string, message: string, errorKind: string): Promise<void> {
-  const result = await query<{ attempts: number }>(`
-    SELECT attempts FROM scrape_jobs WHERE id = $1
-  `, [jobId]);
+  const result = await query<{ attempts: number }>(
+    `SELECT attempts FROM scrape_jobs WHERE id = $1`,
+    [jobId],
+  );
   const attempts = result.rows[0]?.attempts ?? 0;
   const shouldRetry = attempts < MAX_ATTEMPTS;
 
-  await query(`
+  await query(
+    `
     UPDATE scrape_jobs
     SET
       status = $1,
@@ -260,7 +319,9 @@ async function failJob(jobId: string, message: string, errorKind: string): Promi
       run_after = CASE WHEN $3 THEN NOW() + ($5 || ' minutes')::interval ELSE NULL END,
       updated_at = NOW()
     WHERE id = $4
-  `, [shouldRetry ? 'PENDING' : 'FAILED', message, shouldRetry, jobId, FAILURE_RETRY_MINUTES]);
+  `,
+    [shouldRetry ? 'PENDING' : 'FAILED', message, shouldRetry, jobId, FAILURE_RETRY_MINUTES],
+  );
 
   if (!shouldRetry) {
     console.error(`[worker] 최대 재시도 횟수 초과, 작업 중단: job ${jobId}`);
@@ -270,21 +331,6 @@ async function failJob(jobId: string, message: string, errorKind: string): Promi
 function classifyError(message: string): 'TIMEOUT' | 'AUTH_FAILED' | 'PARSE_FAILED' | 'UNKNOWN' {
   if (/timeout/i.test(message)) return 'TIMEOUT';
   if (/auth|login|session|403|401/i.test(message)) return 'AUTH_FAILED';
-  if (/parse|selector|not found/i.test(message)) return 'PARSE_FAILED';
+  if (/parse|bizitem|not found|빈 응답|매핑/i.test(message)) return 'PARSE_FAILED';
   return 'UNKNOWN';
-}
-
-function getDatesInRange(dateFrom: string, dateTo: string): string[] {
-  const todaySeoul = new Intl.DateTimeFormat('sv-SE', { timeZone: 'Asia/Seoul' }).format(new Date());
-  const dates: string[] = [];
-  const current = new Date(dateFrom + 'T00:00:00');
-  const end = new Date(dateTo + 'T00:00:00');
-  while (current <= end) {
-    const dateStr = `${current.getFullYear()}-${String(current.getMonth() + 1).padStart(2, '0')}-${String(current.getDate()).padStart(2, '0')}`;
-    if (dateStr >= todaySeoul) {
-      dates.push(dateStr);
-    }
-    current.setDate(current.getDate() + 1);
-  }
-  return dates;
 }

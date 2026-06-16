@@ -10,7 +10,6 @@
   },
   "dependencies": {
     "pg": "^8.13.1",
-    "playwright": "^1.50.0",
     "tsx": "^4.20.3"
   },
   "devDependencies": {
