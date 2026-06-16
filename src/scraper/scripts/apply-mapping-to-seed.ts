@@ -36,6 +36,20 @@ for (const e of report) {
   byStudio.set(e.studio, roomMap);
 }
 
+// 자동 매칭으로 안 잡힌 방의 수동 1:1 매핑을 병합한다(검증 완료된 것만).
+const MANUAL_PATH = new URL('./manual-mapping.json', import.meta.url).pathname;
+const manual = JSON.parse(readFileSync(MANUAL_PATH, 'utf8')) as Record<string, unknown>;
+let manualCount = 0;
+for (const [studioName, rooms] of Object.entries(manual)) {
+  if (studioName.startsWith('_')) continue; // _comment 등 메타키 제외
+  const roomMap = byStudio.get(studioName) ?? new Map<string, string>();
+  for (const [roomName, bizItemId] of Object.entries(rooms as Record<string, string>)) {
+    roomMap.set(roomName, bizItemId);
+    manualCount++;
+  }
+  byStudio.set(studioName, roomMap);
+}
+
 let injected = 0;
 let studiosTouched = 0;
 const skipped: string[] = [];
@@ -59,6 +73,6 @@ for (const studio of data.studios) {
 
 writeFileSync(DATA_PATH, JSON.stringify(data, null, 2) + '\n');
 
-console.log(`naverBizItemId 주입: ${injected}개 방, ${studiosTouched}개 스튜디오`);
+console.log(`naverBizItemId 주입: ${injected}개 방, ${studiosTouched}개 스튜디오 (수동 매핑 ${manualCount}개 포함)`);
 console.log(`미반영(1:N/미매칭/네이버없음): ${skipped.length}개 방`);
 console.log(`_local/data 갱신 완료 → generate_seed.py 재실행 필요`);

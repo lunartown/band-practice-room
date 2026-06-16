@@ -190,7 +190,9 @@ INSERT INTO studios (slug, name, description, primary_area_id, address, is_activ
 INSERT INTO studio_areas (studio_id, area_id) SELECT id, 1 FROM studios WHERE slug='studio-합정/홍대-이막';
 INSERT INTO studio_sources (studio_id, source_id, external_key, url) SELECT id, 1, '1385421', 'https://m.booking.naver.com/booking/10/bizes/1385421/items/6686059?area=bmp&lang=ko&map-search=1&service-target=map-pc&theme=place' FROM studios WHERE slug='studio-합정/홍대-이막';
 INSERT INTO rooms (studio_id, name, price_per_hour, price_source, capacity_min, capacity_max, is_active) SELECT id, 'B룸', 15500, 'SCRAPED', NULL, NULL, true FROM studios WHERE slug='studio-합정/홍대-이막';
+INSERT INTO room_sources (room_id, source_id, external_key) SELECT r.id, 1, '6686062' FROM rooms r JOIN studios s ON r.studio_id=s.id WHERE s.slug='studio-합정/홍대-이막' AND r.name='B룸';
 INSERT INTO rooms (studio_id, name, price_per_hour, price_source, capacity_min, capacity_max, is_active) SELECT id, 'A룸', 18000, 'SCRAPED', NULL, NULL, true FROM studios WHERE slug='studio-합정/홍대-이막';
+INSERT INTO room_sources (room_id, source_id, external_key) SELECT r.id, 1, '6686059' FROM rooms r JOIN studios s ON r.studio_id=s.id WHERE s.slug='studio-합정/홍대-이막' AND r.name='A룸';
 
 INSERT INTO studios (slug, name, description, primary_area_id, address, is_active) VALUES ('studio-합정/홍대-제시뮤직', '제시뮤직', '제시뮤직 홍대 합주실은 공연 리허설과 영상 제작을 위한 소리 간섭이 적은 독립된 합주실을 제공하는 스튜디오 입니다. 50평대의 시설로 넓고 쾌적한 환경을 제공하고 잘 관리되어진 장비들로 스트레스를 최소화 할 수 있는 장점이 있습니다.', 1, '서울 마포구 월드컵북로1길 18 지하 1층', true);
 INSERT INTO studio_areas (studio_id, area_id) SELECT id, 1 FROM studios WHERE slug='studio-합정/홍대-제시뮤직';
@@ -383,7 +385,9 @@ INSERT INTO studios (slug, name, description, primary_area_id, address, is_activ
 INSERT INTO studio_areas (studio_id, area_id) SELECT id, 3 FROM studios WHERE slug='studio-사당/이수-위드뮤직';
 INSERT INTO studio_sources (studio_id, source_id, external_key, url) SELECT id, 1, '773046', 'https://m.booking.naver.com/booking/10/bizes/773046' FROM studios WHERE slug='studio-사당/이수-위드뮤직';
 INSERT INTO rooms (studio_id, name, price_per_hour, price_source, capacity_min, capacity_max, is_active) SELECT id, 'B룸', 22000, 'SCRAPED', 5, 5, true FROM studios WHERE slug='studio-사당/이수-위드뮤직';
+INSERT INTO room_sources (room_id, source_id, external_key) SELECT r.id, 1, '5059435' FROM rooms r JOIN studios s ON r.studio_id=s.id WHERE s.slug='studio-사당/이수-위드뮤직' AND r.name='B룸';
 INSERT INTO rooms (studio_id, name, price_per_hour, price_source, capacity_min, capacity_max, is_active) SELECT id, 'A룸', 26000, 'SCRAPED', 8, 8, true FROM studios WHERE slug='studio-사당/이수-위드뮤직';
+INSERT INTO room_sources (room_id, source_id, external_key) SELECT r.id, 1, '5059426' FROM rooms r JOIN studios s ON r.studio_id=s.id WHERE s.slug='studio-사당/이수-위드뮤직' AND r.name='A룸';
 
 INSERT INTO studios (slug, name, description, primary_area_id, address, is_active) VALUES ('studio-사당/이수-톤', '톤', '톤 합주실 정보', 3, '서울특별시 서초구 동작대로 108, 지하 4층', true);
 INSERT INTO studio_areas (studio_id, area_id) SELECT id, 3 FROM studios WHERE slug='studio-사당/이수-톤';
@@ -488,6 +492,7 @@ INSERT INTO studios (slug, name, description, primary_area_id, address, is_activ
 INSERT INTO studio_areas (studio_id, area_id) SELECT id, 8 FROM studios WHERE slug='studio-방배-보고스튜디오';
 INSERT INTO studio_sources (studio_id, source_id, external_key, url) SELECT id, 1, '1173895', 'https://m.booking.naver.com/booking/10/bizes/1173895/items/5946156?area=bmp&lang=ko&map-search=1&service-target=map-pc&theme=place' FROM studios WHERE slug='studio-방배-보고스튜디오';
 INSERT INTO rooms (studio_id, name, price_per_hour, price_source, capacity_min, capacity_max, is_active) SELECT id, '보고합주실', 20000, 'SCRAPED', NULL, NULL, true FROM studios WHERE slug='studio-방배-보고스튜디오';
+INSERT INTO room_sources (room_id, source_id, external_key) SELECT r.id, 1, '5946156' FROM rooms r JOIN studios s ON r.studio_id=s.id WHERE s.slug='studio-방배-보고스튜디오' AND r.name='보고합주실';
 
 INSERT INTO studios (slug, name, description, primary_area_id, address, is_active) VALUES ('studio-방배-비쥬-방배점', '비쥬 방배점', '비쥬 방배점 합주실 정보', 8, '서울특별시 서초구 방배로 60, 지층 1호', true);
 INSERT INTO studio_areas (studio_id, area_id) SELECT id, 8 FROM studios WHERE slug='studio-방배-비쥬-방배점';
@@ -594,20 +599,29 @@ INSERT INTO studios (slug, name, description, primary_area_id, address, is_activ
 INSERT INTO studio_areas (studio_id, area_id) SELECT id, 11 FROM studios WHERE slug='studio-강동/송파-브라더-강동';
 INSERT INTO studio_sources (studio_id, source_id, external_key, url) SELECT id, 1, '1216066', 'https://m.booking.naver.com/booking/10/bizes/1216066/items/6107148?area=bmp&lang=ko&map-search=1&service-target=map-pc&theme=place' FROM studios WHERE slug='studio-강동/송파-브라더-강동';
 INSERT INTO rooms (studio_id, name, price_per_hour, price_source, capacity_min, capacity_max, is_active) SELECT id, '2번방', 25000, 'SCRAPED', 10, 10, true FROM studios WHERE slug='studio-강동/송파-브라더-강동';
+INSERT INTO room_sources (room_id, source_id, external_key) SELECT r.id, 1, '6107376' FROM rooms r JOIN studios s ON r.studio_id=s.id WHERE s.slug='studio-강동/송파-브라더-강동' AND r.name='2번방';
 INSERT INTO rooms (studio_id, name, price_per_hour, price_source, capacity_min, capacity_max, is_active) SELECT id, '5번방', 25000, 'SCRAPED', 10, 10, true FROM studios WHERE slug='studio-강동/송파-브라더-강동';
+INSERT INTO room_sources (room_id, source_id, external_key) SELECT r.id, 1, '6107448' FROM rooms r JOIN studios s ON r.studio_id=s.id WHERE s.slug='studio-강동/송파-브라더-강동' AND r.name='5번방';
 INSERT INTO rooms (studio_id, name, price_per_hour, price_source, capacity_min, capacity_max, is_active) SELECT id, '3번방', 19500, 'SCRAPED', 10, 10, true FROM studios WHERE slug='studio-강동/송파-브라더-강동';
+INSERT INTO room_sources (room_id, source_id, external_key) SELECT r.id, 1, '6115321' FROM rooms r JOIN studios s ON r.studio_id=s.id WHERE s.slug='studio-강동/송파-브라더-강동' AND r.name='3번방';
 INSERT INTO rooms (studio_id, name, price_per_hour, price_source, capacity_min, capacity_max, is_active) SELECT id, '4번방', 19500, 'SCRAPED', 10, 10, true FROM studios WHERE slug='studio-강동/송파-브라더-강동';
+INSERT INTO room_sources (room_id, source_id, external_key) SELECT r.id, 1, '6128721' FROM rooms r JOIN studios s ON r.studio_id=s.id WHERE s.slug='studio-강동/송파-브라더-강동' AND r.name='4번방';
 INSERT INTO rooms (studio_id, name, price_per_hour, price_source, capacity_min, capacity_max, is_active) SELECT id, '1번방', 25000, 'SCRAPED', 10, 10, true FROM studios WHERE slug='studio-강동/송파-브라더-강동';
+INSERT INTO room_sources (room_id, source_id, external_key) SELECT r.id, 1, '6107148' FROM rooms r JOIN studios s ON r.studio_id=s.id WHERE s.slug='studio-강동/송파-브라더-강동' AND r.name='1번방';
 
 INSERT INTO studios (slug, name, description, primary_area_id, address, is_active) VALUES ('studio-강동/송파-브라더-송파', '브라더 송파', '브라더 송파 합주실 정보', 11, '서울특별시 송파구 위례성대로 52, 쌈지빌딩 지하1층', true);
 INSERT INTO studio_areas (studio_id, area_id) SELECT id, 11 FROM studios WHERE slug='studio-강동/송파-브라더-송파';
 INSERT INTO studio_sources (studio_id, source_id, external_key, url) SELECT id, 1, '1555383', 'https://m.booking.naver.com/booking/10/bizes/1555383/items/7267309?area=bmp&lang=ko&map-search=1&service-target=map-pc&theme=place' FROM studios WHERE slug='studio-강동/송파-브라더-송파';
 INSERT INTO rooms (studio_id, name, price_per_hour, price_source, capacity_min, capacity_max, is_active) SELECT id, '2번방', 25000, 'SCRAPED', 10, 10, true FROM studios WHERE slug='studio-강동/송파-브라더-송파';
+INSERT INTO room_sources (room_id, source_id, external_key) SELECT r.id, 1, '7311413' FROM rooms r JOIN studios s ON r.studio_id=s.id WHERE s.slug='studio-강동/송파-브라더-송파' AND r.name='2번방';
 INSERT INTO rooms (studio_id, name, price_per_hour, price_source, capacity_min, capacity_max, is_active) SELECT id, '3번방', 25000, 'SCRAPED', 10, 10, true FROM studios WHERE slug='studio-강동/송파-브라더-송파';
+INSERT INTO room_sources (room_id, source_id, external_key) SELECT r.id, 1, '7319381' FROM rooms r JOIN studios s ON r.studio_id=s.id WHERE s.slug='studio-강동/송파-브라더-송파' AND r.name='3번방';
 INSERT INTO rooms (studio_id, name, price_per_hour, price_source, capacity_min, capacity_max, is_active) SELECT id, '4번방', 15000, 'SCRAPED', 5, 5, true FROM studios WHERE slug='studio-강동/송파-브라더-송파';
+INSERT INTO room_sources (room_id, source_id, external_key) SELECT r.id, 1, '7459490' FROM rooms r JOIN studios s ON r.studio_id=s.id WHERE s.slug='studio-강동/송파-브라더-송파' AND r.name='4번방';
 INSERT INTO rooms (studio_id, name, price_per_hour, price_source, capacity_min, capacity_max, is_active) SELECT id, '라이브홀', 49000, 'SCRAPED', 30, 30, true FROM studios WHERE slug='studio-강동/송파-브라더-송파';
 INSERT INTO room_sources (room_id, source_id, external_key) SELECT r.id, 1, '7319399' FROM rooms r JOIN studios s ON r.studio_id=s.id WHERE s.slug='studio-강동/송파-브라더-송파' AND r.name='라이브홀';
 INSERT INTO rooms (studio_id, name, price_per_hour, price_source, capacity_min, capacity_max, is_active) SELECT id, '1번방', 25000, 'SCRAPED', 10, 10, true FROM studios WHERE slug='studio-강동/송파-브라더-송파';
+INSERT INTO room_sources (room_id, source_id, external_key) SELECT r.id, 1, '7267309' FROM rooms r JOIN studios s ON r.studio_id=s.id WHERE s.slug='studio-강동/송파-브라더-송파' AND r.name='1번방';
 
 INSERT INTO studios (slug, name, description, primary_area_id, address, is_active) VALUES ('studio-강동/송파-스페이스블루', '스페이스블루', '스페이스블루 합주실 정보', 11, '강동/송파 지역', true);
 INSERT INTO studio_areas (studio_id, area_id) SELECT id, 11 FROM studios WHERE slug='studio-강동/송파-스페이스블루';
