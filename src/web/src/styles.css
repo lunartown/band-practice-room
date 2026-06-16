@@ -163,7 +163,7 @@ button {
 }
 
 .top-bar h1 {
-  font-size: var(--fs-xl);
+  font-size: var(--fs-2xl);
   line-height: 1.15;
   margin: 0;
   letter-spacing: 0;
@@ -204,9 +204,9 @@ button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-height: var(--tap-chip);
+  min-height: 33px;
   border-radius: var(--r-md);
-  padding: var(--sp-2) var(--sp-3);
+  padding: var(--sp-fine) var(--sp-3);
   background: var(--surface-sunken);
   color: var(--text-2);
   font-size: var(--fs-xs);
@@ -228,10 +228,34 @@ button {
   color: var(--accent-strong);
 }
 
+/* 사용자가 지정한(기본값과 다른) 필터: 액티브 표시 */
+.chip.active,
+.chip.strong.active {
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+  box-shadow: inset 0 0 0 1px var(--accent-border);
+}
+
 .filter-button {
   margin-left: auto;
   background: var(--gray-900);
   color: var(--white);
+  position: relative;
+}
+
+.filter-button.active {
+  background: var(--accent);
+}
+
+.filter-button.active::after {
+  content: '';
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--white);
 }
 
 /* ============================================================
@@ -247,11 +271,11 @@ button {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: var(--sp-2) var(--gutter);
+  padding: var(--sp-4) var(--gutter);
   background: var(--surface-section);
   border-top: 1px solid var(--gray-150);
   border-bottom: 1px solid var(--gray-150);
-  font-size: var(--fs-sm);
+  font-size: 16px;
   font-weight: var(--fw-bold);
 }
 
@@ -285,22 +309,18 @@ button {
    Studio row (합주실 단위)
    ============================================================ */
 .studio-row {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-3);
   padding: var(--sp-4) var(--gutter);
   background: var(--surface);
   border-bottom: 1px solid var(--border-subtle);
 }
 
-.studio-head {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: var(--sp-3);
-}
-
 .studio-avatar {
   flex: 0 0 auto;
-  width: 40px;
-  height: 40px;
+  width: 44px;
+  height: 44px;
   border-radius: var(--r-md);
   overflow: hidden;
   display: grid;
@@ -318,53 +338,28 @@ button {
   display: block;
 }
 
-.studio-name-area {
+/* 썸네일 오른쪽: 이름·지역·뱃지·시간칩이 한 칼럼으로 정렬되는 본문 */
+.studio-body {
   flex: 1 1 auto;
   min-width: 0;
 }
 
+.studio-title {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sp-3);
+}
+
 .studio-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   color: var(--text-1);
   font-size: var(--fs-md);
   font-weight: var(--fw-bold);
   line-height: 1.25;
-}
-
-.studio-meta {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: var(--sp-2);
-  margin-top: var(--sp-1);
-}
-
-.studio-area {
-  color: var(--text-3);
-  font-size: var(--fs-xs);
-  font-weight: var(--fw-medium);
-}
-
-.studio-reviews {
-  font-size: var(--fs-xs);
-  font-weight: var(--fw-medium);
-  color: var(--text-3);
-}
-
-.review-badges {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--sp-1);
-  margin-top: var(--sp-1);
-}
-
-.review-badge {
-  font-size: var(--fs-2xs);
-  font-weight: var(--fw-medium);
-  color: var(--text-2);
-  background: var(--surface-2, #f1f3f5);
-  border-radius: var(--r-sm, 6px);
-  padding: 1px var(--sp-2);
-  white-space: nowrap;
 }
 
 .studio-price {
@@ -372,6 +367,42 @@ button {
   color: var(--text-2);
   font-size: var(--fs-sm);
   font-weight: var(--fw-bold);
+  white-space: nowrap;
+}
+
+.studio-meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--sp-1);
+  margin-top: 3px;
+}
+
+.studio-area,
+.studio-reviews {
+  color: var(--text-3);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-medium);
+}
+
+.meta-dot {
+  color: var(--text-faint);
+}
+
+.review-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-1);
+  margin-top: var(--sp-2);
+}
+
+.review-badge {
+  font-size: var(--fs-2xs);
+  font-weight: var(--fw-medium);
+  color: var(--text-2);
+  background: var(--surface-sunken);
+  border-radius: var(--r-sm);
+  padding: 2px var(--sp-2);
   white-space: nowrap;
 }
 
