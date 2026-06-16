@@ -83,10 +83,10 @@ export function FilterSheet({ areas, filters, resultCount, onClose, onChange }: 
         </header>
 
         <div className="sheet-body">
-          {/* 지역 생활권 */}
+          {/* 지역 */}
           <div className="filter-group">
-            <h3>지역 생활권</h3>
-            <div>
+            <h3>지역</h3>
+            <div className="filter-chips">
               {areas.map((area) => (
                 <button
                   key={area.id}
@@ -149,7 +149,7 @@ export function FilterSheet({ areas, filters, resultCount, onClose, onChange }: 
           {/* 합주 시간 */}
           <div className="filter-group">
             <h3>합주 시간 <span className="filter-hint">연속</span></h3>
-            <div>
+            <div className="filter-chips">
               {DURATION_OPTIONS.map((opt) => (
                 <button
                   key={opt.value}
