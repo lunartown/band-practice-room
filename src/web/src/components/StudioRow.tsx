@@ -1,4 +1,5 @@
-import type { AvailabilityChip, StudioAvailability } from '../lib/availability';
+import { useState } from 'react';
+import type { AvailabilityChip, RoomAvailability, StudioAvailability } from '../lib/availability';
 import { toReviewBadges } from '../lib/reviewKeywords';
 
 interface StudioRowProps {
@@ -9,58 +10,91 @@ function chipLabel(chip: AvailabilityChip): string {
   return chip.kind === 'single' ? chip.start : `${chip.start}~${chip.end}`;
 }
 
+function TimeChip({ chip, href }: { chip: AvailabilityChip; href: string | null }) {
+  return (
+    <a className="time-chip" href={href ?? '#'} target="_blank" rel="noreferrer">
+      {chipLabel(chip)} <span className="chip-arrow">↗</span>
+    </a>
+  );
+}
+
+function RoomRow({ room }: { room: RoomAvailability }) {
+  return (
+    <div className="room-row">
+      <div className="room-info">
+        <span className="room-name">{room.room.name}</span>
+        {room.capacityLabel && <span className="room-cap">{room.capacityLabel}</span>}
+        <span className="room-price">{room.priceLabel}</span>
+      </div>
+      <div className="room-chips">
+        {room.chips.map((chip, i) => (
+          <TimeChip key={i} chip={chip} href={room.bookingUrl} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export function StudioRow({ studio }: StudioRowProps) {
   const { name, imageUrl, reviewCount, reviewKeywords } = studio.studio;
   const badges = toReviewBadges(reviewKeywords);
+  const [expanded, setExpanded] = useState(false);
 
   return (
     <div className="studio-row">
-      {/* 헤더: 썸네일 높이가 이름·지역 영역과 맞도록 한 줄로 묶는다 */}
       <div className="studio-head">
-        <div className="studio-avatar" aria-hidden>
-          {imageUrl ? <img src={imageUrl} alt="" loading="lazy" /> : name.slice(0, 1)}
-        </div>
+        {imageUrl && (
+          <div className="studio-avatar" aria-hidden>
+            <img src={imageUrl} alt="" loading="lazy" />
+          </div>
+        )}
         <div className="studio-name-area">
           <div className="studio-name">{name}</div>
           <div className="studio-meta">
             <span className="studio-area">{studio.areaName}</span>
             {reviewCount != null && reviewCount > 0 && (
-              <>
-                <span className="meta-dot" aria-hidden>
-                  ·
-                </span>
-                <span className="studio-reviews">리뷰 {reviewCount}</span>
-              </>
+              <span className="studio-reviews">리뷰 {reviewCount}</span>
             )}
           </div>
+          {badges.length > 0 && (
+            <div className="review-badges">
+              {badges.map((word) => (
+                <span key={word} className="review-badge">
+                  {word}
+                </span>
+              ))}
+            </div>
+          )}
         </div>
         <div className="studio-price">{studio.priceLabel}</div>
       </div>
 
-      {/* 본문: 뱃지·시간칩은 전체 너비로 같은 좌측선에 정렬 */}
-      {badges.length > 0 && (
-        <div className="review-badges">
-          {badges.map((word) => (
-            <span key={word} className="review-badge">
-              {word}
-            </span>
+      {/* 접힌 상태: 지금처럼 지점 요약 시간 칩을 그대로 노출 */}
+      <div className="studio-chips">
+        {studio.chips.map((chip, i) => (
+          <TimeChip key={i} chip={chip} href={studio.bookingUrl} />
+        ))}
+      </div>
+
+      <button
+        type="button"
+        className={`room-toggle${expanded ? ' open' : ''}`}
+        aria-expanded={expanded}
+        onClick={() => setExpanded((v) => !v)}
+      >
+        {expanded ? '방별 시간 접기' : `방 ${studio.rooms.length}개 · 방별로 보기`}
+        <span className="room-toggle-arrow" aria-hidden>
+          ▾
+        </span>
+      </button>
+
+      {expanded && (
+        <div className="room-list">
+          {studio.rooms.map((room) => (
+            <RoomRow key={room.room.id} room={room} />
           ))}
         </div>
       )}
-
-      <div className="studio-chips">
-        {studio.chips.map((chip, i) => (
-          <a
-            key={i}
-            className="time-chip"
-            href={studio.bookingUrl ?? '#'}
-            target="_blank"
-            rel="noreferrer"
-          >
-            {chipLabel(chip)} <span className="chip-arrow">↗</span>
-          </a>
-        ))}
-      </div>
     </div>
   );
 }
