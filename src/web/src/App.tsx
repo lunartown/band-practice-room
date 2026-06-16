@@ -1,11 +1,22 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { getAreas, getSlots } from './api/client';
 import type { Area, Slot } from './api/types';
 import { StudioRow } from './components/StudioRow';
-import { FilterSheet, defaultFilters } from './components/FilterSheet';
+import { FilterSheet, defaultFilters, DURATION_OPTIONS } from './components/FilterSheet';
 import type { FilterState } from './components/FilterSheet';
+import { CalendarPicker } from './components/CalendarPicker';
+import { Popover } from './components/Popover';
 import { buildAvailability } from './lib/availability';
 import { dateLabel } from './lib/date';
+
+type PopoverKind = 'duration' | 'date' | 'area';
+const POP_WIDTH: Record<PopoverKind, number> = { duration: 168, date: 300, area: 220 };
+interface PopoverState {
+  kind: PopoverKind;
+  top: number;
+  left: number;
+  width: number;
+}
 
 export function App() {
   const [areas, setAreas] = useState<Area[]>([]);
@@ -13,8 +24,20 @@ export function App() {
   const [responseDates, setResponseDates] = useState<string[]>([]);
   const [filters, setFilters] = useState<FilterState>(defaultFilters);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [popover, setPopover] = useState<PopoverState | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [updatedAt, setUpdatedAt] = useState<Date | null>(null);
+  const phoneRef = useRef<HTMLElement>(null);
+
+  function openPopover(kind: PopoverKind, e: React.MouseEvent<HTMLButtonElement>) {
+    const phone = phoneRef.current;
+    if (!phone) return;
+    const a = e.currentTarget.getBoundingClientRect();
+    const p = phone.getBoundingClientRect();
+    const width = POP_WIDTH[kind];
+    const left = Math.max(12, Math.min(a.left - p.left, p.width - width - 12));
+    setPopover({ kind, top: a.bottom - p.top + 6, left, width });
+  }
 
   useEffect(() => {
     getAreas()
@@ -27,8 +50,7 @@ export function App() {
     getSlots({
       dates: filters.dates,
       areaIds: filters.areaIds.length ? filters.areaIds : undefined,
-      timeFrom: filters.timeFrom ?? undefined,
-      timeTo: filters.timeTo ?? undefined,
+      timeWindows: filters.timeWindows.length ? filters.timeWindows : undefined,
       minDuration: filters.minDuration > 1 ? filters.minDuration : undefined,
       minCapacity: filters.people > 1 ? filters.people : undefined,
     })
@@ -55,7 +77,7 @@ export function App() {
 
   return (
     <main className="app-shell">
-      <section className="phone-app" aria-label="예약 가능 시간 검색">
+      <section className="phone-app" aria-label="예약 가능 시간 검색" ref={phoneRef}>
         <header className="top-bar">
           <div className="top-bar-inner">
             <h1>예약 가능 시간</h1>
@@ -67,9 +89,9 @@ export function App() {
         </header>
 
         <div className="chip-row">
-          <button className="chip strong" onClick={() => setIsFilterOpen(true)}>{filters.minDuration}시간 ▾</button>
-          <button className="chip" onClick={() => setIsFilterOpen(true)}>{buildDateChipLabel(filters.dates)} ▾</button>
-          <button className="chip" onClick={() => setIsFilterOpen(true)}>{areaChipLabel} ▾</button>
+          <button className={`chip strong${popover?.kind === 'duration' ? ' open' : ''}`} onClick={(e) => openPopover('duration', e)}>{filters.minDuration}시간 ▾</button>
+          <button className={`chip${popover?.kind === 'date' ? ' open' : ''}`} onClick={(e) => openPopover('date', e)}>{buildDateChipLabel(filters.dates)} ▾</button>
+          <button className={`chip${popover?.kind === 'area' ? ' open' : ''}`} onClick={(e) => openPopover('area', e)}>{areaChipLabel} ▾</button>
           <button className="filter-button" aria-label="필터" onClick={() => setIsFilterOpen(true)}>
             <FilterIcon />
           </button>
@@ -102,6 +124,77 @@ export function App() {
             ))
           )}
         </div>
+
+        {popover && (
+          <Popover
+            top={popover.top}
+            left={popover.left}
+            width={popover.width}
+            className={popover.kind === 'date' ? 'padded' : undefined}
+            onClose={() => setPopover(null)}
+          >
+            {popover.kind === 'duration' &&
+              DURATION_OPTIONS.map((opt) => {
+                const on = filters.minDuration === opt.value;
+                return (
+                  <button
+                    key={opt.value}
+                    role="menuitemradio"
+                    aria-checked={on}
+                    className={`popover-option${on ? ' selected' : ''}`}
+                    onClick={() => {
+                      setFilters((f) => ({ ...f, minDuration: opt.value }));
+                      setPopover(null);
+                    }}
+                  >
+                    <span>{opt.label}</span>
+                    {on && <span className="pop-check">✓</span>}
+                  </button>
+                );
+              })}
+
+            {popover.kind === 'area' && (
+              <>
+                <button
+                  role="menuitemradio"
+                  aria-checked={filters.areaIds.length === 0}
+                  className={`popover-option${filters.areaIds.length === 0 ? ' selected' : ''}`}
+                  onClick={() => setFilters((f) => ({ ...f, areaIds: [] }))}
+                >
+                  <span>전체 지역</span>
+                  {filters.areaIds.length === 0 && <span className="pop-check">✓</span>}
+                </button>
+                {areas.map((area) => {
+                  const on = filters.areaIds.includes(area.id);
+                  return (
+                    <button
+                      key={area.id}
+                      role="menuitemcheckbox"
+                      aria-checked={on}
+                      className={`popover-option${on ? ' selected' : ''}`}
+                      onClick={() =>
+                        setFilters((f) => ({
+                          ...f,
+                          areaIds: on ? f.areaIds.filter((x) => x !== area.id) : [...f.areaIds, area.id],
+                        }))
+                      }
+                    >
+                      <span>{area.name}</span>
+                      {on && <span className="pop-check">✓</span>}
+                    </button>
+                  );
+                })}
+              </>
+            )}
+
+            {popover.kind === 'date' && (
+              <CalendarPicker
+                selected={filters.dates}
+                onChange={(dates) => setFilters((f) => ({ ...f, dates }))}
+              />
+            )}
+          </Popover>
+        )}
 
         {isFilterOpen && (
           <FilterSheet
@@ -143,11 +236,11 @@ function EmptyState({ filters, setFilters }: { filters: FilterState; setFilters:
       label: `인원 ${filters.people} → ${Math.max(1, filters.people - 1)}명`,
       apply: () => setFilters((f) => ({ ...f, people: Math.max(1, f.people - 1) })),
     },
-    { label: '시간 제한 해제', apply: () => setFilters((f) => ({ ...f, timeFrom: null, timeTo: null })) },
+    { label: '시간 제한 해제', apply: () => setFilters((f) => ({ ...f, timeWindows: [] })) },
   ].filter((s) => {
     if (s.label === '날짜 초기화' && filters.dates.length === 0) return false;
     if (s.label.startsWith('인원') && filters.people <= 1) return false;
-    if (s.label === '시간 제한 해제' && !filters.timeFrom && !filters.timeTo) return false;
+    if (s.label === '시간 제한 해제' && filters.timeWindows.length === 0) return false;
     return true;
   });
 

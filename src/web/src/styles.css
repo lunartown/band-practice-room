@@ -86,6 +86,7 @@
   /* --- Shadow --- */
   --shadow-phone: 0 18px 50px -16px rgba(20, 28, 42, 0.28);
   --shadow-sheet: 0 -12px 44px rgba(0, 0, 0, 0.2);
+  --shadow-pop: 0 10px 30px -8px rgba(20, 28, 42, 0.25);
 }
 
 /* ============================================================
@@ -207,6 +208,11 @@ button {
 .chip.strong {
   background: var(--gray-150);
   color: var(--text-1);
+}
+
+.chip.open {
+  background: var(--accent-soft);
+  color: var(--accent-strong);
 }
 
 .filter-button {
@@ -630,6 +636,76 @@ button {
   flex: 1 1 auto;
   color: var(--white);
   background: var(--accent);
+}
+
+/* ============================================================
+   Popover (per-chip quick filter)
+   ============================================================ */
+.popover-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+}
+
+.popover-backdrop {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  background: transparent;
+}
+
+.popover {
+  position: absolute;
+  max-height: 72%;
+  overflow: auto;
+  padding: var(--sp-1);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-pop);
+  transform-origin: top left;
+  animation: popover-in 0.14s ease;
+}
+
+.popover.padded {
+  padding: var(--sp-3);
+}
+
+@keyframes popover-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+}
+
+.popover-option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  width: 100%;
+  padding: var(--sp-3);
+  border-radius: var(--r-sm);
+  background: transparent;
+  color: var(--text-1);
+  font-size: var(--fs-md);
+  font-weight: var(--fw-semibold);
+  text-align: left;
+}
+
+.popover-option:hover {
+  background: var(--surface-sunken);
+}
+
+.popover-option.selected {
+  color: var(--accent-strong);
+  font-weight: var(--fw-extrabold);
+}
+
+.popover-option .pop-check {
+  flex: 0 0 auto;
+  color: var(--accent);
+  font-size: var(--fs-sm);
 }
 
 /* ============================================================
