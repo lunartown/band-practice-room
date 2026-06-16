@@ -9,11 +9,11 @@ export const areas: Area[] = [
 ];
 
 const studioList = [
-  { id: 1, name: '그라운드 합주실 홍대 본점', areaId: 1, areaName: '홍대', imageUrl: 'https://picsum.photos/seed/ground-hongdae/120', rating: 4.7, reviewCount: 213 },
-  { id: 2, name: '그라운드 합주실 합정 1호점', areaId: 2, areaName: '합정', imageUrl: null, rating: 4.5, reviewCount: 88 },
-  { id: 3, name: '그루브 합주실', areaId: 3, areaName: '신촌', imageUrl: 'https://picsum.photos/seed/groove/120', rating: 4.2, reviewCount: 41 },
-  { id: 4, name: '사운딕트', areaId: 1, areaName: '홍대', imageUrl: null, rating: null, reviewCount: null },
-  { id: 5, name: '웨이브랩', areaId: 2, areaName: '합정', imageUrl: null, rating: 4.9, reviewCount: 7 },
+  { id: 1, name: '그라운드 합주실 홍대 본점', areaId: 1, areaName: '홍대', imageUrl: 'https://picsum.photos/seed/ground-hongdae/120', rating: 4.7, reviewCount: 213, reviewKeywords: [{ keyword: '시설이 깔끔해요', count: 69 }, { keyword: '가성비가 좋아요', count: 47 }, { keyword: '방음이 잘돼요', count: 40 }] },
+  { id: 2, name: '그라운드 합주실 합정 1호점', areaId: 2, areaName: '합정', imageUrl: null, rating: 4.5, reviewCount: 88, reviewKeywords: [{ keyword: '친절해요', count: 22 }, { keyword: '스피커 성능이 좋아요', count: 18 }] },
+  { id: 3, name: '그루브 합주실', areaId: 3, areaName: '신촌', imageUrl: 'https://picsum.photos/seed/groove/120', rating: 4.2, reviewCount: 41, reviewKeywords: [{ keyword: '인테리어가 멋져요', count: 12 }] },
+  { id: 4, name: '사운딕트', areaId: 1, areaName: '홍대', imageUrl: null, rating: null, reviewCount: null, reviewKeywords: [] },
+  { id: 5, name: '웨이브랩', areaId: 2, areaName: '합정', imageUrl: null, rating: 4.9, reviewCount: 7, reviewKeywords: [] },
 ];
 
 function dateStr(offset: number) {
@@ -58,6 +58,7 @@ function makeSlot(
       imageUrl: s.imageUrl,
       rating: s.rating,
       reviewCount: s.reviewCount,
+      reviewKeywords: s.reviewKeywords,
     },
     room: { id: roomId, name: roomName, pricePerHour: price, capacityMin: 2, capacityMax: capacity },
     bookingUrl: 'https://naver.me/example',

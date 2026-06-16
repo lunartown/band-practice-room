@@ -1,4 +1,5 @@
 import type { AvailabilityChip, StudioAvailability } from '../lib/availability';
+import { toReviewBadges } from '../lib/reviewKeywords';
 
 interface StudioRowProps {
   studio: StudioAvailability;
@@ -9,7 +10,8 @@ function chipLabel(chip: AvailabilityChip): string {
 }
 
 export function StudioRow({ studio }: StudioRowProps) {
-  const { name, imageUrl, rating, reviewCount } = studio.studio;
+  const { name, imageUrl, reviewCount, reviewKeywords } = studio.studio;
+  const badges = toReviewBadges(reviewKeywords);
 
   return (
     <div className="studio-row">
@@ -23,13 +25,16 @@ export function StudioRow({ studio }: StudioRowProps) {
           <div className="studio-name">{name}</div>
           <div className="studio-meta">
             <span className="studio-area">{studio.areaName}</span>
-            {rating != null && (
-              <span className="studio-rating">
-                <span className="star" aria-hidden>
-                  ★
-                </span>
-                {rating.toFixed(1)}
-                {reviewCount != null && <span className="rev">({reviewCount})</span>}
+            {reviewCount != null && reviewCount > 0 && (
+              <span className="studio-reviews">리뷰 {reviewCount}</span>
+            )}
+            {badges.length > 0 && (
+              <span className="review-badges">
+                {badges.map((word) => (
+                  <span key={word} className="review-badge">
+                    {word}
+                  </span>
+                ))}
               </span>
             )}
           </div>

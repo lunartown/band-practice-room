@@ -344,23 +344,26 @@ button {
   font-weight: var(--fw-medium);
 }
 
-.studio-rating {
-  display: inline-flex;
-  align-items: center;
-  gap: 2px;
+.studio-reviews {
   font-size: var(--fs-xs);
-  font-weight: var(--fw-bold);
-  color: var(--text-2);
-}
-
-.studio-rating .star {
-  color: var(--star);
-}
-
-.studio-rating .rev {
-  margin-left: 2px;
-  color: var(--text-3);
   font-weight: var(--fw-medium);
+  color: var(--text-3);
+}
+
+.review-badges {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: var(--sp-1);
+}
+
+.review-badge {
+  font-size: var(--fs-2xs);
+  font-weight: var(--fw-medium);
+  color: var(--text-2);
+  background: var(--surface-2, #f1f3f5);
+  border-radius: var(--r-sm, 6px);
+  padding: 1px var(--sp-2);
+  white-space: nowrap;
 }
 
 .studio-price {

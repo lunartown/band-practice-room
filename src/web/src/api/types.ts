@@ -19,6 +19,12 @@ export interface Studio {
   imageUrl?: string | null;
   rating?: number | null;
   reviewCount?: number | null;
+  reviewKeywords?: ReviewKeyword[];
+}
+
+export interface ReviewKeyword {
+  keyword: string;
+  count: number;
 }
 
 export interface Room {
