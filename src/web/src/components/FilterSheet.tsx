@@ -29,7 +29,6 @@ export interface FilterState {
   timeTo: string | null;
   minDuration: 1 | 2 | 3 | 4;
   people: number;
-  includeStale: boolean;
 }
 
 export const defaultFilters: FilterState = {
@@ -39,7 +38,6 @@ export const defaultFilters: FilterState = {
   timeTo: null,
   minDuration: 1,
   people: 2,
-  includeStale: false,
 };
 
 interface FilterSheetProps {
@@ -170,18 +168,6 @@ export function FilterSheet({ areas, filters, resultCount, onClose, onChange }: 
             <button onClick={() => set({ people: Math.min(10, filters.people + 1) })}>+</button>
           </div>
 
-          {/* stale */}
-          <label className="toggle-row">
-            <span>
-              <strong>오래된 정보(stale) 포함</strong>
-              <small>갱신 6시간 초과 슬롯도 함께 보기</small>
-            </span>
-            <input
-              type="checkbox"
-              checked={filters.includeStale}
-              onChange={(e) => set({ includeStale: e.target.checked })}
-            />
-          </label>
         </div>
 
         <footer>

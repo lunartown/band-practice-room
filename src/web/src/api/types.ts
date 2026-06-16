@@ -57,7 +57,6 @@ export interface SlotsQuery {
   timeTo?: string;
   minCapacity?: number;
   minDuration?: number;
-  includeStale?: boolean;
 }
 
 export interface SlotsResponse {

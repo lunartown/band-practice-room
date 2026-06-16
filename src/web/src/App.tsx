@@ -29,7 +29,6 @@ export function App() {
       timeTo: filters.timeTo ?? undefined,
       minDuration: filters.minDuration > 1 ? filters.minDuration : undefined,
       minCapacity: filters.people > 1 ? filters.people : undefined,
-      includeStale: filters.includeStale || undefined,
     })
       .then((r) => {
         setSlots(r.slots.map((s) => ({ ...s, freshness: s.freshness ?? computeFreshness(s.scrapedAt) })));
@@ -38,23 +37,18 @@ export function App() {
       .catch(() => setError('예약 가능 시간을 불러오지 못했습니다'));
   }, [filters]);
 
-  const visibleSlots = useMemo(() => {
-    return slots
-      .filter((s) => filters.includeStale || s.freshness !== 'stale')
-      .sort((a, b) => `${a.date} ${a.startTime}`.localeCompare(`${b.date} ${b.startTime}`));
-  }, [slots, filters.includeStale]);
+  const visibleSlots = useMemo(
+    () => slots.sort((a, b) => `${a.date} ${a.startTime}`.localeCompare(`${b.date} ${b.startTime}`)),
+    [slots],
+  );
 
   const availableSlots = visibleSlots.filter((s) => s.status === 'AVAILABLE');
-  const staleCount = visibleSlots.filter((s) => s.freshness === 'stale').length;
   const groupedByDate = groupByDate(visibleSlots);
 
   const areaChipLabel = filters.areaIds.length
     ? areas.filter((a) => filters.areaIds.includes(a.id)).map((a) => a.name).join('·')
     : '전체 지역';
 
-  const dateChipLabel = buildDateChipLabel(filters.dates);
-
-  const freshnessClass = staleCount > 0 ? 'aging' : 'fresh';
   const syncLabel = updatedAt ? formatUpdatedAt(updatedAt) : '–';
 
   return (
@@ -64,7 +58,7 @@ export function App() {
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <h1>빈 합주실</h1>
             <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-              <span className={`fresh-dot ${freshnessClass}`} />
+              <span className="fresh-dot fresh" />
               <span style={{ fontSize: 11.5, color: '#8b95a1', fontWeight: 500 }}>{syncLabel}</span>
             </div>
           </div>
@@ -72,7 +66,7 @@ export function App() {
 
         <div className="chip-row">
           <button className="chip strong" onClick={() => setIsFilterOpen(true)}>{areaChipLabel} ▾</button>
-          <button className="chip" onClick={() => setIsFilterOpen(true)}>{dateChipLabel} ▾</button>
+          <button className="chip" onClick={() => setIsFilterOpen(true)}>{buildDateChipLabel(filters.dates)} ▾</button>
           <button className="chip" onClick={() => setIsFilterOpen(true)}>{filters.people}명 ▾</button>
           <button className="filter-button" onClick={() => setIsFilterOpen(true)}>
             <FilterIcon /> 필터
@@ -80,17 +74,6 @@ export function App() {
         </div>
 
         {error && <div className="error-banner">{error}</div>}
-
-        {staleCount > 0 && !error && (
-          <div className="stale-banner">
-            <span className="fresh-dot stale-warning" />
-            <div>
-              <strong>일부 정보가 오래됐어요</strong>
-              <span>stale {staleCount}건 포함</span>
-            </div>
-            <button onClick={() => setFilters((f) => ({ ...f }))}>새로고침</button>
-          </div>
-        )}
 
         <div className="summary-bar">
           <span>빈 시간 <strong>{availableSlots.length}건</strong></span>
@@ -135,12 +118,10 @@ function EmptyState({ filters, setFilters }: { filters: FilterState; setFilters:
       apply: () => setFilters((f) => ({ ...f, people: Math.max(1, f.people - 1) })),
     },
     { label: '시간 제한 해제', apply: () => setFilters((f) => ({ ...f, timeFrom: null, timeTo: null })) },
-    { label: '오래된 정보 포함', apply: () => setFilters((f) => ({ ...f, includeStale: true })) },
   ].filter((s) => {
     if (s.label === '날짜 초기화' && filters.dates.length === 0) return false;
     if (s.label.startsWith('인원') && filters.people <= 1) return false;
     if (s.label === '시간 제한 해제' && !filters.timeFrom && !filters.timeTo) return false;
-    if (s.label === '오래된 정보 포함' && filters.includeStale) return false;
     return true;
   });
 
