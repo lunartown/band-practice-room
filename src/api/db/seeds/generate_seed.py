@@ -1,7 +1,12 @@
 #!/usr/bin/env python3
 """JSON 데이터를 DB seed SQL로 변환"""
 import json
+import os
 import re
+
+# 경로는 스크립트 위치 기준으로 해석한다 (src/api/db/seeds/ → 레포 루트는 4단계 위).
+_SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+_REPO_ROOT = os.path.abspath(os.path.join(_SCRIPT_DIR, "..", "..", "..", ".."))
 
 REGION_MAP = {
     "합정/홍대":        ("hapjeong-hongdae",        "합정/홍대",        1),
@@ -35,7 +40,7 @@ def naver_biz_id(url):
     m = re.search(r'/bizes/(\d+)', url)
     return m.group(1) if m else None
 
-data = json.load(open("/Users/lunartown/development/projects/band-practice-room/_local/data"))
+data = json.load(open(os.path.join(_REPO_ROOT, "_local", "data")))
 
 lines = []
 lines.append("-- Auto-generated seed from _local/data")
@@ -87,7 +92,10 @@ for studio in data["studios"]:
         )
 
     for room in studio.get("roomDetails", []):
-        room_ext_id = room.get("id")
+        # room_sources.external_key 는 네이버 실제 bizItemId(naverBizItemId)를 쓴다.
+        # 미매칭(1:N/공백) 방은 네이버 식별자가 없으므로 room_sources 자체를 생략해
+        # 스크래퍼가 틀린 키로 BizItemNotFound 를 내지 않도록 한다.
+        naver_biz_item_id = room.get("naverBizItemId")
         room_name = room.get("name")
         hourly = room.get("hourlyPrice") or parse_price(room.get("price"))
         capacity = room.get("capacity")
@@ -104,10 +112,10 @@ for studio in data["studios"]:
             f"{'NULL' if capacity is None else capacity}, true "
             f"FROM studios WHERE slug={esc(slug)};"
         )
-        if room_ext_id:
+        if naver_biz_item_id:
             lines.append(
                 f"INSERT INTO room_sources (room_id, source_id, external_key) "
-                f"SELECT r.id, 1, {esc(str(room_ext_id))} "
+                f"SELECT r.id, 1, {esc(str(naver_biz_item_id))} "
                 f"FROM rooms r JOIN studios s ON r.studio_id=s.id "
                 f"WHERE s.slug={esc(slug)} AND r.name={esc(room_name)};"
             )
@@ -121,7 +129,7 @@ for tbl in ("areas", "studios", "rooms"):
         f"SELECT setval(pg_get_serial_sequence('{tbl}', 'id'), COALESCE((SELECT MAX(id) FROM {tbl}), 1));"
     )
 
-out_path = "/Users/lunartown/development/projects/band-practice-room/apps/api/db/seeds/002_studios.sql"
+out_path = os.path.join(_SCRIPT_DIR, "002_studios.sql")
 with open(out_path, "w") as f:
     f.write("\n".join(lines))
 
