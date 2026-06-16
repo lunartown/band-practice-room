@@ -93,7 +93,7 @@ export class CatalogRepository {
             '{}'
           ) AS area_ids,
           s.address,
-          s.image_url,
+          COALESCE(s.image_url_manual, s.image_url_scraped) AS image_url,
           s.rating,
           s.review_count
         FROM studios s

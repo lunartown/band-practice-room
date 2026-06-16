@@ -112,7 +112,7 @@ export class SlotsRepository {
           s.primary_area_id AS studio_primary_area_id,
           a.name    AS studio_primary_area_name,
           s.address AS studio_address,
-          s.image_url     AS studio_image_url,
+          COALESCE(s.image_url_manual, s.image_url_scraped) AS studio_image_url,
           s.rating        AS studio_rating,
           s.review_count  AS studio_review_count,
           r.id      AS room_id,

@@ -5,16 +5,17 @@
 -- 002 이후에 실행할 것.
 --
 -- 새 합주실을 추가할 때 아래 블록을 복사해 slug / 값만 바꾸면 된다.
--- image_url 은 비워두면(NULL) 프론트가 이름 이니셜 아바타로 폴백한다.
+-- 썸네일은 image_url_manual(수동) 에만 넣는다. image_url_scraped 는 스크래퍼가 채운다.
+-- 둘 다 비어 있으면(NULL) 프론트가 이름 이니셜 아바타로 폴백한다. (응답은 manual 우선)
 
 UPDATE studios SET
-  image_url    = NULL,           -- 예: 'https://.../st-music.jpg'
-  rating       = 4.6,
-  review_count = 128
+  image_url_manual = NULL,        -- 예: 'https://.../st-music.jpg'
+  rating           = 4.6,
+  review_count     = 128
 WHERE slug = 'studio-합정/홍대-st-music';
 
 -- UPDATE studios SET
---   image_url    = 'https://.../example.jpg',
---   rating       = 4.3,
---   review_count = 57
+--   image_url_manual = 'https://.../example.jpg',
+--   rating           = 4.3,
+--   review_count     = 57
 -- WHERE slug = 'studio-...';
