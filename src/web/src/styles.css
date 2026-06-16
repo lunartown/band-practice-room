@@ -247,7 +247,7 @@ button {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: var(--sp-2) var(--gutter);
+  padding: var(--sp-1) var(--gutter);
   background: var(--surface-section);
   border-top: 1px solid var(--gray-150);
   border-bottom: 1px solid var(--gray-150);
