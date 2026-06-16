@@ -31,6 +31,9 @@ venv/
 *.log
 *.tmp
 
+# local db data
+data/
+
 # local private workspace
 _local/*
 !_local/.gitkeep
