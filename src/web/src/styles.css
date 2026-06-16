@@ -520,9 +520,8 @@ button {
 
 .filter-chips .selected,
 .filter-group .selected {
-  color: var(--accent-strong);
-  background: var(--accent-soft);
-  outline: 1.5px solid var(--accent-ring);
+  color: var(--white);
+  background: var(--accent);
 }
 
 .check-icon {
@@ -577,9 +576,8 @@ button {
 }
 
 .preset-chips button.selected {
-  color: var(--accent-strong);
-  background: var(--accent-soft);
-  outline: 1.5px solid var(--accent-ring);
+  color: var(--white);
+  background: var(--accent);
 }
 
 /* --- People stepper --- */
