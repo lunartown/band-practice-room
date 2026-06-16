@@ -16,6 +16,9 @@ export interface Studio {
   primaryAreaName: string | null;
   areaIds?: number[];
   address?: string | null;
+  imageUrl?: string | null;
+  rating?: number | null;
+  reviewCount?: number | null;
 }
 
 export interface Room {

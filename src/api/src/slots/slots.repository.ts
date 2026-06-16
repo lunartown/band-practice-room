@@ -15,6 +15,9 @@ export interface SlotRow {
   studio_primary_area_id: string | null;
   studio_primary_area_name: string | null;
   studio_address: string | null;
+  studio_image_url: string | null;
+  studio_rating: string | null;
+  studio_review_count: number | null;
   room_id: string;
   room_name: string;
   room_price_per_hour: number | null;
@@ -109,6 +112,9 @@ export class SlotsRepository {
           s.primary_area_id AS studio_primary_area_id,
           a.name    AS studio_primary_area_name,
           s.address AS studio_address,
+          s.image_url     AS studio_image_url,
+          s.rating        AS studio_rating,
+          s.review_count  AS studio_review_count,
           r.id      AS room_id,
           r.name    AS room_name,
           r.price_per_hour  AS room_price_per_hour,
@@ -149,6 +155,9 @@ export class SlotsRepository {
         studio_primary_area_id,
         studio_primary_area_name,
         studio_address,
+        studio_image_url,
+        studio_rating,
+        studio_review_count,
         room_id,
         room_name,
         room_price_per_hour,

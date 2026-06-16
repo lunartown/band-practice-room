@@ -9,11 +9,11 @@ export const areas: Area[] = [
 ];
 
 const studioList = [
-  { id: 1, name: '그라운드 합주실 홍대 본점', areaId: 1, areaName: '홍대' },
-  { id: 2, name: '그라운드 합주실 합정 1호점', areaId: 2, areaName: '합정' },
-  { id: 3, name: '그루브 합주실', areaId: 3, areaName: '신촌' },
-  { id: 4, name: '사운딕트', areaId: 1, areaName: '홍대' },
-  { id: 5, name: '웨이브랩', areaId: 2, areaName: '합정' },
+  { id: 1, name: '그라운드 합주실 홍대 본점', areaId: 1, areaName: '홍대', imageUrl: 'https://picsum.photos/seed/ground-hongdae/120', rating: 4.7, reviewCount: 213 },
+  { id: 2, name: '그라운드 합주실 합정 1호점', areaId: 2, areaName: '합정', imageUrl: null, rating: 4.5, reviewCount: 88 },
+  { id: 3, name: '그루브 합주실', areaId: 3, areaName: '신촌', imageUrl: 'https://picsum.photos/seed/groove/120', rating: 4.2, reviewCount: 41 },
+  { id: 4, name: '사운딕트', areaId: 1, areaName: '홍대', imageUrl: null, rating: null, reviewCount: null },
+  { id: 5, name: '웨이브랩', areaId: 2, areaName: '합정', imageUrl: null, rating: 4.9, reviewCount: 7 },
 ];
 
 function dateStr(offset: number) {
@@ -55,6 +55,9 @@ function makeSlot(
       primaryAreaId: s.areaId,
       primaryAreaName: s.areaName,
       areaIds: [s.areaId],
+      imageUrl: s.imageUrl,
+      rating: s.rating,
+      reviewCount: s.reviewCount,
     },
     room: { id: roomId, name: roomName, pricePerHour: price, capacityMin: 2, capacityMax: capacity },
     bookingUrl: 'https://naver.me/example',
@@ -120,6 +123,9 @@ export async function getMockStudios(areaIds?: number[]): Promise<StudiosRespons
     name: s.name,
     primaryAreaId: s.areaId,
     primaryAreaName: s.areaName,
+    imageUrl: s.imageUrl,
+    rating: s.rating,
+    reviewCount: s.reviewCount,
   }));
   return {
     studios: areaIds?.length ? all.filter((s) => areaIds.includes(s.primaryAreaId)) : all,

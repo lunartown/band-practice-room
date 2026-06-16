@@ -41,6 +41,9 @@ export class SlotsService {
           slot.studio_primary_area_id === null ? null : Number(slot.studio_primary_area_id),
         primaryAreaName: slot.studio_primary_area_name,
         address: slot.studio_address,
+        imageUrl: slot.studio_image_url ?? null,
+        rating: slot.studio_rating == null ? null : Number(slot.studio_rating),
+        reviewCount: slot.studio_review_count ?? null,
       },
       room: {
         id: Number(slot.room_id),

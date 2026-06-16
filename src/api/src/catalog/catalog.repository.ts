@@ -14,6 +14,9 @@ export interface StudioRow {
   primary_area_id: string | null;
   area_ids: string[];
   address: string | null;
+  image_url: string | null;
+  rating: string | null;
+  review_count: number | null;
 }
 
 @Injectable()
@@ -89,7 +92,10 @@ export class CatalogRepository {
               FILTER (WHERE sa.area_id IS NOT NULL),
             '{}'
           ) AS area_ids,
-          s.address
+          s.address,
+          s.image_url,
+          s.rating,
+          s.review_count
         FROM studios s
         LEFT JOIN studio_areas sa ON sa.studio_id = s.id
         WHERE ${where.join(' AND ')}

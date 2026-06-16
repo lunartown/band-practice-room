@@ -57,6 +57,9 @@ export class CatalogService {
         studio.primary_area_id === null ? null : Number(studio.primary_area_id),
       areaIds: studio.area_ids.map(Number),
       address: studio.address,
+      imageUrl: studio.image_url ?? null,
+      rating: studio.rating == null ? null : Number(studio.rating),
+      reviewCount: studio.review_count ?? null,
     };
   }
 }
