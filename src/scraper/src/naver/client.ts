@@ -55,6 +55,50 @@ export async function fetchHourlySchedule(params: {
   return data.schedule?.bizItemSchedule?.hourly ?? [];
 }
 
+const REVIEW_STATS_QUERY = `query reviewStats($input: ReviewStatsParams) {
+  reviewStats(input: $input) { totalCount avgRating ratingUserCount }
+}`;
+
+const BUSINESS_IMAGES_QUERY = `query business($input: BusinessParams) {
+  business(input: $input) { businessResources { order resourceUrl } }
+}`;
+
+export type NaverReviewStats = {
+  totalCount: number | null;
+  avgRating: number | null;
+  ratingUserCount: number | null;
+};
+
+/** 비즈니스 리뷰 통계. 네이버 예약 리뷰는 키워드식이라 avgRating 은 대부분 0(ratingUserCount=0). */
+export async function fetchReviewStats(params: {
+  businessId: string;
+  businessTypeId: number;
+}): Promise<NaverReviewStats> {
+  const data = await naverGraphql<{ reviewStats: NaverReviewStats | null }>({
+    operationName: 'reviewStats',
+    query: REVIEW_STATS_QUERY,
+    referer: bookingReferer(params.businessTypeId, params.businessId),
+    variables: { input: { businessId: params.businessId } },
+  });
+  return data.reviewStats ?? { totalCount: null, avgRating: null, ratingUserCount: null };
+}
+
+/** 비즈니스 대표 이미지들(표시 순서대로). 첫 번째가 커버. */
+export async function fetchBusinessImages(params: {
+  businessId: string;
+  businessTypeId: number;
+}): Promise<string[]> {
+  const data = await naverGraphql<{
+    business: { businessResources: Array<{ order: number; resourceUrl: string }> | null } | null;
+  }>({
+    operationName: 'business',
+    query: BUSINESS_IMAGES_QUERY,
+    referer: bookingReferer(params.businessTypeId, params.businessId),
+    variables: { input: { businessId: params.businessId, lang: 'ko', projections: 'RESOURCE' } },
+  });
+  return (data.business?.businessResources ?? []).map((r) => r.resourceUrl).filter(Boolean);
+}
+
 export type NaverBizItem = { bizItemId: string; name: string; bookingTimeUnitCode: string };
 
 /** 비즈니스의 방(bizItem) 목록. 매핑 부트스트랩/점검용. */
