@@ -453,25 +453,29 @@ button {
   transform: rotate(180deg);
 }
 
+/* 펼친 방 목록 = 지점 카드보다 한 단계 안쪽. 움푹 들어간(sunken) 배경 +
+   왼쪽 액센트 레일 + 들여쓰기로 "합주실 아래 뎁스"임을 시각적으로 분리한다. */
 .room-list {
   margin-top: var(--sp-3);
-  padding-top: var(--sp-1);
-  border-top: 1px solid var(--border-subtle);
+  margin-left: var(--sp-5);
+  padding: var(--sp-1) var(--sp-4);
+  background: var(--gray-50);
+  border-left: 3px solid var(--accent-ring);
+  border-radius: 0 var(--r-md) var(--r-md) 0;
 }
 
 .room-row {
   padding: var(--sp-3) 0;
-  border-bottom: 1px solid var(--border-subtle);
+  border-bottom: 1px solid var(--border);
 }
 
 .room-row:last-child {
   border-bottom: 0;
-  padding-bottom: 0;
 }
 
 .room-info {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   gap: var(--sp-2);
 }
 
@@ -481,10 +485,23 @@ button {
   font-weight: var(--fw-bold);
 }
 
+/* 인원 제한: sunken 배경 위에서 흰색 핀으로 또렷하게 */
 .room-cap {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 1px var(--sp-2);
+  border-radius: var(--r-pill);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text-2);
+  font-size: var(--fs-2xs);
+  font-weight: var(--fw-semibold);
+  white-space: nowrap;
+}
+
+.room-cap svg {
   color: var(--text-3);
-  font-size: var(--fs-xs);
-  font-weight: var(--fw-medium);
 }
 
 .room-price {
@@ -1077,15 +1094,26 @@ button {
    Responsive — full-bleed on phones
    ============================================================ */
 @media (max-width: 520px) {
+  /* 폰에서는 카드 프레임 없이 화면을 꽉 채우고, 상태표시줄 영역까지 흰색으로 이어지게 */
+  body {
+    background: var(--surface);
+  }
+
   .app-shell {
     padding: 0;
   }
 
   .phone-app {
     width: 100%;
-    height: 100vh;
-    min-height: 100vh;
+    height: 100dvh;
+    min-height: 100dvh;
     border: 0;
     border-radius: 0;
+    box-shadow: none;
+  }
+
+  /* 노치/상태표시줄에 딱 붙게: 안전영역만큼만(노치 없으면 0) 확보하고 추가 여백 없음 */
+  .top-bar {
+    padding-top: env(safe-area-inset-top, 0px);
   }
 }

@@ -111,6 +111,34 @@ function sortChips(a: AvailabilityChip, b: AvailabilityChip): number {
   return a.start.localeCompare(b.start) || a.kind.localeCompare(b.kind);
 }
 
+/** 칩이 커버하는 "시작 시(hour)" 구간 [lo, hi] (둘 다 포함). */
+function chipStartBounds(chip: AvailabilityChip, minDuration: number): [number, number] {
+  if (chip.kind === 'single') {
+    const h = toHour(chip.start);
+    return [h, h];
+  }
+  // 범위 칩의 end = (마지막 시작 + minDuration). 따라서 시작 시는 [start, end - minDuration].
+  return [toHour(chip.start), toHour(chip.end) - minDuration];
+}
+
+/**
+ * 지점 요약 칩에서, 더 넓은 다른 칩에 완전히 포함되는 칩을 제거한다.
+ * 예: 어떤 방이 14:00~22:00 범위를 제공하면 그 범위가 이미 "14시 시작 가능"을
+ * 말하므로, 다른 방의 단독 14:00 칩은 중복이라 지운다. (완전 동일 칩은 이미
+ * chipKey로 제거되지만, 범위가 단독·작은 범위를 "포함"하는 건 여기서 걸러야 함.)
+ */
+function dropCoveredChips(chips: AvailabilityChip[], minDuration: number): AvailabilityChip[] {
+  const bounds = chips.map((c) => chipStartBounds(c, minDuration));
+  return chips.filter((_, i) => {
+    const [lo, hi] = bounds[i];
+    return !chips.some((_, j) => {
+      if (i === j) return false;
+      const [olo, ohi] = bounds[j];
+      return olo <= lo && hi <= ohi && ohi - olo > hi - lo;
+    });
+  });
+}
+
 /** 한 방의 연속 구간에서 minDuration이 들어가는 시작 시각을 칩으로 변환한다. */
 function roomChips(roomSlots: Slot[], minDuration: number): AvailabilityChip[] {
   const starts = new Set<number>();
@@ -208,10 +236,11 @@ function buildStudios(slots: Slot[], minDuration: number): StudioAvailability[] 
         a.room.name.localeCompare(b.room.name, 'ko'),
     );
 
-    // 접힌 지점 행용 요약 칩: 방별 칩을 중복 제거해 합친다(접어도 시간은 보여야 함).
+    // 접힌 지점 행용 요약 칩: 방별 칩을 합치되, 완전 동일 칩(chipKey)뿐 아니라
+    // 더 넓은 범위 칩에 포함되는 칩(예: 14:00~22:00 안의 단독 14:00)도 제거한다.
     const chipByKey = new Map<string, AvailabilityChip>();
     for (const r of rooms) for (const chip of r.chips) chipByKey.set(chipKey(chip), chip);
-    const chips = [...chipByKey.values()].sort(sortChips);
+    const chips = dropCoveredChips([...chipByKey.values()], minDuration).sort(sortChips);
 
     const studio = studioSlots[0].studio;
     const prices = studioSlots.map((s) => s.room.pricePerHour ?? s.price ?? 0);

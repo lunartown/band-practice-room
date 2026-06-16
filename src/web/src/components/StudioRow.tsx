@@ -18,12 +18,26 @@ function TimeChip({ chip, href }: { chip: AvailabilityChip; href: string | null 
   );
 }
 
+function PersonIcon() {
+  return (
+    <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+      <circle cx="12" cy="7" r="4" />
+      <path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7" />
+    </svg>
+  );
+}
+
 function RoomRow({ room }: { room: RoomAvailability }) {
   return (
     <div className="room-row">
       <div className="room-info">
         <span className="room-name">{room.room.name}</span>
-        {room.capacityLabel && <span className="room-cap">{room.capacityLabel}</span>}
+        {room.capacityLabel && (
+          <span className="room-cap">
+            <PersonIcon />
+            {room.capacityLabel}
+          </span>
+        )}
         <span className="room-price">{room.priceLabel}</span>
       </div>
       <div className="room-chips">
