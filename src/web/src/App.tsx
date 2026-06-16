@@ -57,17 +57,17 @@ export function App() {
     <main className="app-shell">
       <section className="phone-app" aria-label="예약 가능 시간 검색">
         <header className="top-bar">
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div className="top-bar-inner">
             <h1>예약 가능 시간</h1>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+            <div className="sync-status">
               <span className="fresh-dot" />
-              <span style={{ fontSize: 11.5, color: '#8b95a1', fontWeight: 500 }}>{syncLabel}</span>
+              <span className="sync-label">{syncLabel}</span>
             </div>
           </div>
         </header>
 
         <div className="chip-row">
-          <button className="chip strong" onClick={() => setIsFilterOpen(true)}>연속 {filters.minDuration}시간 ▾</button>
+          <button className="chip strong" onClick={() => setIsFilterOpen(true)}>{filters.minDuration}시간 ▾</button>
           <button className="chip" onClick={() => setIsFilterOpen(true)}>{buildDateChipLabel(filters.dates)} ▾</button>
           <button className="chip" onClick={() => setIsFilterOpen(true)}>{areaChipLabel} ▾</button>
           <button className="filter-button" aria-label="필터" onClick={() => setIsFilterOpen(true)}>
@@ -181,7 +181,7 @@ function FilterIcon() {
 }
 
 function buildDateChipLabel(dates: string[]) {
-  if (dates.length === 0) return '오늘~7일';
+  if (dates.length === 0) return '일주일 내';
   return `${dates.length}일 선택`;
 }
 
