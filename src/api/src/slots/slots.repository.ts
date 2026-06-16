@@ -22,12 +22,16 @@ export interface SlotRow {
   room_capacity_max: number | null;
 }
 
+export interface TimeWindow {
+  from: string;
+  to: string;
+}
+
 export interface SlotFilters {
   dates: string[];
   areaIds?: number[];
   studioId?: number;
-  timeFrom?: string;
-  timeTo?: string;
+  timeWindows?: TimeWindow[];
   minCapacity?: number;
   minDuration?: number;
 }
@@ -62,14 +66,20 @@ export class SlotsRepository {
       baseConditions.push(`s.id = $${params.length}`);
     }
 
-    if (filters.timeFrom) {
-      params.push(filters.timeFrom);
-      baseConditions.push(`sl.start_time >= $${params.length}::time`);
-    }
-
-    if (filters.timeTo) {
-      params.push(filters.timeTo);
-      baseConditions.push(`sl.start_time < $${params.length}::time`);
+    if (filters.timeWindows?.length) {
+      // 윈도우 OR: 슬롯 시작 시각이 선택된 시간대 중 하나에 들어가면 통과.
+      const ors: string[] = [];
+      for (const window of filters.timeWindows) {
+        const conditions: string[] = [];
+        params.push(window.from);
+        conditions.push(`sl.start_time >= $${params.length}::time`);
+        if (window.to !== '24:00') {
+          params.push(window.to);
+          conditions.push(`sl.start_time < $${params.length}::time`);
+        }
+        ors.push(`(${conditions.join(' AND ')})`);
+      }
+      baseConditions.push(`(${ors.join(' OR ')})`);
     }
 
     if (filters.minCapacity !== undefined) {

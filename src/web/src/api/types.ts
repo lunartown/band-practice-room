@@ -49,12 +49,16 @@ export interface StudiosResponse {
   studios: Studio[];
 }
 
+export interface TimeWindow {
+  from: string;
+  to: string;
+}
+
 export interface SlotsQuery {
   dates?: string[];
   areaIds?: number[];
   studioId?: number;
-  timeFrom?: string;
-  timeTo?: string;
+  timeWindows?: TimeWindow[];
   minCapacity?: number;
   minDuration?: number;
 }

@@ -4,6 +4,7 @@ import {
   parseOptionalPositiveInteger,
   parseOptionalPositiveIntegers,
   parseOptionalTime,
+  parseOptionalTimeWindows,
 } from '../shared/id.js';
 import { parseDates } from './date-range.js';
 import { SlotsService } from './slots.service.js';
@@ -17,6 +18,7 @@ export class SlotsController {
     @Query('dates') datesQuery?: string | string[],
     @Query('areaIds') areaIdsQuery?: string | string[],
     @Query('studioId') studioIdQuery?: string,
+    @Query('timeWindows') timeWindowsQuery?: string | string[],
     @Query('timeFrom') timeFromQuery?: string,
     @Query('timeTo') timeToQuery?: string,
     @Query('minCapacity') minCapacityQuery?: string,
@@ -25,6 +27,7 @@ export class SlotsController {
     const dates = parseDates(datesQuery);
     const areaIds = parseOptionalPositiveIntegers(areaIdsQuery, 'areaIds');
     const studioId = parseOptionalPositiveInteger(studioIdQuery, 'studioId');
+    const parsedWindows = parseOptionalTimeWindows(timeWindowsQuery, 'timeWindows');
     const timeFrom = parseOptionalTime(timeFromQuery, 'timeFrom');
     const timeTo = parseOptionalTime(timeToQuery, 'timeTo');
     const minCapacity = parseOptionalPositiveInteger(minCapacityQuery, 'minCapacity');
@@ -38,12 +41,16 @@ export class SlotsController {
       );
     }
 
+    // 레거시 timeFrom/timeTo는 단일 윈도우로 흡수한다.
+    const timeWindows =
+      parsedWindows ??
+      (timeFrom || timeTo ? [{ from: timeFrom ?? '00:00', to: timeTo ?? '24:00' }] : undefined);
+
     return this.slotsService.getSlots({
       dates,
       areaIds,
       studioId,
-      timeFrom,
-      timeTo,
+      timeWindows,
       minCapacity,
       minDuration,
     });

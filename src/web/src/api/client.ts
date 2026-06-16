@@ -24,8 +24,7 @@ export async function getSlots(query: SlotsQuery): Promise<SlotsResponse> {
   query.dates?.forEach((d) => params.append('dates', d));
   query.areaIds?.forEach((id) => params.append('areaIds', String(id)));
   if (query.studioId) params.set('studioId', String(query.studioId));
-  if (query.timeFrom) params.set('timeFrom', query.timeFrom);
-  if (query.timeTo && query.timeTo !== '24:00') params.set('timeTo', query.timeTo);
+  query.timeWindows?.forEach((w) => params.append('timeWindows', `${w.from}-${w.to}`));
   if (query.minCapacity) params.set('minCapacity', String(query.minCapacity));
   if (query.minDuration && query.minDuration > 1) params.set('minDuration', String(query.minDuration));
 

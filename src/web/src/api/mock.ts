@@ -138,8 +138,12 @@ export async function getMockSlots(query: SlotsQuery): Promise<SlotsResponse> {
     if (query.areaIds?.length && !query.areaIds.includes(s.studio.primaryAreaId!)) return false;
     if (query.studioId && s.studio.id !== query.studioId) return false;
     if (query.minCapacity && (s.room.capacityMax ?? 99) < query.minCapacity) return false;
-    if (query.timeFrom && s.startTime < query.timeFrom) return false;
-    if (query.timeTo && s.startTime >= query.timeTo) return false;
+    if (query.timeWindows?.length) {
+      const inWindow = query.timeWindows.some(
+        (w) => s.startTime >= w.from && (w.to === '24:00' || s.startTime < w.to),
+      );
+      if (!inWindow) return false;
+    }
     return true;
   });
 
