@@ -44,6 +44,7 @@ export class SlotsService {
         imageUrl: slot.studio_image_url ?? null,
         rating: slot.studio_rating == null ? null : Number(slot.studio_rating),
         reviewCount: slot.studio_review_count ?? null,
+        reviewKeywords: slot.studio_review_keywords ?? [],
       },
       room: {
         id: Number(slot.room_id),

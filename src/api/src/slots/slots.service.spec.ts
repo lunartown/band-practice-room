@@ -20,6 +20,7 @@ describe('SlotsService', () => {
         studio_image_url: 'https://img.example/mapo.jpg',
         studio_rating: '4.6',
         studio_review_count: 128,
+        studio_review_keywords: [{ keyword: '시설이 깔끔해요', count: 69 }],
         room_id: '1',
         room_name: 'A룸',
         room_price_per_hour: 15000,
@@ -57,6 +58,7 @@ describe('SlotsService', () => {
             imageUrl: 'https://img.example/mapo.jpg',
             rating: 4.6,
             reviewCount: 128,
+            reviewKeywords: [{ keyword: '시설이 깔끔해요', count: 69 }],
           },
           room: {
             id: 1,

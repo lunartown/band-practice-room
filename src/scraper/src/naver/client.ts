@@ -56,31 +56,67 @@ export async function fetchHourlySchedule(params: {
 }
 
 const REVIEW_STATS_QUERY = `query reviewStats($input: ReviewStatsParams) {
-  reviewStats(input: $input) { totalCount avgRating ratingUserCount }
+  reviewStats(input: $input) {
+    totalCount
+    avgRating
+    ratingUserCount
+    analysis { votedKeyword { details { count keyword { label } } } }
+  }
 }`;
 
 const BUSINESS_IMAGES_QUERY = `query business($input: BusinessParams) {
   business(input: $input) { businessResources { order resourceUrl } }
 }`;
 
+export type ReviewKeyword = { keyword: string; count: number };
+
 export type NaverReviewStats = {
   totalCount: number | null;
   avgRating: number | null;
   ratingUserCount: number | null;
+  keywords: ReviewKeyword[]; // 긍정 키워드, count 내림차순 상위 N개
 };
 
-/** 비즈니스 리뷰 통계. 네이버 예약 리뷰는 키워드식이라 avgRating 은 대부분 0(ratingUserCount=0). */
+type RawReviewStats = {
+  totalCount: number | null;
+  avgRating: number | null;
+  ratingUserCount: number | null;
+  analysis: {
+    votedKeyword: {
+      details: Array<{ count: number; keyword: { label: { ko: string } | null } | null }> | null;
+    } | null;
+  } | null;
+};
+
+const KEYWORD_LIMIT = 5;
+
+/** 비즈니스 리뷰 통계 + 긍정 키워드. 네이버 예약 리뷰는 키워드식이라 avgRating 은 대부분 0. */
 export async function fetchReviewStats(params: {
   businessId: string;
   businessTypeId: number;
 }): Promise<NaverReviewStats> {
-  const data = await naverGraphql<{ reviewStats: NaverReviewStats | null }>({
+  const data = await naverGraphql<{ reviewStats: RawReviewStats | null }>({
     operationName: 'reviewStats',
     query: REVIEW_STATS_QUERY,
     referer: bookingReferer(params.businessTypeId, params.businessId),
     variables: { input: { businessId: params.businessId } },
   });
-  return data.reviewStats ?? { totalCount: null, avgRating: null, ratingUserCount: null };
+
+  const stats = data.reviewStats;
+  if (!stats) return { totalCount: null, avgRating: null, ratingUserCount: null, keywords: [] };
+
+  const keywords: ReviewKeyword[] = (stats.analysis?.votedKeyword?.details ?? [])
+    .map((d) => ({ keyword: d.keyword?.label?.ko ?? '', count: d.count }))
+    .filter((k) => k.keyword)
+    .sort((a, b) => b.count - a.count)
+    .slice(0, KEYWORD_LIMIT);
+
+  return {
+    totalCount: stats.totalCount,
+    avgRating: stats.avgRating,
+    ratingUserCount: stats.ratingUserCount,
+    keywords,
+  };
 }
 
 /** 비즈니스 대표 이미지들(표시 순서대로). 첫 번째가 커버. */

@@ -18,6 +18,7 @@ export interface SlotRow {
   studio_image_url: string | null;
   studio_rating: string | null;
   studio_review_count: number | null;
+  studio_review_keywords: Array<{ keyword: string; count: number }> | null;
   room_id: string;
   room_name: string;
   room_price_per_hour: number | null;
@@ -115,6 +116,7 @@ export class SlotsRepository {
           COALESCE(s.image_url_manual, s.image_url_scraped) AS studio_image_url,
           s.rating        AS studio_rating,
           s.review_count  AS studio_review_count,
+          s.review_keywords AS studio_review_keywords,
           r.id      AS room_id,
           r.name    AS room_name,
           r.price_per_hour  AS room_price_per_hour,
@@ -158,6 +160,7 @@ export class SlotsRepository {
         studio_image_url,
         studio_rating,
         studio_review_count,
+        studio_review_keywords,
         room_id,
         room_name,
         room_price_per_hour,

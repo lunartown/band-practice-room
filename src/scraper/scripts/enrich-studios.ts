@@ -4,8 +4,9 @@
  *
  * - image_url_scraped: business.businessResources 첫 번째(커버) 이미지
  * - review_count:      reviewStats.totalCount
- * - rating:            reviewStats.avgRating (단, ratingUserCount>0 일 때만. 네이버 예약
- *                      리뷰는 대부분 키워드식이라 별점이 0/없음)
+ * - review_keywords:   긍정 키워드 상위 N개 [{keyword, count}] (별점 대체 품질 신호)
+ *
+ * 별점(rating)은 네이버 예약 리뷰가 키워드식이라 신뢰 가능한 곳이 4곳뿐이라 쓰지 않는다(null).
  *
  * 실행: cd src/scraper && npx tsx scripts/enrich-studios.ts
  */
@@ -36,7 +37,7 @@ async function main() {
 
   let updated = 0;
   let withImage = 0;
-  let withRating = 0;
+  let withKeywords = 0;
   let failed = 0;
 
   for (const src of sources.rows) {
@@ -55,22 +56,25 @@ async function main() {
 
       const imageUrl = images[0] ?? null;
       const reviewCount = stats.totalCount;
-      // 별점은 실제로 평가한 사람이 있을 때만 의미가 있다.
-      const rating =
-        stats.ratingUserCount && stats.ratingUserCount > 0 ? stats.avgRating : null;
+      const keywords = stats.keywords;
 
       await query(
         `UPDATE studios
-         SET image_url_scraped = $2, review_count = $3, rating = $4
+         SET image_url_scraped = $2, review_count = $3,
+             review_keywords = $4::jsonb, rating = NULL
          WHERE id = $1`,
-        [src.studio_id, imageUrl, reviewCount, rating],
+        [src.studio_id, imageUrl, reviewCount, keywords.length ? JSON.stringify(keywords) : null],
       );
 
       updated++;
       if (imageUrl) withImage++;
-      if (rating !== null) withRating++;
+      if (keywords.length) withKeywords++;
+      const top = keywords
+        .slice(0, 3)
+        .map((k) => `${k.keyword}(${k.count})`)
+        .join(', ');
       console.log(
-        `[enrich] ${src.studio_name}: img=${imageUrl ? 'O' : 'X'} reviews=${reviewCount ?? '-'} rating=${rating ?? '-'}`,
+        `[enrich] ${src.studio_name}: img=${imageUrl ? 'O' : 'X'} reviews=${reviewCount ?? '-'} | ${top || '키워드 없음'}`,
       );
     } catch (e) {
       failed++;
@@ -79,7 +83,7 @@ async function main() {
     await sleep(250);
   }
 
-  console.log(`\n완료: 갱신 ${updated} (이미지 ${withImage}, 별점 ${withRating}), 실패 ${failed}`);
+  console.log(`\n완료: 갱신 ${updated} (이미지 ${withImage}, 키워드 ${withKeywords}), 실패 ${failed}`);
   await end();
 }
 
