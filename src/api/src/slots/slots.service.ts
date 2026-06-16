@@ -13,10 +13,6 @@ export class SlotsService {
   ) {}
 
   async getSlots(filters: SlotFilters) {
-    if (filters.areaId !== undefined) {
-      await this.catalogService.assertActiveArea(filters.areaId);
-    }
-
     if (filters.studioId !== undefined) {
       await this.catalogService.assertActiveStudio(filters.studioId);
     }
@@ -24,8 +20,7 @@ export class SlotsService {
     const slots = await this.slotsRepository.findSlots(filters);
 
     return {
-      dateFrom: filters.dateFrom,
-      dateTo: filters.dateTo,
+      dates: filters.dates,
       slots: slots.map((slot) => this.toSlotResponse(slot)),
     };
   }
@@ -43,9 +38,8 @@ export class SlotsService {
         id: Number(slot.studio_id),
         name: slot.studio_name,
         primaryAreaId:
-          slot.studio_primary_area_id === null
-            ? null
-            : Number(slot.studio_primary_area_id),
+          slot.studio_primary_area_id === null ? null : Number(slot.studio_primary_area_id),
+        primaryAreaName: slot.studio_primary_area_name,
         address: slot.studio_address,
       },
       room: {

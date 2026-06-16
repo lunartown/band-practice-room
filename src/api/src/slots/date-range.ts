@@ -2,60 +2,48 @@ import { HttpStatus } from '@nestjs/common';
 import { ApiError } from '../shared/api-error.js';
 
 const datePattern = /^\d{4}-\d{2}-\d{2}$/;
-const millisecondsPerDay = 24 * 60 * 60 * 1000;
+const MAX_DATES = 30;
+const DEFAULT_DAYS = 7;
 
-export interface DateRange {
-  dateFrom: string;
-  dateTo: string;
-}
-
-export function validateDateRange(
-  dateFrom: unknown,
-  dateTo: unknown,
+export function parseDates(
+  raw: string | string[] | undefined,
   today = getTodayInKst(),
-): DateRange {
-  if (dateFrom === undefined || dateTo === undefined) {
+): string[] {
+  if (!raw || (Array.isArray(raw) && raw.length === 0)) {
+    return defaultDates(today);
+  }
+
+  const inputs = Array.isArray(raw) ? raw : raw.split(',');
+  const dates = inputs.map((d) => d.trim()).filter(Boolean);
+
+  if (dates.length === 0) return defaultDates(today);
+
+  if (dates.length > MAX_DATES) {
     throw new ApiError(
-      'MISSING_PARAMETER',
-      'dateFrom and dateTo are required',
+      'INVALID_PARAMETER',
+      `dates must not exceed ${MAX_DATES}`,
       HttpStatus.BAD_REQUEST,
     );
   }
 
-  if (typeof dateFrom !== 'string' || typeof dateTo !== 'string') {
-    throwInvalidDate();
+  for (const date of dates) {
+    if (!isValidDateString(date)) {
+      throw new ApiError(
+        'INVALID_DATE',
+        `Invalid date: ${date}. Must be YYYY-MM-DD`,
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+    if (date < today) {
+      throw new ApiError(
+        'INVALID_DATE',
+        `Date must not be in the past: ${date}`,
+        HttpStatus.BAD_REQUEST,
+      );
+    }
   }
 
-  if (!isValidDateString(dateFrom) || !isValidDateString(dateTo)) {
-    throwInvalidDate();
-  }
-
-  if (dateFrom < today) {
-    throw new ApiError(
-      'INVALID_DATE_RANGE',
-      'dateFrom must not be in the past',
-      HttpStatus.BAD_REQUEST,
-    );
-  }
-
-  if (dateTo < dateFrom) {
-    throw new ApiError(
-      'INVALID_DATE_RANGE',
-      'dateTo must be greater than or equal to dateFrom',
-      HttpStatus.BAD_REQUEST,
-    );
-  }
-
-  const includedDays = getIncludedDays(dateFrom, dateTo);
-  if (includedDays > 30) {
-    throw new ApiError(
-      'INVALID_DATE_RANGE',
-      'dateTo must be within 30 included days from dateFrom',
-      HttpStatus.BAD_REQUEST,
-    );
-  }
-
-  return { dateFrom, dateTo };
+  return [...new Set(dates)].sort();
 }
 
 export function getTodayInKst() {
@@ -67,25 +55,18 @@ export function getTodayInKst() {
   }).format(new Date());
 }
 
-function isValidDateString(value: string) {
-  if (!datePattern.test(value)) {
-    return false;
-  }
+function defaultDates(today: string): string[] {
+  return Array.from({ length: DEFAULT_DAYS }, (_, i) => addDays(today, i));
+}
 
+function isValidDateString(value: string) {
+  if (!datePattern.test(value)) return false;
   const parsed = new Date(`${value}T00:00:00.000Z`);
   return !Number.isNaN(parsed.getTime()) && parsed.toISOString().slice(0, 10) === value;
 }
 
-function getIncludedDays(dateFrom: string, dateTo: string) {
-  const from = Date.parse(`${dateFrom}T00:00:00.000Z`);
-  const to = Date.parse(`${dateTo}T00:00:00.000Z`);
-  return Math.floor((to - from) / millisecondsPerDay) + 1;
-}
-
-function throwInvalidDate(): never {
-  throw new ApiError(
-    'INVALID_DATE',
-    'dateFrom and dateTo must be YYYY-MM-DD',
-    HttpStatus.BAD_REQUEST,
-  );
+function addDays(date: string, days: number) {
+  const d = new Date(`${date}T00:00:00.000Z`);
+  d.setUTCDate(d.getUTCDate() + days);
+  return d.toISOString().slice(0, 10);
 }

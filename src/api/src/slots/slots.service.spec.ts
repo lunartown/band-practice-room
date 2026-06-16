@@ -15,6 +15,7 @@ describe('SlotsService', () => {
         studio_id: '1',
         studio_name: '마포 합주실',
         studio_primary_area_id: '1',
+        studio_primary_area_name: '합정/홍대',
         studio_address: '서울시 마포구',
         room_id: '1',
         room_name: 'A룸',
@@ -23,24 +24,18 @@ describe('SlotsService', () => {
         room_capacity_max: 6,
       },
     ]);
-    const assertActiveArea = jest.fn().mockResolvedValue(undefined);
     const assertActiveStudio = jest.fn().mockResolvedValue(undefined);
 
     const service = new SlotsService(
       { findSlots } as never,
-      { assertActiveArea, assertActiveStudio } as never,
+      { assertActiveStudio } as never,
     );
 
+    const dates = ['2026-06-15'];
     await expect(
-      service.getSlots({
-        dateFrom: '2026-06-15',
-        dateTo: '2026-06-15',
-        areaId: 1,
-        studioId: 1,
-      }),
+      service.getSlots({ dates, studioId: 1 }),
     ).resolves.toEqual({
-      dateFrom: '2026-06-15',
-      dateTo: '2026-06-15',
+      dates,
       slots: [
         {
           date: '2026-06-15',
@@ -54,6 +49,7 @@ describe('SlotsService', () => {
             id: 1,
             name: '마포 합주실',
             primaryAreaId: 1,
+            primaryAreaName: '합정/홍대',
             address: '서울시 마포구',
           },
           room: {
@@ -68,13 +64,7 @@ describe('SlotsService', () => {
       ],
     });
 
-    expect(assertActiveArea).toHaveBeenCalledWith(1);
     expect(assertActiveStudio).toHaveBeenCalledWith(1);
-    expect(findSlots).toHaveBeenCalledWith({
-      dateFrom: '2026-06-15',
-      dateTo: '2026-06-15',
-      areaId: 1,
-      studioId: 1,
-    });
+    expect(findSlots).toHaveBeenCalledWith({ dates, studioId: 1 });
   });
 });

@@ -18,7 +18,7 @@ export function SlotRow({ slot }: SlotRowProps) {
       <div className="slot-main">
         <div className="slot-studio">{slot.studio.name}</div>
         <div className="slot-meta">
-          <span>{slot.room.name} · {slot.area?.name ?? slot.studio.primaryAreaName ?? '지역 미확인'}</span>
+          <span>{slot.room.name} · {slot.studio.primaryAreaName ?? '지역 미확인'}</span>
           <span className={`fresh-dot ${freshnessClass}`} />
           <span className={`fresh-text ${freshnessClass}`}>{relativeCheckedText(slot.scrapedAt, slot.freshness)}</span>
         </div>
@@ -28,7 +28,7 @@ export function SlotRow({ slot }: SlotRowProps) {
         {isUnavailable ? (
           <span className="closed-pill">마감</span>
         ) : (
-          <a className="book-link" href={slot.bookingUrl} target="_blank" rel="noreferrer">예약</a>
+          <a className="book-link" href={slot.bookingUrl ?? '#'} target="_blank" rel="noreferrer">예약 ↗</a>
         )}
       </div>
     </div>

@@ -1,5 +1,6 @@
+import { computeFreshness } from '../lib/date';
 import { getMockAreas, getMockSlots, getMockStudios } from './mock';
-import type { AreasResponse, SlotsQuery, SlotsResponse, StudiosResponse } from './types';
+import type { AreasResponse, Slot, SlotsQuery, SlotsResponse, StudiosResponse } from './types';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? '/api/v1';
 const USE_MOCK_API = import.meta.env.VITE_USE_MOCK_API !== 'false';
@@ -9,28 +10,35 @@ export async function getAreas(): Promise<AreasResponse> {
   return fetchJson(`${API_BASE_URL}/areas`);
 }
 
-export async function getStudios(areaId?: number): Promise<StudiosResponse> {
-  if (USE_MOCK_API) return getMockStudios(areaId);
+export async function getStudios(areaIds?: number[]): Promise<StudiosResponse> {
+  if (USE_MOCK_API) return getMockStudios(areaIds);
   const params = new URLSearchParams();
-  if (areaId) params.set('areaId', String(areaId));
+  areaIds?.forEach((id) => params.append('areaIds', String(id)));
   return fetchJson(`${API_BASE_URL}/studios?${params.toString()}`);
 }
 
 export async function getSlots(query: SlotsQuery): Promise<SlotsResponse> {
   if (USE_MOCK_API) return getMockSlots(query);
-  const params = new URLSearchParams({
-    dateFrom: query.dateFrom,
-    dateTo: query.dateTo,
-  });
-  if (query.areaId) params.set('areaId', String(query.areaId));
+
+  const params = new URLSearchParams();
+  query.dates?.forEach((d) => params.append('dates', d));
+  query.areaIds?.forEach((id) => params.append('areaIds', String(id)));
   if (query.studioId) params.set('studioId', String(query.studioId));
-  return fetchJson(`${API_BASE_URL}/slots?${params.toString()}`);
+  if (query.timeFrom) params.set('timeFrom', query.timeFrom);
+  if (query.timeTo && query.timeTo !== '24:00') params.set('timeTo', query.timeTo);
+  if (query.minCapacity) params.set('minCapacity', String(query.minCapacity));
+  if (query.minDuration && query.minDuration > 1) params.set('minDuration', String(query.minDuration));
+
+  const response = await fetchJson<SlotsResponse>(`${API_BASE_URL}/slots?${params.toString()}`);
+  return { ...response, slots: response.slots.map(withFreshness) };
+}
+
+function withFreshness(slot: Slot): Slot {
+  return { ...slot, freshness: computeFreshness(slot.scrapedAt) };
 }
 
 async function fetchJson<T>(url: string): Promise<T> {
   const response = await fetch(url);
-  if (!response.ok) {
-    throw new Error(`API request failed: ${response.status}`);
-  }
+  if (!response.ok) throw new Error(`API ${response.status}`);
   return response.json() as Promise<T>;
 }

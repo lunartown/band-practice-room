@@ -1,6 +1,6 @@
 export type SlotStatus = 'AVAILABLE' | 'UNAVAILABLE' | 'UNKNOWN';
 export type PriceSource = 'SCRAPED' | 'MANUAL' | 'UNKNOWN';
-export type Freshness = 'fresh' | 'recent' | 'aging' | 'stale' | 'failed' | 'unknown';
+export type Freshness = 'fresh' | 'recent' | 'aging' | 'stale' | 'unknown';
 
 export interface Area {
   id: number;
@@ -13,9 +13,9 @@ export interface Studio {
   slug?: string;
   name: string;
   primaryAreaId: number | null;
-  primaryAreaName?: string;
+  primaryAreaName: string | null;
   areaIds?: number[];
-  address?: string;
+  address?: string | null;
 }
 
 export interface Room {
@@ -36,8 +36,7 @@ export interface Slot {
   priceSource: PriceSource;
   studio: Studio;
   room: Room;
-  bookingUrl: string;
-  area?: Area;
+  bookingUrl: string | null;
   scrapedAt?: string;
   freshness?: Freshness;
 }
@@ -51,14 +50,17 @@ export interface StudiosResponse {
 }
 
 export interface SlotsQuery {
-  dateFrom: string;
-  dateTo: string;
-  areaId?: number;
+  dates?: string[];
+  areaIds?: number[];
   studioId?: number;
+  timeFrom?: string;
+  timeTo?: string;
+  minCapacity?: number;
+  minDuration?: number;
+  includeStale?: boolean;
 }
 
 export interface SlotsResponse {
-  dateFrom: string;
-  dateTo: string;
+  dates: string[];
   slots: Slot[];
 }

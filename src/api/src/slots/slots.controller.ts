@@ -1,6 +1,11 @@
-import { Controller, Get, Inject, Query } from '@nestjs/common';
-import { parseOptionalPositiveInteger } from '../shared/id.js';
-import { validateDateRange } from './date-range.js';
+import { Controller, Get, HttpStatus, Inject, Query } from '@nestjs/common';
+import { ApiError } from '../shared/api-error.js';
+import {
+  parseOptionalPositiveInteger,
+  parseOptionalPositiveIntegers,
+  parseOptionalTime,
+} from '../shared/id.js';
+import { parseDates } from './date-range.js';
 import { SlotsService } from './slots.service.js';
 
 @Controller('slots')
@@ -9,19 +14,38 @@ export class SlotsController {
 
   @Get()
   getSlots(
-    @Query('dateFrom') dateFromQuery?: string,
-    @Query('dateTo') dateToQuery?: string,
-    @Query('areaId') areaIdQuery?: string,
+    @Query('dates') datesQuery?: string | string[],
+    @Query('areaIds') areaIdsQuery?: string | string[],
     @Query('studioId') studioIdQuery?: string,
+    @Query('timeFrom') timeFromQuery?: string,
+    @Query('timeTo') timeToQuery?: string,
+    @Query('minCapacity') minCapacityQuery?: string,
+    @Query('minDuration') minDurationQuery?: string,
   ) {
-    const dateRange = validateDateRange(dateFromQuery, dateToQuery);
-    const areaId = parseOptionalPositiveInteger(areaIdQuery, 'areaId');
+    const dates = parseDates(datesQuery);
+    const areaIds = parseOptionalPositiveIntegers(areaIdsQuery, 'areaIds');
     const studioId = parseOptionalPositiveInteger(studioIdQuery, 'studioId');
+    const timeFrom = parseOptionalTime(timeFromQuery, 'timeFrom');
+    const timeTo = parseOptionalTime(timeToQuery, 'timeTo');
+    const minCapacity = parseOptionalPositiveInteger(minCapacityQuery, 'minCapacity');
+    const minDuration = parseOptionalPositiveInteger(minDurationQuery, 'minDuration');
+
+    if (minDuration !== undefined && (minDuration < 1 || minDuration > 4)) {
+      throw new ApiError(
+        'INVALID_PARAMETER',
+        'minDuration must be between 1 and 4',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
 
     return this.slotsService.getSlots({
-      ...dateRange,
-      areaId,
+      dates,
+      areaIds,
       studioId,
+      timeFrom,
+      timeTo,
+      minCapacity,
+      minDuration,
     });
   }
 }

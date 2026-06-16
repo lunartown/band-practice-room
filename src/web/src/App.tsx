@@ -1,123 +1,113 @@
 import { useEffect, useMemo, useState } from 'react';
-import { getAreas, getSlots, getStudios } from './api/client';
-import type { Area, Slot, Studio } from './api/types';
+import { getAreas, getSlots } from './api/client';
+import type { Area, Slot } from './api/types';
 import { SlotRow } from './components/SlotRow';
-import { dateLabel } from './lib/date';
-
-interface Filters {
-  dateFrom: string;
-  dateTo: string;
-  areaId?: number;
-  studioId?: number;
-  timePreset: 'all' | 'afternoon' | 'evening' | 'night';
-  includeStale: boolean;
-  people: number;
-}
-
-function todayString() {
-  const d = new Date();
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-}
-
-function addDays(dateStr: string, days: number) {
-  const d = new Date(dateStr + 'T00:00:00');
-  d.setDate(d.getDate() + days);
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-}
-
-const defaultFilters: Filters = {
-  dateFrom: todayString(),
-  dateTo: addDays(todayString(), 29),
-  timePreset: 'all',
-  includeStale: true,
-  people: 2,
-};
+import { FilterSheet, defaultFilters } from './components/FilterSheet';
+import type { FilterState } from './components/FilterSheet';
+import { computeFreshness, dateLabel } from './lib/date';
 
 export function App() {
   const [areas, setAreas] = useState<Area[]>([]);
-  const [studios, setStudios] = useState<Studio[]>([]);
   const [slots, setSlots] = useState<Slot[]>([]);
-  const [filters, setFilters] = useState<Filters>(() => readFiltersFromUrl());
+  const [filters, setFilters] = useState<FilterState>(defaultFilters);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [updatedAt, setUpdatedAt] = useState<Date | null>(null);
 
   useEffect(() => {
-    getAreas().then((response) => setAreas(response.areas)).catch(() => setError('지역 목록을 불러오지 못했습니다'));
+    getAreas()
+      .then((r) => setAreas(r.areas))
+      .catch(() => setError('지역 목록을 불러오지 못했습니다'));
   }, []);
 
   useEffect(() => {
-    getStudios(filters.areaId).then((response) => setStudios(response.studios)).catch(() => setError('합주실 목록을 불러오지 못했습니다'));
-  }, [filters.areaId]);
-
-  useEffect(() => {
-    const query = {
-      dateFrom: filters.dateFrom,
-      dateTo: filters.dateTo,
-      areaId: filters.areaId,
-      studioId: filters.studioId,
-    };
-    writeFiltersToUrl(filters);
-    getSlots(query).then((response) => setSlots(response.slots)).catch(() => setError('예약 가능 시간을 불러오지 못했습니다'));
+    setError(null);
+    getSlots({
+      dates: filters.dates,
+      areaIds: filters.areaIds.length ? filters.areaIds : undefined,
+      timeFrom: filters.timeFrom ?? undefined,
+      timeTo: filters.timeTo ?? undefined,
+      minDuration: filters.minDuration > 1 ? filters.minDuration : undefined,
+      minCapacity: filters.people > 1 ? filters.people : undefined,
+      includeStale: filters.includeStale || undefined,
+    })
+      .then((r) => {
+        setSlots(r.slots.map((s) => ({ ...s, freshness: s.freshness ?? computeFreshness(s.scrapedAt) })));
+        setUpdatedAt(new Date());
+      })
+      .catch(() => setError('예약 가능 시간을 불러오지 못했습니다'));
   }, [filters]);
 
   const visibleSlots = useMemo(() => {
     return slots
-      .filter((slot) => filters.includeStale || slot.freshness !== 'stale')
-      .filter((slot) => matchTimePreset(slot, filters.timePreset))
-      .filter((slot) => !slot.room.capacityMax || slot.room.capacityMax >= filters.people)
-      .sort((a, b) => `${a.date} ${a.startTime} ${a.studio.name}`.localeCompare(`${b.date} ${b.startTime} ${b.studio.name}`));
-  }, [filters, slots]);
+      .filter((s) => filters.includeStale || s.freshness !== 'stale')
+      .sort((a, b) => `${a.date} ${a.startTime}`.localeCompare(`${b.date} ${b.startTime}`));
+  }, [slots, filters.includeStale]);
 
-  const availableSlots = visibleSlots.filter((slot) => slot.status === 'AVAILABLE');
-  const staleCount = visibleSlots.filter((slot) => slot.freshness === 'stale').length;
-  const groupedSlots = groupByDate(visibleSlots);
-  const selectedAreaNames = filters.areaId ? areas.filter((area) => area.id === filters.areaId).map((area) => area.name).join('·') : '전체 지역';
+  const availableSlots = visibleSlots.filter((s) => s.status === 'AVAILABLE');
+  const staleCount = visibleSlots.filter((s) => s.freshness === 'stale').length;
+  const groupedByDate = groupByDate(visibleSlots);
+
+  const areaChipLabel = filters.areaIds.length
+    ? areas.filter((a) => filters.areaIds.includes(a.id)).map((a) => a.name).join('·')
+    : '전체 지역';
+
+  const dateChipLabel = buildDateChipLabel(filters.dates);
+
+  const freshnessClass = staleCount > 0 ? 'aging' : 'fresh';
+  const syncLabel = updatedAt ? formatUpdatedAt(updatedAt) : '–';
 
   return (
     <main className="app-shell">
       <section className="phone-app" aria-label="예약 가능 시간 검색">
         <header className="top-bar">
-          <div>
-            <h1>예약 가능 시간</h1>
-            <p><span className="fresh-dot fresh" /> 9:24 업데이트</p>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <h1>빈 합주실</h1>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+              <span className={`fresh-dot ${freshnessClass}`} />
+              <span style={{ fontSize: 11.5, color: '#8b95a1', fontWeight: 500 }}>{syncLabel}</span>
+            </div>
           </div>
         </header>
 
         <div className="chip-row">
-          <button className="chip strong" onClick={() => setIsFilterOpen(true)}>{selectedAreaNames}</button>
-          <button className="chip" onClick={() => setIsFilterOpen(true)}>오늘~30일</button>
-          <button className="chip" onClick={() => setIsFilterOpen(true)}>{filters.people}명</button>
-          <button className="filter-button" onClick={() => setIsFilterOpen(true)}>필터</button>
+          <button className="chip strong" onClick={() => setIsFilterOpen(true)}>{areaChipLabel} ▾</button>
+          <button className="chip" onClick={() => setIsFilterOpen(true)}>{dateChipLabel} ▾</button>
+          <button className="chip" onClick={() => setIsFilterOpen(true)}>{filters.people}명 ▾</button>
+          <button className="filter-button" onClick={() => setIsFilterOpen(true)}>
+            <FilterIcon /> 필터
+          </button>
         </div>
 
         {error && <div className="error-banner">{error}</div>}
-        {staleCount > 0 && (
+
+        {staleCount > 0 && !error && (
           <div className="stale-banner">
             <span className="fresh-dot stale-warning" />
             <div>
               <strong>일부 정보가 오래됐어요</strong>
-              <span>stale {staleCount}건 포함 · 마지막 동기화 6시간 전</span>
+              <span>stale {staleCount}건 포함</span>
             </div>
-            <button onClick={() => setFilters((value) => ({ ...value }))}>새로고침</button>
+            <button onClick={() => setFilters((f) => ({ ...f }))}>새로고침</button>
           </div>
         )}
 
         <div className="summary-bar">
           <span>빈 시간 <strong>{availableSlots.length}건</strong></span>
-          <span>빠른 시간순</span>
+          <span style={{ color: '#adb5bd', fontSize: 11 }}>빠른 시간순 ▾</span>
         </div>
 
         <div className="result-list">
           {availableSlots.length === 0 ? (
-            <EmptyState setFilters={setFilters} />
+            <EmptyState filters={filters} setFilters={setFilters} />
           ) : (
-            groupedSlots.map(([date, items]) => (
+            groupedByDate.map(([date, items]) => (
               <section className="date-section" key={date}>
                 <div className="date-heading">
                   <span>{dateLabel(date)}</span>
-                  <span>{items.filter((slot) => slot.status === 'AVAILABLE').length}개 시간</span>
+                  <span>{items.filter((s) => s.status === 'AVAILABLE').length}개 시간</span>
                 </div>
-                {items.map((slot) => <SlotRow key={slot.id} slot={slot} />)}
+                {items.map((slot, i) => <SlotRow key={slot.id ?? `${date}-${i}`} slot={slot} />)}
               </section>
             ))
           )}
@@ -126,7 +116,6 @@ export function App() {
         {isFilterOpen && (
           <FilterSheet
             areas={areas}
-            studios={studios}
             filters={filters}
             resultCount={availableSlots.length}
             onClose={() => setIsFilterOpen(false)}
@@ -138,150 +127,74 @@ export function App() {
   );
 }
 
-function EmptyState({ setFilters }: { setFilters: React.Dispatch<React.SetStateAction<Filters>> }) {
+function EmptyState({ filters, setFilters }: { filters: FilterState; setFilters: React.Dispatch<React.SetStateAction<FilterState>> }) {
+  const suggestions: { label: string; apply: () => void }[] = [
+    { label: '날짜 초기화', apply: () => setFilters((f) => ({ ...f, dates: [] })) },
+    {
+      label: `인원 ${filters.people} → ${Math.max(1, filters.people - 1)}명`,
+      apply: () => setFilters((f) => ({ ...f, people: Math.max(1, f.people - 1) })),
+    },
+    { label: '시간 제한 해제', apply: () => setFilters((f) => ({ ...f, timeFrom: null, timeTo: null })) },
+    { label: '오래된 정보 포함', apply: () => setFilters((f) => ({ ...f, includeStale: true })) },
+  ].filter((s) => {
+    if (s.label === '날짜 초기화' && filters.dates.length === 0) return false;
+    if (s.label.startsWith('인원') && filters.people <= 1) return false;
+    if (s.label === '시간 제한 해제' && !filters.timeFrom && !filters.timeTo) return false;
+    if (s.label === '오래된 정보 포함' && filters.includeStale) return false;
+    return true;
+  });
+
   return (
     <div className="empty-state">
-      <div className="empty-icon">⌕</div>
-      <h2>조건에 맞는 빈 시간이 없습니다</h2>
-      <p>시간대를 넓히거나 지역을 추가해보세요</p>
-      <div className="empty-actions">
-        <button onClick={() => setFilters((value) => ({ ...value, timePreset: 'all' }))}>시간 전체로 보기</button>
-        <button onClick={() => setFilters((value) => ({ ...value, areaId: undefined }))}>지역 전체로 보기</button>
-        <button onClick={() => setFilters((value) => ({ ...value, includeStale: true }))}>오래된 정보 포함</button>
+      <div className="empty-icon">
+        <svg width="30" height="30" viewBox="0 0 24 24" fill="none">
+          <circle cx="11" cy="11" r="7" stroke="#adb5bd" strokeWidth="2" />
+          <path d="M20 20l-3.8-3.8" stroke="#adb5bd" strokeWidth="2" strokeLinecap="round" />
+        </svg>
       </div>
-    </div>
-  );
-}
-
-function FilterSheet({
-  areas,
-  studios,
-  filters,
-  resultCount,
-  onClose,
-  onChange,
-}: {
-  areas: Area[];
-  studios: Studio[];
-  filters: Filters;
-  resultCount: number;
-  onClose: () => void;
-  onChange: React.Dispatch<React.SetStateAction<Filters>>;
-}) {
-  return (
-    <div className="sheet-layer">
-      <button className="sheet-dim" aria-label="필터 닫기" onClick={onClose} />
-      <section className="filter-sheet">
-        <div className="sheet-handle" />
-        <header>
-          <h2>필터</h2>
-          <button onClick={() => onChange(defaultFilters)}>초기화</button>
-        </header>
-        <div className="sheet-body">
-          <FilterGroup title="지역">
-            <button className={!filters.areaId ? 'selected' : ''} onClick={() => onChange((value) => ({ ...value, areaId: undefined, studioId: undefined }))}>전체</button>
-            {areas.map((area) => (
-              <button key={area.id} className={filters.areaId === area.id ? 'selected' : ''} onClick={() => onChange((value) => ({ ...value, areaId: area.id, studioId: undefined }))}>{area.name}</button>
-            ))}
-          </FilterGroup>
-          <FilterGroup title="날짜 범위">
-            <button className="selected">30일</button>
-            <button onClick={() => onChange((value) => ({ ...value, dateTo: value.dateFrom }))}>오늘</button>
-            <button onClick={() => onChange((value) => ({ ...value, dateTo: addDays(value.dateFrom, 7) }))}>7일</button>
-          </FilterGroup>
-          <FilterGroup title="시간대">
-            {[
-              ['all', '전체'],
-              ['afternoon', '오후'],
-              ['evening', '저녁'],
-              ['night', '밤'],
-            ].map(([value, label]) => (
-              <button key={value} className={filters.timePreset === value ? 'selected' : ''} onClick={() => onChange((current) => ({ ...current, timePreset: value as Filters['timePreset'] }))}>{label}</button>
-            ))}
-          </FilterGroup>
-          <FilterGroup title="합주실">
-            <button className={!filters.studioId ? 'selected' : ''} onClick={() => onChange((value) => ({ ...value, studioId: undefined }))}>전체</button>
-            {studios.map((studio) => (
-              <button key={studio.id} className={filters.studioId === studio.id ? 'selected' : ''} onClick={() => onChange((value) => ({ ...value, studioId: studio.id }))}>{studio.name}</button>
-            ))}
-          </FilterGroup>
-          <div className="people-control">
-            <span>인원</span>
-            <button onClick={() => onChange((value) => ({ ...value, people: Math.max(1, value.people - 1) }))}>-</button>
-            <strong>{filters.people}명</strong>
-            <button onClick={() => onChange((value) => ({ ...value, people: Math.min(10, value.people + 1) }))}>+</button>
-          </div>
-          <label className="toggle-row">
-            <span>
-              <strong>오래된 정보(stale) 포함</strong>
-              <small>갱신 6시간 초과 슬롯도 함께 보기</small>
-            </span>
-            <input type="checkbox" checked={filters.includeStale} onChange={(event) => onChange((value) => ({ ...value, includeStale: event.target.checked }))} />
-          </label>
+      <h2>조건에 맞는 빈 시간이 없어요</h2>
+      <p>날짜·인원·시간 조건을 조금만 넓히면<br />예약 가능한 시간이 나올 수 있어요</p>
+      {suggestions.length > 0 && (
+        <div className="empty-actions">
+          {suggestions.map((s) => (
+            <button key={s.label} onClick={s.apply}>{s.label}</button>
+          ))}
         </div>
-        <footer>
-          <button className="secondary" onClick={() => onChange(defaultFilters)}>초기화</button>
-          <button className="primary" onClick={onClose}>결과 {resultCount}건 보기</button>
-        </footer>
-      </section>
+      )}
     </div>
   );
 }
 
-function FilterGroup({ title, children }: { title: string; children: React.ReactNode }) {
+function FilterIcon() {
   return (
-    <div className="filter-group">
-      <h3>{title}</h3>
-      <div>{children}</div>
-    </div>
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" style={{ display: 'inline', verticalAlign: 'middle', marginRight: 4 }}>
+      <path d="M3 6h18M6 12h12M10 18h4" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" />
+    </svg>
   );
 }
 
 function groupByDate(slots: Slot[]) {
   const map = new Map<string, Slot[]>();
-  slots.forEach((slot) => {
-    map.set(slot.date, [...(map.get(slot.date) ?? []), slot]);
-  });
-  return [...map.entries()];
+  for (const s of slots) {
+    const list = map.get(s.date) ?? [];
+    list.push(s);
+    map.set(s.date, list);
+  }
+  return [...map.entries()].sort(([a], [b]) => a.localeCompare(b));
 }
 
-function matchTimePreset(slot: Slot, preset: Filters['timePreset']) {
-  const hour = Number(slot.startTime.slice(0, 2));
-  if (preset === 'afternoon') return hour >= 12 && hour < 18;
-  if (preset === 'evening') return hour >= 18 && hour < 22;
-  if (preset === 'night') return hour >= 22 || hour < 6;
-  return true;
+function buildDateChipLabel(dates: string[]) {
+  if (dates.length === 0) return '오늘~7일';
+  if (dates.length === 1) {
+    const d = new Date(`${dates[0]}T00:00:00`);
+    return `${d.getMonth() + 1}/${d.getDate()}`;
+  }
+  const first = new Date(`${dates[0]}T00:00:00`);
+  return `${first.getMonth() + 1}/${first.getDate()} 외 ${dates.length - 1}일`;
 }
 
-function readFiltersFromUrl(): Filters {
-  const params = new URLSearchParams(window.location.search);
-  return {
-    ...defaultFilters,
-    dateFrom: params.get('dateFrom') ?? params.get('from') ?? defaultFilters.dateFrom,
-    dateTo: params.get('dateTo') ?? params.get('to') ?? defaultFilters.dateTo,
-    areaId: numberParam(params.get('areaId')),
-    studioId: numberParam(params.get('studioId')),
-    timePreset: (params.get('time') as Filters['timePreset']) ?? defaultFilters.timePreset,
-    includeStale: params.get('stale') !== 'false',
-    people: numberParam(params.get('people')) ?? defaultFilters.people,
-  };
-}
-
-function writeFiltersToUrl(filters: Filters) {
-  const params = new URLSearchParams({
-    dateFrom: filters.dateFrom,
-    dateTo: filters.dateTo,
-    time: filters.timePreset,
-    stale: String(filters.includeStale),
-    people: String(filters.people),
-  });
-  if (filters.areaId) params.set('areaId', String(filters.areaId));
-  if (filters.studioId) params.set('studioId', String(filters.studioId));
-  window.history.replaceState(null, '', `?${params.toString()}`);
-}
-
-function numberParam(value: string | null) {
-  if (!value) return undefined;
-  const parsed = Number(value);
-  return Number.isFinite(parsed) ? parsed : undefined;
+function formatUpdatedAt(date: Date) {
+  const h = date.getHours();
+  const m = String(date.getMinutes()).padStart(2, '0');
+  return `${h}:${m} 업데이트`;
 }
