@@ -27,6 +27,7 @@ export function App() {
   const [popover, setPopover] = useState<PopoverState | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [updatedAt, setUpdatedAt] = useState<Date | null>(null);
+  const [loading, setLoading] = useState(true);
   const phoneRef = useRef<HTMLElement>(null);
 
   function openPopover(kind: PopoverKind, e: React.MouseEvent<HTMLButtonElement>) {
@@ -47,6 +48,7 @@ export function App() {
 
   useEffect(() => {
     setError(null);
+    setLoading(true);
     getSlots({
       dates: filters.dates,
       areaIds: filters.areaIds.length ? filters.areaIds : undefined,
@@ -59,7 +61,8 @@ export function App() {
         setResponseDates(r.dates);
         setUpdatedAt(new Date());
       })
-      .catch(() => setError('예약 가능 시간을 불러오지 못했습니다'));
+      .catch(() => setError('예약 가능 시간을 불러오지 못했습니다'))
+      .finally(() => setLoading(false));
   }, [filters]);
 
   const dateGroups = useMemo(
@@ -98,9 +101,12 @@ export function App() {
         </div>
 
         {error && <div className="error-banner">{error}</div>}
+        {loading && <div className="loading-bar" aria-hidden />}
 
-        <div className="result-list">
-          {totalStudios === 0 ? (
+        <div className={`result-list${loading && totalStudios > 0 ? ' is-refreshing' : ''}`}>
+          {loading && totalStudios === 0 ? (
+            <SkeletonList />
+          ) : totalStudios === 0 ? (
             <EmptyState filters={filters} setFilters={setFilters} />
           ) : (
             dateGroups.map((group) => (
@@ -207,6 +213,36 @@ export function App() {
         )}
       </section>
     </main>
+  );
+}
+
+function SkeletonList() {
+  return (
+    <div aria-busy="true" aria-label="불러오는 중">
+      {[0, 1].map((g) => (
+        <div key={g}>
+          <div className="date-heading">
+            <span className="skeleton sk-heading" />
+          </div>
+          {[0, 1, 2].map((r) => (
+            <div className="studio-row" key={r}>
+              <div className="studio-head">
+                <div className="studio-name-area">
+                  <span className="skeleton sk-title" />
+                  <span className="skeleton sk-sub" />
+                </div>
+                <span className="skeleton sk-price" />
+              </div>
+              <div className="studio-chips">
+                <span className="skeleton sk-chip" />
+                <span className="skeleton sk-chip" />
+                <span className="skeleton sk-chip" />
+              </div>
+            </div>
+          ))}
+        </div>
+      ))}
+    </div>
   );
 }
 
