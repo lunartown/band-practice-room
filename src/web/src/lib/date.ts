@@ -58,11 +58,13 @@ export function dateLabel(date: string) {
   const d = new Date(`${date}T00:00:00+09:00`);
   const month = d.getMonth() + 1;
   const day = d.getDate();
-  const dow = DOW_KO[d.getDay()];
-  const short = `${month}/${day} (${dow})`;
-  if (date === today) return `오늘 · ${short}`;
-  if (date === tomorrow) return `내일 · ${short}`;
-  return short;
+  const dowIdx = d.getDay();
+  const base = `${month}/${day} (${DOW_KO[dowIdx]})`;
+  let suffix = '';
+  if (date === today) suffix = '오늘';
+  else if (date === tomorrow) suffix = '내일';
+  else if (dowIdx === 0 || dowIdx === 6) suffix = '주말';
+  return suffix ? `${base} ${suffix}` : base;
 }
 
 export function shortDateLabel(date: string) {

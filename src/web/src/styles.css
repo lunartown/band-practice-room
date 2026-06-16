@@ -247,10 +247,9 @@ button {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: var(--sp-2) var(--gutter);
-  background: var(--surface-section);
-  border-top: 1px solid var(--gray-150);
-  border-bottom: 1px solid var(--gray-150);
+  padding: var(--sp-3) var(--gutter) var(--sp-2);
+  background: var(--surface);
+  border-top: 1px solid var(--border-subtle);
   font-size: var(--fs-sm);
   font-weight: var(--fw-bold);
 }
@@ -382,14 +381,14 @@ button {
   display: inline-flex;
   align-items: center;
   gap: var(--sp-1);
-  min-height: var(--tap-chip);
-  padding: var(--sp-2) var(--sp-3);
+  padding: var(--sp-fine) var(--sp-3);
   border-radius: var(--r-md);
   font-size: var(--fs-sm);
   font-weight: var(--fw-bold);
   text-decoration: none;
   color: var(--accent-strong);
   background: var(--accent-soft);
+  border: 1px solid var(--accent-border);
 }
 
 .time-chip .chip-arrow {

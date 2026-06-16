@@ -8,19 +8,17 @@ function chipLabel(chip: AvailabilityChip): string {
   return chip.kind === 'single' ? chip.start : `${chip.start}~${chip.end}`;
 }
 
-function initial(name: string): string {
-  return name.trim().charAt(0) || '?';
-}
-
 export function StudioRow({ studio }: StudioRowProps) {
   const { name, imageUrl, rating, reviewCount } = studio.studio;
 
   return (
     <div className="studio-row">
       <div className="studio-head">
-        <div className="studio-avatar" aria-hidden>
-          {imageUrl ? <img src={imageUrl} alt="" loading="lazy" /> : <span>{initial(name)}</span>}
-        </div>
+        {imageUrl && (
+          <div className="studio-avatar" aria-hidden>
+            <img src={imageUrl} alt="" loading="lazy" />
+          </div>
+        )}
         <div className="studio-name-area">
           <div className="studio-name">{name}</div>
           <div className="studio-meta">
