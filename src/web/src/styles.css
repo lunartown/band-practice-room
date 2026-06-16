@@ -695,6 +695,120 @@ button {
   line-height: 1.55;
 }
 
+/* ===== Date heading count pill ===== */
+.date-heading .count-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 800;
+  color: oklch(0.46 0.12 200);
+  background: oklch(0.96 0.03 200);
+}
+
+.date-heading .count-pill::before {
+  content: '✓';
+  font-size: 10px;
+}
+
+.date-heading .count-pill.empty {
+  color: #adb5bd;
+  background: #f2f4f6;
+}
+
+.date-heading .count-pill.empty::before {
+  content: none;
+}
+
+/* ===== Studio row (합주실 단위) ===== */
+.studio-row {
+  padding: 14px 18px 15px;
+  background: #fff;
+  border-bottom: 1px solid #f2f4f6;
+}
+
+.studio-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.studio-name-area {
+  min-width: 0;
+}
+
+.studio-name {
+  color: #191f28;
+  font-size: 14.5px;
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+.studio-area {
+  margin-top: 3px;
+  color: #8b95a1;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.studio-price {
+  flex: 0 0 auto;
+  color: #333d4b;
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.studio-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin-top: 11px;
+}
+
+.time-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 7px 11px;
+  border-radius: 9px;
+  font-size: 12.5px;
+  font-weight: 700;
+  text-decoration: none;
+  color: oklch(0.44 0.12 200);
+  background: oklch(0.96 0.03 200);
+}
+
+.time-chip .chip-arrow {
+  font-size: 11px;
+  opacity: 0.7;
+}
+
+/* ===== Empty day (없음) ===== */
+.empty-day {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 13px 18px;
+  background: #fafbfc;
+  border-bottom: 1px solid #f2f4f6;
+  color: #8b95a1;
+  font-size: 12.5px;
+  font-weight: 500;
+}
+
+.empty-day button {
+  flex: 0 0 auto;
+  background: transparent;
+  color: oklch(0.46 0.12 200);
+  font-size: 12.5px;
+  font-weight: 800;
+}
+
 @media (max-width: 520px) {
   .app-shell {
     padding: 0;

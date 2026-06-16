@@ -36,7 +36,7 @@ export const defaultFilters: FilterState = {
   dates: [],
   timeFrom: null,
   timeTo: null,
-  minDuration: 1,
+  minDuration: 2,
   people: 2,
 };
 
@@ -172,7 +172,7 @@ export function FilterSheet({ areas, filters, resultCount, onClose, onChange }: 
 
         <footer>
           <button className="secondary" onClick={() => onChange(defaultFilters)}>초기화</button>
-          <button className="primary" onClick={onClose}>결과 {resultCount}건 보기</button>
+          <button className="primary" onClick={onClose}>결과 {resultCount}곳 보기</button>
         </footer>
       </section>
     </div>

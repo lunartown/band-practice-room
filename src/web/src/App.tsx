@@ -1,14 +1,16 @@
 import { useEffect, useMemo, useState } from 'react';
 import { getAreas, getSlots } from './api/client';
 import type { Area, Slot } from './api/types';
-import { SlotRow } from './components/SlotRow';
+import { StudioRow } from './components/StudioRow';
 import { FilterSheet, defaultFilters } from './components/FilterSheet';
 import type { FilterState } from './components/FilterSheet';
-import { computeFreshness, dateLabel } from './lib/date';
+import { buildAvailability } from './lib/availability';
+import { dateLabel } from './lib/date';
 
 export function App() {
   const [areas, setAreas] = useState<Area[]>([]);
   const [slots, setSlots] = useState<Slot[]>([]);
+  const [responseDates, setResponseDates] = useState<string[]>([]);
   const [filters, setFilters] = useState<FilterState>(defaultFilters);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -31,19 +33,19 @@ export function App() {
       minCapacity: filters.people > 1 ? filters.people : undefined,
     })
       .then((r) => {
-        setSlots(r.slots.map((s) => ({ ...s, freshness: s.freshness ?? computeFreshness(s.scrapedAt) })));
+        setSlots(r.slots);
+        setResponseDates(r.dates);
         setUpdatedAt(new Date());
       })
       .catch(() => setError('예약 가능 시간을 불러오지 못했습니다'));
   }, [filters]);
 
-  const visibleSlots = useMemo(
-    () => slots.sort((a, b) => `${a.date} ${a.startTime}`.localeCompare(`${b.date} ${b.startTime}`)),
-    [slots],
+  const dateGroups = useMemo(
+    () => buildAvailability(slots, responseDates, filters.minDuration),
+    [slots, responseDates, filters.minDuration],
   );
 
-  const availableSlots = visibleSlots.filter((s) => s.status === 'AVAILABLE');
-  const groupedByDate = groupByDate(visibleSlots);
+  const totalStudios = dateGroups.reduce((sum, g) => sum + g.studios.length, 0);
 
   const areaChipLabel = filters.areaIds.length
     ? areas.filter((a) => filters.areaIds.includes(a.id)).map((a) => a.name).join('·')
@@ -56,41 +58,46 @@ export function App() {
       <section className="phone-app" aria-label="예약 가능 시간 검색">
         <header className="top-bar">
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <h1>빈 합주실</h1>
+            <h1>예약 가능 시간</h1>
             <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-              <span className="fresh-dot fresh" />
+              <span className="fresh-dot" />
               <span style={{ fontSize: 11.5, color: '#8b95a1', fontWeight: 500 }}>{syncLabel}</span>
             </div>
           </div>
         </header>
 
         <div className="chip-row">
-          <button className="chip strong" onClick={() => setIsFilterOpen(true)}>{areaChipLabel} ▾</button>
+          <button className="chip strong" onClick={() => setIsFilterOpen(true)}>연속 {filters.minDuration}시간 ▾</button>
           <button className="chip" onClick={() => setIsFilterOpen(true)}>{buildDateChipLabel(filters.dates)} ▾</button>
-          <button className="chip" onClick={() => setIsFilterOpen(true)}>{filters.people}명 ▾</button>
-          <button className="filter-button" onClick={() => setIsFilterOpen(true)}>
-            <FilterIcon /> 필터
+          <button className="chip" onClick={() => setIsFilterOpen(true)}>{areaChipLabel} ▾</button>
+          <button className="filter-button" aria-label="필터" onClick={() => setIsFilterOpen(true)}>
+            <FilterIcon />
           </button>
         </div>
 
         {error && <div className="error-banner">{error}</div>}
 
-        <div className="summary-bar">
-          <span>빈 시간 <strong>{availableSlots.length}건</strong></span>
-          <span style={{ color: '#adb5bd', fontSize: 11 }}>빠른 시간순 ▾</span>
-        </div>
-
         <div className="result-list">
-          {availableSlots.length === 0 ? (
+          {totalStudios === 0 ? (
             <EmptyState filters={filters} setFilters={setFilters} />
           ) : (
-            groupedByDate.map(([date, items]) => (
-              <section className="date-section" key={date}>
+            dateGroups.map((group) => (
+              <section className="date-section" key={group.date}>
                 <div className="date-heading">
-                  <span>{dateLabel(date)}</span>
-                  <span>{items.filter((s) => s.status === 'AVAILABLE').length}개 시간</span>
+                  <span>{dateLabel(group.date)}</span>
+                  {group.studios.length > 0 ? (
+                    <span className="count-pill">{group.studios.length}곳</span>
+                  ) : (
+                    <span className="count-pill empty">없음</span>
+                  )}
                 </div>
-                {items.map((slot, i) => <SlotRow key={slot.id ?? `${date}-${i}`} slot={slot} />)}
+                {group.studios.length > 0 ? (
+                  group.studios.map((studio) => (
+                    <StudioRow key={studio.studio.id} studio={studio} />
+                  ))
+                ) : (
+                  <EmptyDay minDuration={filters.minDuration} setFilters={setFilters} />
+                )}
               </section>
             ))
           )}
@@ -100,13 +107,32 @@ export function App() {
           <FilterSheet
             areas={areas}
             filters={filters}
-            resultCount={availableSlots.length}
+            resultCount={totalStudios}
             onClose={() => setIsFilterOpen(false)}
             onChange={setFilters}
           />
         )}
       </section>
     </main>
+  );
+}
+
+function EmptyDay({
+  minDuration,
+  setFilters,
+}: {
+  minDuration: number;
+  setFilters: React.Dispatch<React.SetStateAction<FilterState>>;
+}) {
+  return (
+    <div className="empty-day">
+      <span>이 날은 연속 {minDuration}시간이 안 돼요</span>
+      {minDuration > 1 && (
+        <button onClick={() => setFilters((f) => ({ ...f, minDuration: (minDuration - 1) as FilterState['minDuration'] }))}>
+          {minDuration - 1}시간으로 보기
+        </button>
+      )}
+    </div>
   );
 }
 
@@ -148,30 +174,15 @@ function EmptyState({ filters, setFilters }: { filters: FilterState; setFilters:
 
 function FilterIcon() {
   return (
-    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" style={{ display: 'inline', verticalAlign: 'middle', marginRight: 4 }}>
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" style={{ display: 'block' }}>
       <path d="M3 6h18M6 12h12M10 18h4" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" />
     </svg>
   );
 }
 
-function groupByDate(slots: Slot[]) {
-  const map = new Map<string, Slot[]>();
-  for (const s of slots) {
-    const list = map.get(s.date) ?? [];
-    list.push(s);
-    map.set(s.date, list);
-  }
-  return [...map.entries()].sort(([a], [b]) => a.localeCompare(b));
-}
-
 function buildDateChipLabel(dates: string[]) {
   if (dates.length === 0) return '오늘~7일';
-  if (dates.length === 1) {
-    const d = new Date(`${dates[0]}T00:00:00`);
-    return `${d.getMonth() + 1}/${d.getDate()}`;
-  }
-  const first = new Date(`${dates[0]}T00:00:00`);
-  return `${first.getMonth() + 1}/${first.getDate()} 외 ${dates.length - 1}일`;
+  return `${dates.length}일 선택`;
 }
 
 function formatUpdatedAt(date: Date) {
