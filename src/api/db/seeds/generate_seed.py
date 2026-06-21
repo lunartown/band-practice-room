@@ -40,10 +40,10 @@ def naver_biz_id(url):
     m = re.search(r'/bizes/(\d+)', url)
     return m.group(1) if m else None
 
-data = json.load(open(os.path.join(_REPO_ROOT, "_local", "data")))
+data = json.load(open(os.path.join(_REPO_ROOT, "_local", "studio-catalog.json")))
 
 lines = []
-lines.append("-- Auto-generated seed from _local/data")
+lines.append("-- Auto-generated seed from _local/studio-catalog.json")
 lines.append("-- 기존 스튜디오/룸 데이터를 완전히 교체\n")
 
 # ── 기존 데이터 초기화 (의존성 역순) ─────────────────────────────────────────

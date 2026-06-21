@@ -1,4 +1,4 @@
--- Auto-generated seed from _local/data
+-- Auto-generated seed from _local/studio-catalog.json
 -- 기존 스튜디오/룸 데이터를 완전히 교체
 
 -- 기존 데이터 초기화
