@@ -99,9 +99,9 @@ export function App() {
         </header>
 
         <div className="chip-row">
-          <button className={`chip strong${durationActive ? ' active' : ''}${popover?.kind === 'duration' ? ' open' : ''}`} aria-pressed={durationActive} onClick={(e) => openPopover('duration', e)}>{filters.minDuration}시간 ▾</button>
-          <button className={`chip${dateActive ? ' active' : ''}${popover?.kind === 'date' ? ' open' : ''}`} aria-pressed={dateActive} onClick={(e) => openPopover('date', e)}>{buildDateChipLabel(filters.dates)} ▾</button>
-          <button className={`chip${areaActive ? ' active' : ''}${popover?.kind === 'area' ? ' open' : ''}`} aria-pressed={areaActive} onClick={(e) => openPopover('area', e)}>{areaChipLabel} ▾</button>
+          <button className={`chip strong${durationActive ? ' active' : ''}${popover?.kind === 'duration' ? ' open' : ''}`} aria-pressed={durationActive} onClick={(e) => openPopover('duration', e)}><span>{filters.minDuration}시간</span><ChevronIcon /></button>
+          <button className={`chip${dateActive ? ' active' : ''}${popover?.kind === 'date' ? ' open' : ''}`} aria-pressed={dateActive} onClick={(e) => openPopover('date', e)}><span>{buildDateChipLabel(filters.dates)}</span><ChevronIcon /></button>
+          <button className={`chip${areaActive ? ' active' : ''}${popover?.kind === 'area' ? ' open' : ''}`} aria-pressed={areaActive} onClick={(e) => openPopover('area', e)}><span>{areaChipLabel}</span><ChevronIcon /></button>
           <button className={`filter-button${sheetActive ? ' active' : ''}`} aria-pressed={sheetActive} aria-label="필터" onClick={() => setIsFilterOpen(true)}>
             <FilterIcon />
           </button>
@@ -312,6 +312,14 @@ function FilterIcon() {
   return (
     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" style={{ display: 'block' }}>
       <path d="M3 6h18M6 12h12M10 18h4" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function ChevronIcon() {
+  return (
+    <svg className="chip-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden>
+      <path d="M7 10l5 5 5-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
 }
