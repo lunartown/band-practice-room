@@ -107,7 +107,14 @@ export class SlotsRepository {
           sl.price,
           sl.price_source,
           sl.scraped_at,
-          COALESCE(rs.url, ss.url) AS booking_url,
+          -- 방별 예약 링크: room_sources.url 이 있으면 그대로,
+          -- 없으면 합주실 URL의 /items/{대표} 를 그 방의 bizItemId 로 치환해 방 단위로 연결.
+          CASE
+            WHEN rs.url IS NOT NULL THEN rs.url
+            WHEN ss.url IS NOT NULL AND rs.external_key IS NOT NULL
+              THEN regexp_replace(ss.url, '/items/[^/?]+', '/items/' || rs.external_key)
+            ELSE ss.url
+          END AS booking_url,
           s.id      AS studio_id,
           s.name    AS studio_name,
           s.primary_area_id AS studio_primary_area_id,
@@ -130,10 +137,10 @@ export class SlotsRepository {
         INNER JOIN studios s ON s.id = r.studio_id
         LEFT JOIN areas a ON a.id = s.primary_area_id
         LEFT JOIN LATERAL (
-          SELECT url FROM room_sources WHERE room_id = r.id ORDER BY id ASC LIMIT 1
+          SELECT url, external_key FROM room_sources WHERE room_id = r.id ORDER BY id ASC LIMIT 1
         ) rs ON true
         LEFT JOIN LATERAL (
-          SELECT url FROM studio_sources WHERE studio_id = s.id ORDER BY id ASC LIMIT 1
+          SELECT url, external_key FROM studio_sources WHERE studio_id = s.id ORDER BY id ASC LIMIT 1
         ) ss ON true
         WHERE ${baseConditions.join(' AND ')}
       ),
