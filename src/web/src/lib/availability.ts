@@ -1,16 +1,28 @@
-import type { Slot, Studio } from '../api/types';
+import type { Room, Slot, Studio } from '../api/types';
 
 /**
  * 합주실(지점) 단위 가용 시간 집계.
  *
- * 슬롯(방×시간)을 날짜 → 합주실로 묶고, 방별 연속 가용 구간에서
+ * 슬롯(방×시간)을 날짜 → 합주실 → 방으로 묶고, 방별 연속 가용 구간에서
  * 선택한 연속 시간이 들어가는 "시작 시각"을 계산해 칩으로 변환한다.
  * 한 묶음의 시작점이 3개 이하면 단독칩, 4개 이상이면 범위칩으로 접는다.
+ *
+ * 지점 행은 접힌 상태에서도 시간 칩을 보여주되(방별 칩을 중복 제거해 합친 요약),
+ * 펼치면 어느 방이 어떤 시간에 되는지 방별로 분리해 보여줄 수 있도록
+ * `rooms`에 방별 가용 정보를 함께 담는다.
  */
 
 export type AvailabilityChip =
   | { kind: 'single'; start: string }
   | { kind: 'range'; start: string; end: string };
+
+export interface RoomAvailability {
+  room: Room;
+  chips: AvailabilityChip[];
+  bookingUrl: string | null;
+  priceLabel: string;
+  capacityLabel: string | null;
+}
 
 export interface StudioAvailability {
   studio: Studio;
@@ -18,6 +30,7 @@ export interface StudioAvailability {
   priceLabel: string;
   bookingUrl: string | null;
   chips: AvailabilityChip[];
+  rooms: RoomAvailability[];
 }
 
 export interface DateAvailability {
@@ -90,6 +103,57 @@ function startsToChips(starts: number[], minDuration: number): AvailabilityChip[
   return chips;
 }
 
+function chipKey(chip: AvailabilityChip): string {
+  return chip.kind === 'single' ? `s:${chip.start}` : `r:${chip.start}-${chip.end}`;
+}
+
+function sortChips(a: AvailabilityChip, b: AvailabilityChip): number {
+  return a.start.localeCompare(b.start) || a.kind.localeCompare(b.kind);
+}
+
+/** 칩이 커버하는 "시작 시(hour)" 구간 [lo, hi] (둘 다 포함). */
+function chipStartBounds(chip: AvailabilityChip, minDuration: number): [number, number] {
+  if (chip.kind === 'single') {
+    const h = toHour(chip.start);
+    return [h, h];
+  }
+  // 범위 칩의 end = (마지막 시작 + minDuration). 따라서 시작 시는 [start, end - minDuration].
+  return [toHour(chip.start), toHour(chip.end) - minDuration];
+}
+
+/**
+ * 지점 요약 칩에서, 더 넓은 다른 칩에 완전히 포함되는 칩을 제거한다.
+ * 예: 어떤 방이 14:00~22:00 범위를 제공하면 그 범위가 이미 "14시 시작 가능"을
+ * 말하므로, 다른 방의 단독 14:00 칩은 중복이라 지운다. (완전 동일 칩은 이미
+ * chipKey로 제거되지만, 범위가 단독·작은 범위를 "포함"하는 건 여기서 걸러야 함.)
+ */
+function dropCoveredChips(chips: AvailabilityChip[], minDuration: number): AvailabilityChip[] {
+  const bounds = chips.map((c) => chipStartBounds(c, minDuration));
+  return chips.filter((_, i) => {
+    const [lo, hi] = bounds[i];
+    return !chips.some((_, j) => {
+      if (i === j) return false;
+      const [olo, ohi] = bounds[j];
+      return olo <= lo && hi <= ohi && ohi - olo > hi - lo;
+    });
+  });
+}
+
+/** 한 방의 연속 구간에서 minDuration이 들어가는 시작 시각을 칩으로 변환한다. */
+function roomChips(roomSlots: Slot[], minDuration: number): AvailabilityChip[] {
+  const starts = new Set<number>();
+  for (const run of contiguousRuns(roomSlots)) {
+    for (const h of validStartHours(run, minDuration)) starts.add(h);
+  }
+  return startsToChips([...starts], minDuration).sort(sortChips);
+}
+
+function capacityLabel(min: number | null | undefined, max: number | null | undefined): string | null {
+  if (min != null && max != null) return min === max ? `${min}인` : `${min}~${max}인`;
+  const one = max ?? min;
+  return one != null ? `${one}인` : null;
+}
+
 // 시간당 합주실 요금의 현실적 범위. 이 범위를 벗어난 값은 손상된 데이터로 보고 제외한다.
 const MIN_PRICE = 1000;
 const MAX_PRICE = 200000;
@@ -146,26 +210,38 @@ function buildStudios(slots: Slot[], minDuration: number): StudioAvailability[] 
       byRoom.set(slot.room.id, list);
     }
 
-    // 방마다 독립적으로 시작 시각 → 칩으로 변환한다. 범위 칩은 한 방의 연속
-    // 구간 안에서만 접혀야 하므로(서로 다른 방의 시작 시각을 한 Set에 합쳐서
-    // 접으면 어떤 방도 제공하지 않는 연속 구간이 만들어진다), 칩 변환을 방 단위로
-    // 하고 합주실 레벨에서는 동일한 칩만 중복 제거해 합친다.
-    const chipByKey = new Map<string, AvailabilityChip>();
+    // 방마다 독립적으로 칩을 만든다. 범위 칩은 한 방의 연속 구간 안에서만
+    // 접혀야 하므로(서로 다른 방의 시작 시각을 합쳐 접으면 어떤 방도 제공하지
+    // 않는 연속 구간이 만들어진다) 칩 변환은 방 단위로 한다.
+    const rooms: RoomAvailability[] = [];
     for (const roomSlots of byRoom.values()) {
-      const starts = new Set<number>();
-      for (const run of contiguousRuns(roomSlots)) {
-        for (const h of validStartHours(run, minDuration)) starts.add(h);
-      }
-      for (const chip of startsToChips([...starts], minDuration)) {
-        const key = chip.kind === 'single' ? `s:${chip.start}` : `r:${chip.start}-${chip.end}`;
-        chipByKey.set(key, chip);
-      }
+      const chips = roomChips(roomSlots, minDuration);
+      if (chips.length === 0) continue;
+      const room = roomSlots[0].room;
+      const price = room.pricePerHour ?? roomSlots[0].price ?? 0;
+      rooms.push({
+        room,
+        chips,
+        bookingUrl: roomSlots.find((s) => s.bookingUrl)?.bookingUrl ?? null,
+        priceLabel: formatPricePerHour([price]),
+        capacityLabel: capacityLabel(room.capacityMin, room.capacityMax),
+      });
     }
-    if (chipByKey.size === 0) continue;
+    if (rooms.length === 0) continue;
 
-    const chips = [...chipByKey.values()].sort(
-      (a, b) => a.start.localeCompare(b.start) || a.kind.localeCompare(b.kind),
+    // 빠른 시작 → 방 이름 순으로 방을 정렬한다.
+    rooms.sort(
+      (a, b) =>
+        (a.chips[0]?.start ?? '').localeCompare(b.chips[0]?.start ?? '') ||
+        a.room.name.localeCompare(b.room.name, 'ko'),
     );
+
+    // 접힌 지점 행용 요약 칩: 방별 칩을 합치되, 완전 동일 칩(chipKey)뿐 아니라
+    // 더 넓은 범위 칩에 포함되는 칩(예: 14:00~22:00 안의 단독 14:00)도 제거한다.
+    const chipByKey = new Map<string, AvailabilityChip>();
+    for (const r of rooms) for (const chip of r.chips) chipByKey.set(chipKey(chip), chip);
+    const chips = dropCoveredChips([...chipByKey.values()], minDuration).sort(sortChips);
+
     const studio = studioSlots[0].studio;
     const prices = studioSlots.map((s) => s.room.pricePerHour ?? s.price ?? 0);
 
@@ -175,6 +251,7 @@ function buildStudios(slots: Slot[], minDuration: number): StudioAvailability[] 
       priceLabel: formatPricePerHour(prices),
       bookingUrl: studioSlots.find((s) => s.bookingUrl)?.bookingUrl ?? null,
       chips,
+      rooms,
     });
   }
 

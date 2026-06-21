@@ -76,6 +76,13 @@ export function App() {
     ? areas.filter((a) => filters.areaIds.includes(a.id)).map((a) => a.name).join('·')
     : '전체 지역';
 
+  // 시간 칩은 항상 활성. 나머지는 기본값에서 바꾼(지정한) 경우만 활성
+  const durationActive = true;
+  const dateActive = filters.dates.length > 0;
+  const areaActive = filters.areaIds.length > 0;
+  const sheetActive =
+    filters.timeWindows.length > 0 || filters.people !== defaultFilters.people;
+
   const syncLabel = updatedAt ? formatUpdatedAt(updatedAt) : '–';
 
   return (
@@ -92,10 +99,10 @@ export function App() {
         </header>
 
         <div className="chip-row">
-          <button className={`chip strong${popover?.kind === 'duration' ? ' open' : ''}`} onClick={(e) => openPopover('duration', e)}>{filters.minDuration}시간 ▾</button>
-          <button className={`chip${popover?.kind === 'date' ? ' open' : ''}`} onClick={(e) => openPopover('date', e)}>{buildDateChipLabel(filters.dates)} ▾</button>
-          <button className={`chip${popover?.kind === 'area' ? ' open' : ''}`} onClick={(e) => openPopover('area', e)}>{areaChipLabel} ▾</button>
-          <button className="filter-button" aria-label="필터" onClick={() => setIsFilterOpen(true)}>
+          <button className={`chip strong${durationActive ? ' active' : ''}${popover?.kind === 'duration' ? ' open' : ''}`} aria-pressed={durationActive} onClick={(e) => openPopover('duration', e)}>{filters.minDuration}시간 ▾</button>
+          <button className={`chip${dateActive ? ' active' : ''}${popover?.kind === 'date' ? ' open' : ''}`} aria-pressed={dateActive} onClick={(e) => openPopover('date', e)}>{buildDateChipLabel(filters.dates)} ▾</button>
+          <button className={`chip${areaActive ? ' active' : ''}${popover?.kind === 'area' ? ' open' : ''}`} aria-pressed={areaActive} onClick={(e) => openPopover('area', e)}>{areaChipLabel} ▾</button>
+          <button className={`filter-button${sheetActive ? ' active' : ''}`} aria-pressed={sheetActive} aria-label="필터" onClick={() => setIsFilterOpen(true)}>
             <FilterIcon />
           </button>
         </div>
