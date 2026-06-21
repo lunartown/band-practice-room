@@ -131,7 +131,6 @@ export function FilterSheet({ areas, filters, resultCount, onClose, onChange }: 
           <div className="sheet-handle" />
           <header>
             <h2>필터</h2>
-            <button onClick={() => onChange(defaultFilters)}>초기화</button>
           </header>
         </div>
 
