@@ -222,20 +222,54 @@ async function getMappedRooms(studioId: string, sourceId: string): Promise<RoomR
   return result.rows;
 }
 
+// 한 INSERT 당 행 수 (Postgres 파라미터 한도 65535 / 7컬럼 ≈ 9362, 여유 있게 500).
+const SLOT_BATCH_SIZE = 500;
+
+interface SlotRow {
+  roomId: string;
+  date: string;
+  startTime: string;
+  endTime: string;
+  status: string;
+  price: number | null;
+  priceSource: string;
+}
+
 async function upsertSlots(
   slots: AvailabilitySlot[],
   roomIdByName: Map<string, string>,
 ): Promise<void> {
+  // 같은 (room_id, date, start_time) 가 한 배치에 두 번 들어가면 ON CONFLICT DO UPDATE 가
+  // "한 행을 두 번 갱신할 수 없다" 에러를 내므로, 키 기준 중복 제거(마지막 값 우선).
+  const dedup = new Map<string, SlotRow>();
   for (const slot of slots) {
     const roomId = roomIdByName.get(slot.roomName);
     if (!roomId) continue;
+    dedup.set(`${roomId}|${slot.date}|${slot.startTime}`, {
+      roomId,
+      date: slot.date,
+      startTime: slot.startTime,
+      endTime: slot.endTime,
+      status: slot.status.toUpperCase(),
+      price: slot.price,
+      priceSource: slot.price !== null ? 'SCRAPED' : 'UNKNOWN',
+    });
+  }
 
-    const status = slot.status.toUpperCase();
-    const priceSource = slot.price !== null ? 'SCRAPED' : 'UNKNOWN';
+  const rows = [...dedup.values()];
+  // 슬롯당 1쿼리 대신, 배치당 1쿼리(다중 행)로 DB 왕복을 크게 줄인다.
+  for (let i = 0; i < rows.length; i += SLOT_BATCH_SIZE) {
+    const batch = rows.slice(i, i + SLOT_BATCH_SIZE);
+    const params: unknown[] = [];
+    const tuples = batch.map((r, idx) => {
+      const b = idx * 7;
+      params.push(r.roomId, r.date, r.startTime, r.endTime, r.status, r.price, r.priceSource);
+      return `($${b + 1}, $${b + 2}, $${b + 3}, $${b + 4}, $${b + 5}, $${b + 6}, $${b + 7}, NOW())`;
+    });
     await query(
       `
       INSERT INTO slots (room_id, date, start_time, end_time, status, price, price_source, scraped_at)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, NOW())
+      VALUES ${tuples.join(', ')}
       ON CONFLICT (room_id, date, start_time) DO UPDATE SET
         end_time = EXCLUDED.end_time,
         status = EXCLUDED.status,
@@ -243,7 +277,7 @@ async function upsertSlots(
         price_source = EXCLUDED.price_source,
         scraped_at = EXCLUDED.scraped_at
     `,
-      [roomId, slot.date, slot.startTime, slot.endTime, status, slot.price, priceSource],
+      params,
     );
   }
 }
