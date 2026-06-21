@@ -3,7 +3,8 @@ import { NaverReservationScraper } from './naver/scraper.js';
 import type { AvailabilitySlot, ScrapeRoom } from './naver/types.js';
 
 const MAX_ATTEMPTS = 5;
-const SUCCESS_REQUEUE_MINUTES = 60;
+// 수집 성공 후 재수집까지 간격(분). 운영에선 10 정도가 적당하나, 개발 단계라 기본 60.
+const SUCCESS_REQUEUE_MINUTES = Number(process.env.SUCCESS_REQUEUE_MINUTES ?? 60);
 const FAILURE_RETRY_MINUTES = 15;
 
 // 한 Job당 스크래핑 날짜 범위 (오늘 포함 N일)
