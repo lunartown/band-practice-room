@@ -17,6 +17,7 @@ ENV NODE_ENV=production
 ENV PORT=3000
 EXPOSE 3000
 
-# 기동 시 마이그레이션 + 시드(둘 다 멱등) 실행 후 서버 시작.
-# Render 무료 플랜은 pre-deploy 훅이 없어 컨테이너 부팅 단계에서 처리한다.
-CMD ["sh", "-c", "npm run db:migrate && npm run db:seed && npm run start"]
+# 기동 시 마이그레이션(멱등)만 실행 후 서버 시작.
+# 시드는 002_studios.sql 이 slots 까지 TRUNCATE 하므로 콜드스타트마다 돌리면 안 된다.
+# 시드/스크랩은 GitHub Actions 워크플로(.github/workflows/scrape.yml)에서 담당한다.
+CMD ["sh", "-c", "npm run db:migrate && npm run start"]

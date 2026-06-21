@@ -1,0 +1,48 @@
+name: Scrape availability
+
+# 네이버 예약 가능 시간(slots)을 무료로 주기 수집한다.
+# - 수동 실행(workflow_dispatch): 시드(합주실 89곳·매핑) + 스크랩 → 최초 1회 데이터 채우기용
+# - 정기 실행(schedule): 스크랩만 → slots 갱신 (시드는 slots 를 TRUNCATE 하므로 제외)
+#
+# 사전 준비: 저장소 Settings → Secrets and variables → Actions 에
+#   DATABASE_URL = Neon 연결 문자열(?sslmode=require) 등록
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 * * * *' # 매시 정각(UTC)
+
+concurrency:
+  group: scrape
+  cancel-in-progress: false
+
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      RUN_ONCE: 'true'
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Migrate (idempotent)
+        working-directory: src/api
+        run: |
+          npm ci
+          npm run db:migrate
+
+      - name: Seed studios (manual run only)
+        if: github.event_name == 'workflow_dispatch'
+        working-directory: src/api
+        run: npm run db:seed
+
+      - name: Scrape Naver → slots
+        working-directory: src/scraper
+        run: |
+          npm ci
+          npm start
