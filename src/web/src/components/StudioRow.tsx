@@ -13,7 +13,7 @@ function chipLabel(chip: AvailabilityChip): string {
 function TimeChip({ chip, href }: { chip: AvailabilityChip; href: string | null }) {
   return (
     <a className="time-chip" href={href ?? '#'} target="_blank" rel="noreferrer">
-      {chipLabel(chip)} <span className="chip-arrow">↗</span>
+      {chipLabel(chip)}
     </a>
   );
 }
