@@ -11,13 +11,14 @@ function chipLabel(chip: AvailabilityChip): string {
   return chip.kind === 'single' ? chip.start : `${chip.start}~${chip.end}`;
 }
 
-// 비는 시간 = 정보(액션 아님). 중립 회색 칩으로 "슬롯" 단위를 또렷하게 하되,
-// 틸(액션) 색은 쓰지 않아 예약 버튼과 확실히 구분한다.
+// 비는 시간 = 정보(액션 아님). 범위는 '형광펜'(옅은 각진 배경)으로 한 묶음임을
+// 표시하고, 단일 시간은 평문으로 둔다. 채운 pill/테두리를 쓰지 않아 예약 버튼과
+// 종(種)이 달라 보이게 해, 탭 어포던스 오인을 막는다.
 function TimeSlots({ chips }: { chips: AvailabilityChip[] }) {
   return (
     <div className="time-slots">
       {chips.map((chip, i) => (
-        <span key={i} className="time-slot">
+        <span key={i} className={`time-slot ${chip.kind === 'single' ? 'single' : 'range'}`}>
           {chipLabel(chip)}
         </span>
       ))}

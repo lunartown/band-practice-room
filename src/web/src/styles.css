@@ -446,24 +446,42 @@ button {
   color: var(--text-faint);
 }
 
-/* 비는 시간 = 중립 회색 칩(슬롯 단위는 또렷, 틸 아니라 비액션). 지점·방 공통 */
+/* 비는 시간 = 정보(액션 아님). 채운 pill은 범위 묶음은 또렷하나 버튼처럼
+   보여 탭 어포던스를 유발하고, 점·텍스트로 풀면 버튼감은 죽지만 범위가
+   한 단위라는 그룹핑이 사라진다. 그래서 '형광펜' 방식을 쓴다:
+   - 범위(09~20)에만 옅은 각진 배경을 깔아 "한 묶음"임을 텍스트 강조로 표시
+   - 단일 시간은 평문(배경 없음) — 점(point)이라 묶을 게 없다
+   - 테두리·채운 pill을 쓰지 않아 버튼이 아니라 '강조된 값'으로 읽힌다
+   지점·방 공통. 단일끼리 붙어 보이지 않도록 슬롯 간 간격을 넓게 둔다. */
 .time-slots {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--sp-fine);
+  align-items: center;
+  column-gap: var(--sp-3);
+  row-gap: var(--sp-2);
   margin-top: var(--sp-2);
 }
 
 .time-slot {
   display: inline-flex;
   align-items: center;
-  min-height: 32px;
-  padding: 5px var(--sp-3);
-  border-radius: var(--r-md);
   font-size: var(--fs-sm);
   font-weight: var(--fw-semibold);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
   color: var(--text-2);
+}
+
+/* 범위 = 형광펜(옅은 각진 배경). 시작~끝을 하나로 묶어 보여준다 */
+.time-slot.range {
+  padding: 1px var(--sp-2);
+  border-radius: 4px;
   background: var(--gray-100);
+}
+
+/* 단일 = 평문. 묶을 점이 하나뿐이라 배경을 주지 않는다 */
+.time-slot.single {
+  color: var(--text-1);
 }
 
 /* 예약하기 = 카드당 단 하나의 주(主) 액션. 솔리드 틸 + 살짝 떠 있게 */
