@@ -116,8 +116,16 @@ function roomStartHours(roomSlots: Slot[], minDuration: number): Set<number> {
   return starts;
 }
 
-function capacityLabel(min: number | null | undefined, max: number | null | undefined): string | null {
-  if (min != null && max != null) return min === max ? `${min}인` : `${min}~${max}인`;
+/**
+ * 방 단위 딥링크(.../bizes/{biz}/items/{bizItem}?startDate=...)에서 방 세그먼트를
+ * 떼어 합주실(지점) 일반 예약 페이지 링크로 만든다. startDate 등 쿼리는 보존한다.
+ * 합주실 행은 여러 방을 요약하므로 특정 방이 아니라 합주실 페이지로 연결해야 한다.
+ */
+function toStudioBookingUrl(url: string | null): string | null {
+  return url ? url.replace(/\/items\/[^/?]+/, '') : null;
+}
+
+function capacityLabel(min: number | null | undefined, max: number | null | undefined): string | null {  if (min != null && max != null) return min === max ? `${min}인` : `${min}~${max}인`;
   const one = max ?? min;
   return one != null ? `${one}인` : null;
 }
@@ -221,7 +229,7 @@ function buildStudios(slots: Slot[], minDuration: number): StudioAvailability[] 
       studio,
       areaName: studio.primaryAreaName ?? '지역 미확인',
       priceLabel: formatPricePerHour(prices),
-      bookingUrl: studioSlots.find((s) => s.bookingUrl)?.bookingUrl ?? null,
+      bookingUrl: toStudioBookingUrl(studioSlots.find((s) => s.bookingUrl)?.bookingUrl ?? null),
       chips,
       rooms,
     });
