@@ -11,8 +11,18 @@ function chipLabel(chip: AvailabilityChip): string {
   return chip.kind === 'single' ? chip.start : `${chip.start}~${chip.end}`;
 }
 
-function timesText(chips: AvailabilityChip[]): string {
-  return chips.map(chipLabel).join(' · ');
+// 비는 시간 = 정보(액션 아님). 중립 회색 칩으로 "슬롯" 단위를 또렷하게 하되,
+// 틸(액션) 색은 쓰지 않아 예약 버튼과 확실히 구분한다.
+function TimeSlots({ chips }: { chips: AvailabilityChip[] }) {
+  return (
+    <div className="time-slots">
+      {chips.map((chip, i) => (
+        <span key={i} className="time-slot">
+          {chipLabel(chip)}
+        </span>
+      ))}
+    </div>
+  );
 }
 
 function PersonIcon() {
@@ -46,7 +56,7 @@ function RoomRow({ room }: { room: RoomAvailability }) {
         )}
         <span className="room-price">{room.priceLabel}</span>
       </div>
-      <div className="room-times">{timesText(room.chips)}</div>
+      <TimeSlots chips={room.chips} />
       <a className="book-room" href={room.bookingUrl ?? '#'} target="_blank" rel="noreferrer">
         이 방 예약 <span className="book-arrow" aria-hidden>↗</span>
       </a>
@@ -120,7 +130,7 @@ export function StudioRow({ studio }: StudioRowProps) {
           <ClockIcon />
           비는 시간
         </div>
-        <div className="times-text">{timesText(studio.chips)}</div>
+        <TimeSlots chips={studio.chips} />
       </div>
 
       {/* 카드당 단 하나의 주 액션: 합주실 예약 페이지로(거기서 방 선택) */}
