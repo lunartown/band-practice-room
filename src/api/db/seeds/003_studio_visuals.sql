@@ -10,9 +10,12 @@
 --
 -- image_url_manual 에 넣을 수 있는 값 두 가지:
 --   1) 외부 URL          : 'https://.../foo.jpg' (네이버 CDN 등)
---   2) 직접 커밋한 이미지 : '/studios/foo.jpg'
+--   2) 직접 커밋한 이미지 : '/studios/foo.webp'
 --      → 파일을 src/web/public/studios/ 에 두고 루트 경로로 참조.
---        커밋·규칙은 src/web/public/studios/README.md 참고.
+--
+-- 직접 커밋 이미지는 손으로 넣지 말고 도구를 쓰는 게 편하다(리사이즈+이 파일 갱신 자동):
+--   cd src/scraper && npm run thumbnail -- --slug '<slug>' --image <파일|URL> [--name <영문>]
+-- 도구가 아래 "managed thumbnails" 블록을 자동 관리한다. 규칙: src/web/public/studios/README.md
 
 UPDATE studios SET
   image_url_manual = NULL,        -- 예: 'https://.../st-music.jpg'
