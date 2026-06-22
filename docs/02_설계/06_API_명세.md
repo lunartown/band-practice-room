@@ -171,6 +171,8 @@
 - `status = AVAILABLE`, `UNAVAILABLE`은 기본 응답에 포함한다.
 - `status = UNKNOWN`은 기본 응답에서 제외한다.
 - `scrapedAt`은 해당 슬롯 상태를 마지막으로 확인한 시각이다.
-- `bookingUrl`은 우선 `room_sources.url` 기준으로 반환한다.
+- `bookingUrl`은 방 단위 네이버 예약 링크에 해당 슬롯 날짜를 `startDate=YYYY-MM-DD`로 실어 반환한다.
+  우선순위는 `room_sources.url` → `booking/{typeId}/bizes/{businessId}/items/{bizItemId}` 재구성 → 합주실 일반 링크 순이다.
+  합주실 URL이 `/items/` 없는 bare 포맷이어도 부품으로 재구성하므로 방 단위 링크가 보장된다.
 - 기본 정렬은 `date ASC`, `startTime ASC`, `studio.name ASC`, `room.name ASC`이다.
 - 초기 API는 페이지네이션 없이 최대 30일 범위를 한 번에 반환한다.
