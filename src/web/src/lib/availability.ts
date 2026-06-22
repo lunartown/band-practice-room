@@ -134,6 +134,22 @@ function capacityLabel(min: number | null | undefined, max: number | null | unde
 const MIN_PRICE = 1000;
 const MAX_PRICE = 200000;
 
+/**
+ * 시간당 가격을 구한다.
+ * 방의 pricePerHour가 있으면 그대로 쓰고, 없으면 슬롯 가격으로 보정한다.
+ * 단, 슬롯 가격은 API에서 minDuration(연속 예약 시간)이 곱해진 "구간 총액"이므로
+ * minDuration으로 나눠 시간당으로 환산해야 "/시간" 라벨이 부풀지 않는다.
+ */
+function perHourPrice(
+  pricePerHour: number | null | undefined,
+  slotPrice: number | null | undefined,
+  minDuration: number,
+): number {
+  if (pricePerHour != null) return pricePerHour;
+  if (slotPrice == null) return 0;
+  return minDuration > 0 ? slotPrice / minDuration : slotPrice;
+}
+
 function formatPricePerHour(prices: number[]): string {
   const valid = prices.filter((p) => p >= MIN_PRICE && p <= MAX_PRICE);
   if (valid.length === 0) return '가격 확인 불가';
@@ -197,7 +213,7 @@ function buildStudios(slots: Slot[], minDuration: number): StudioAvailability[] 
       if (chips.length === 0) continue;
       for (const h of startHours) studioStartHours.add(h);
       const room = roomSlots[0].room;
-      const price = room.pricePerHour ?? roomSlots[0].price ?? 0;
+      const price = perHourPrice(room.pricePerHour, roomSlots[0].price, minDuration);
       rooms.push({
         room,
         chips,
@@ -223,7 +239,7 @@ function buildStudios(slots: Slot[], minDuration: number): StudioAvailability[] 
     const chips = startsToChips([...studioStartHours], minDuration).sort(sortChips);
 
     const studio = studioSlots[0].studio;
-    const prices = studioSlots.map((s) => s.room.pricePerHour ?? s.price ?? 0);
+    const prices = studioSlots.map((s) => perHourPrice(s.room.pricePerHour, s.price, minDuration));
 
     studios.push({
       studio,

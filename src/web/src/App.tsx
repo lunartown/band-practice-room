@@ -32,6 +32,7 @@ export function App() {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [popover, setPopover] = useState<PopoverState | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [areasError, setAreasError] = useState(false);
   const [updatedAt, setUpdatedAt] = useState<Date | null>(null);
   const [loading, setLoading] = useState(true);
   const phoneRef = useRef<HTMLElement>(null);
@@ -46,10 +47,15 @@ export function App() {
     setPopover({ kind, top: a.bottom - p.top + 6, left, width });
   }
 
-  useEffect(() => {
+  function loadAreas() {
+    setAreasError(false);
     getAreas()
       .then((r) => setAreas(r.areas))
-      .catch(() => setError('지역 목록을 불러오지 못했습니다'));
+      .catch(() => setAreasError(true));
+  }
+
+  useEffect(() => {
+    loadAreas();
   }, []);
 
   useEffect(() => {
@@ -100,7 +106,7 @@ export function App() {
     return (
       <main className="app-shell">
         <section className="phone-app" aria-label="합주실닷컴">
-          <OpenScreen areas={areas} onPick={enterWithAreas} />
+          <OpenScreen areas={areas} error={areasError} onRetry={loadAreas} onPick={enterWithAreas} />
         </section>
       </main>
     );
