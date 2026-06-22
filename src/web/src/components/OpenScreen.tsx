@@ -12,7 +12,7 @@ export function OpenScreen({ areas, error, onRetry, onPick }: OpenScreenProps) {
   return (
     <section className="open-screen" aria-label="합주실닷컴 시작">
       <div className="open-brand">
-        <span className="open-logo" aria-hidden>🎸</span>
+        <img className="open-logo" src="/hapjushil-logo.png" alt="" aria-hidden width={88} height={88} />
         <h1 className="open-wordmark">
           합주실<span className="open-dot">닷컴</span>
         </h1>
