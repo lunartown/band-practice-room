@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { AvailabilityChip, RoomAvailability, StudioAvailability } from '../lib/availability';
 import { toReviewBadges } from '../lib/reviewKeywords';
+import { thumbnailUrl } from '../lib/imageUrl';
 
 interface StudioRowProps {
   studio: StudioAvailability;
@@ -54,10 +55,26 @@ export function StudioRow({ studio }: StudioRowProps) {
   const badges = toReviewBadges(reviewKeywords);
   const [expanded, setExpanded] = useState(false);
   const [imgFailed, setImgFailed] = useState(false);
+  // 리사이즈 URL 부터 시도하고, 실패하면 원본 URL 로 한 번 더 시도(self-healing).
+  // 리사이즈 타입이 호스트에서 안 먹혀도 이미지가 사라지지 않게 보장한다.
+  const [useOriginal, setUseOriginal] = useState(false);
+  const resized = thumbnailUrl(imageUrl);
+
+  // studio(이미지)가 바뀌면 폴백 상태를 초기화한다(행 재사용 대비).
+  useEffect(() => {
+    setImgFailed(false);
+    setUseOriginal(false);
+  }, [imageUrl]);
 
   // 아바타는 항상 렌더한다. 이미지가 없거나(또는 로드 실패하면) 이니셜 폴백으로
   // 떨어져, 행마다 좌측 정렬이 흔들리지 않게 한다.
   const showImg = Boolean(imageUrl) && !imgFailed;
+  const imgSrc = !useOriginal && resized ? resized : imageUrl!;
+  const handleImgError = () => {
+    // 1차(리사이즈) 실패 → 원본 재시도, 2차(원본) 실패 → 이니셜.
+    if (!useOriginal && resized && resized !== imageUrl) setUseOriginal(true);
+    else setImgFailed(true);
+  };
   const initial = name.trim().charAt(0);
 
   return (
@@ -65,7 +82,7 @@ export function StudioRow({ studio }: StudioRowProps) {
       <div className="studio-head">
         <div className="studio-avatar" aria-hidden>
           {showImg ? (
-            <img src={imageUrl!} alt="" loading="lazy" onError={() => setImgFailed(true)} />
+            <img src={imgSrc} alt="" loading="lazy" onError={handleImgError} />
           ) : (
             initial
           )}
