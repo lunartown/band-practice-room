@@ -6,8 +6,10 @@ import { FilterSheet, defaultFilters, DURATION_OPTIONS } from './components/Filt
 import type { FilterState } from './components/FilterSheet';
 import { CalendarPicker } from './components/CalendarPicker';
 import { Popover } from './components/Popover';
+import { OpenScreen } from './components/OpenScreen';
 import { buildAvailability } from './lib/availability';
 import { dateLabel } from './lib/date';
+import { loadFilters, saveFilters } from './lib/prefs';
 
 type PopoverKind = 'duration' | 'date' | 'area';
 const POP_WIDTH: Record<PopoverKind, number> = { duration: 168, date: 340, area: 220 };
@@ -19,10 +21,13 @@ interface PopoverState {
 }
 
 export function App() {
+  const savedFilters = useMemo(() => loadFilters(), []);
   const [areas, setAreas] = useState<Area[]>([]);
   const [slots, setSlots] = useState<Slot[]>([]);
   const [responseDates, setResponseDates] = useState<string[]>([]);
-  const [filters, setFilters] = useState<FilterState>(defaultFilters);
+  const [filters, setFilters] = useState<FilterState>(savedFilters ?? defaultFilters);
+  // 저장된 조건이 있으면 오픈 화면을 건너뛰고 바로 결과로 진입한다.
+  const [entered, setEntered] = useState(savedFilters !== null);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [popover, setPopover] = useState<PopoverState | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -47,6 +52,8 @@ export function App() {
   }, []);
 
   useEffect(() => {
+    if (!entered) return;
+    saveFilters(filters);
     setError(null);
     setLoading(true);
     getSlots({
@@ -63,7 +70,12 @@ export function App() {
       })
       .catch(() => setError('예약 가능 시간을 불러오지 못했습니다'))
       .finally(() => setLoading(false));
-  }, [filters]);
+  }, [filters, entered]);
+
+  function enterWithAreas(areaIds: number[]) {
+    setFilters((f) => ({ ...f, areaIds }));
+    setEntered(true);
+  }
 
   const dateGroups = useMemo(
     () => buildAvailability(slots, responseDates, filters.minDuration),
@@ -84,6 +96,16 @@ export function App() {
     filters.timeWindows.length > 0 || filters.people !== defaultFilters.people;
 
   const syncLabel = updatedAt ? formatUpdatedAt(updatedAt) : '–';
+
+  if (!entered) {
+    return (
+      <main className="app-shell">
+        <section className="phone-app" aria-label="합주실닷컴">
+          <OpenScreen areas={areas} onPick={enterWithAreas} />
+        </section>
+      </main>
+    );
+  }
 
   return (
     <main className="app-shell">
