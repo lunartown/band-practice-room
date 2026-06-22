@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="합주실 로고">
+  <g fill="#1C9FA7" transform="rotate(-33 256 256)">
+    <!-- body: double-cutaway electric guitar silhouette, neck pointing up-right -->
+    <path d="
+      M 150 118
+      C 92 120 58 170 58 232
+      C 58 304 102 362 168 362
+      C 214 362 244 332 256 300
+      C 262 312 274 320 292 320
+      L 306 320
+      L 306 292
+      L 280 292
+      C 262 292 252 280 252 262
+      L 470 262
+      L 470 250
+      L 252 250
+      C 252 232 262 220 280 220
+      L 306 220
+      L 306 192
+      L 292 192
+      C 274 192 262 200 256 212
+      C 246 184 220 150 168 150
+      C 160 150 156 144 154 136
+      C 153 128 151 122 150 118
+      Z" />
+    <!-- headstock paddle -->
+    <path d="M 462 238 L 520 226 C 533 223 540 230 540 240 L 540 272 C 540 282 533 289 520 286 L 462 274 Z" />
+    <!-- tuning pegs -->
+    <circle cx="502" cy="236" r="6.5"/>
+    <circle cx="502" cy="276" r="6.5"/>
+    <circle cx="520" cy="234" r="6.5"/>
+    <circle cx="520" cy="278" r="6.5"/>
+    <circle cx="538" cy="232" r="6.5"/>
+    <circle cx="538" cy="280" r="6.5"/>
+  </g>
+</svg>
