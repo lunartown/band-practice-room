@@ -25,6 +25,19 @@ export const DURATION_OPTIONS: { label: string; value: 1 | 2 | 3 | 4 }[] = [
   { label: '4시간', value: 4 },
 ];
 
+// 시간 윈도우들이 하나의 연속된 구간을 이루면 그 구간(가장 이른 시작~가장 늦은 종료)을 돌려준다.
+// 시간 문자열은 'HH:MM' 고정폭이라 사전식 비교로 시각 비교가 그대로 성립한다.
+function contiguousSpan(windows: TimeWindow[]): TimeWindow | null {
+  if (windows.length === 0) return null;
+  const sorted = [...windows].sort((a, b) => a.from.localeCompare(b.from));
+  let { from, to } = sorted[0];
+  for (let i = 1; i < sorted.length; i++) {
+    if (sorted[i].from > to) return null; // 사이에 빈 구간이 있으면 단일 구간이 아니다
+    if (sorted[i].to > to) to = sorted[i].to;
+  }
+  return { from, to };
+}
+
 export interface FilterState {
   areaIds: number[];
   dates: string[];
@@ -72,14 +85,16 @@ export function FilterSheet({ areas, filters, resultCount, onClose, onChange }: 
     set({ timeWindows: next });
   }
 
-  // 수동 시간 선택: 윈도우가 정확히 하나일 때만 드롭다운에 반영하고, 바꾸면 단일 커스텀 윈도우로 대체한다.
-  const single = filters.timeWindows.length === 1 ? filters.timeWindows[0] : null;
-  const fromVal = single?.from ?? '';
-  const toVal = single?.to ?? '';
+  // 드롭다운에는 선택한 윈도우들의 "이어진 구간"을 보여준다.
+  // 저녁(18~22)+밤(22~24)처럼 맞닿은 밴드는 18~24로 합쳐 표시하고,
+  // 오전+밤처럼 떨어진 윈도우는 단일 구간으로 표현할 수 없어 비워 둔다.
+  const span = contiguousSpan(filters.timeWindows);
+  const fromVal = span?.from ?? '';
+  const toVal = span?.to ?? '';
 
   function setManual(part: 'from' | 'to', value: string) {
-    const from = part === 'from' ? value : single?.from ?? '';
-    const to = part === 'to' ? value : single?.to ?? '';
+    const from = part === 'from' ? value : span?.from ?? '';
+    const to = part === 'to' ? value : span?.to ?? '';
     if (!from && !to) {
       set({ timeWindows: [] });
       return;
