@@ -7,6 +7,12 @@
 -- 새 합주실을 추가할 때 아래 블록을 복사해 slug / 값만 바꾸면 된다.
 -- 썸네일은 image_url_manual(수동) 에만 넣는다. image_url_scraped 는 스크래퍼가 채운다.
 -- 둘 다 비어 있으면(NULL) 프론트가 이름 이니셜 아바타로 폴백한다. (응답은 manual 우선)
+--
+-- image_url_manual 에 넣을 수 있는 값 두 가지:
+--   1) 외부 URL          : 'https://.../foo.jpg' (네이버 CDN 등)
+--   2) 직접 커밋한 이미지 : '/studios/foo.jpg'
+--      → 파일을 src/web/public/studios/ 에 두고 루트 경로로 참조.
+--        커밋·규칙은 src/web/public/studios/README.md 참고.
 
 UPDATE studios SET
   image_url_manual = NULL,        -- 예: 'https://.../st-music.jpg'
@@ -19,3 +25,7 @@ WHERE slug = 'studio-합정/홍대-st-music';
 --   rating           = 4.3,
 --   review_count     = 57
 -- WHERE slug = 'studio-...';
+
+-- 직접 커밋한 이미지를 쓰는 예 (src/web/public/studios/brother-gangdong.jpg):
+-- UPDATE studios SET image_url_manual = '/studios/brother-gangdong.jpg'
+-- WHERE slug = 'studio-강동/송파-브라더-강동';
