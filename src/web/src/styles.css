@@ -476,26 +476,31 @@ button {
   background: transparent;
 }
 
-/* 예약하기 = 카드당 단 하나의 주(主) 액션. 솔리드 틸 + 살짝 떠 있게 */
-.book-primary {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--sp-fine);
-  width: 100%;
-  height: 44px;
-  margin-top: var(--sp-3);
-  border-radius: var(--r-md);
-  background: var(--accent);
-  color: var(--white);
-  font-size: var(--fs-lg);
-  font-weight: var(--fw-bold);
+/* 예약 = 카드당 단 하나의 주(主) 액션. 큰 솔리드 버튼 대신 카드 본문(헤더+비는시간)
+   전체가 링크가 되고, 우측 셰브론 하나로 어포던스를 준다. 탭 영역을 카드 밖으로
+   살짝 넓혀(negative margin) 행 전체가 눌리는 느낌을 주고, 호버/탭 시 옅게 깔린다. */
+.studio-main {
+  display: block;
+  margin: 0 calc(-1 * var(--gutter));
+  padding: 0 var(--gutter);
+  color: inherit;
   text-decoration: none;
-  box-shadow: 0 1px 2px rgba(20, 28, 42, 0.12);
+  border-radius: var(--r-md);
+  transition: background-color 0.12s ease;
 }
 
-.book-arrow {
-  font-size: var(--fs-md);
+.studio-main:hover {
+  background: var(--surface-sunken);
+}
+
+.studio-main:active {
+  background: var(--accent-soft);
+}
+
+/* 카드/방행 전체가 탭 대상임을 알리는 셰브론. 틸로 칠해 "여기서 예약으로 간다"를 암시 */
+.book-chevron {
+  flex: 0 0 auto;
+  color: var(--accent);
 }
 
 /* 방별 펼침(인라인 아코디언) ------------------------------------ */
@@ -533,9 +538,24 @@ button {
   border-radius: 0 var(--r-md) var(--r-md) 0;
 }
 
+/* 방행 전체가 예약 링크. sunken 레일 안이라 호버 시 흰 surface로 살짝 떠오른다. */
 .room-row {
-  padding: var(--sp-3) 0;
+  display: block;
+  padding: var(--sp-3) var(--sp-2);
+  margin: 0 calc(-1 * var(--sp-2));
   border-bottom: 1px solid var(--border);
+  color: inherit;
+  text-decoration: none;
+  border-radius: var(--r-sm);
+  transition: background-color 0.12s ease;
+}
+
+.room-row:hover {
+  background: var(--surface);
+}
+
+.room-row:active {
+  background: var(--accent-soft);
 }
 
 .room-row:last-child {
@@ -581,22 +601,10 @@ button {
   white-space: nowrap;
 }
 
-/* 방별 예약: 요약 주버튼보다 작게(36) — 움푹 들어간 레일 안이라 자연히 종속된다 */
-.book-room {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 5px;
-  height: 36px;
-  padding: 0 var(--sp-4);
-  margin-top: var(--sp-2);
-  border-radius: var(--r-sm);
-  background: var(--accent);
-  color: var(--white);
-  font-size: var(--fs-sm);
-  font-weight: var(--fw-bold);
-  text-decoration: none;
-  box-shadow: 0 1px 2px rgba(20, 28, 42, 0.12);
+/* 방행 셰브론은 지점 카드보다 한 단계 작게 — sunken 레일 안의 종속 액션 */
+.room-row .book-chevron {
+  width: 16px;
+  height: 16px;
 }
 
 /* ============================================================
