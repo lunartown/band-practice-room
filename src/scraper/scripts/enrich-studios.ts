@@ -58,10 +58,14 @@ async function main() {
       const reviewCount = stats.totalCount;
       const keywords = stats.keywords;
 
+      // COALESCE 로 "못 받은 값은 기존 값 유지". 네이버가 빈 응답을 줘도(imageUrl=null 등)
+      // 멀쩡하던 데이터를 NULL 로 덮어쓰지 않는다. rating 은 시드(003)에서 수동 관리하므로
+      // enrich 가 건드리지 않는다(예전엔 rating=NULL 로 매번 지웠음).
       await query(
         `UPDATE studios
-         SET image_url_scraped = $2, review_count = $3,
-             review_keywords = $4::jsonb, rating = NULL
+         SET image_url_scraped = COALESCE($2, image_url_scraped),
+             review_count      = COALESCE($3, review_count),
+             review_keywords   = COALESCE($4::jsonb, review_keywords)
          WHERE id = $1`,
         [src.studio_id, imageUrl, reviewCount, keywords.length ? JSON.stringify(keywords) : null],
       );
@@ -85,6 +89,16 @@ async function main() {
 
   console.log(`\n완료: 갱신 ${updated} (이미지 ${withImage}, 키워드 ${withKeywords}), 실패 ${failed}`);
   await end();
+
+  // 처리 대상이 충분한데 이미지를 하나도 못 받았다면 네이버 차단/API 변경 같은
+  // 조직적 실패일 가능성이 크다. (이제 데이터를 덮어쓰진 않지만) 조용한 '성공'으로
+  // 묻히지 않도록 비정상 종료시켜 워크플로우에서 빨갛게 보이게 한다.
+  if (sources.rows.length >= 5 && withImage === 0) {
+    console.error(
+      '\n[enrich] 경고: 이미지를 하나도 받지 못했습니다. 네이버 접근이 차단됐을 수 있습니다(차단된 환경에서 실행?).',
+    );
+    process.exit(1);
+  }
 }
 
 main().catch((e) => {
