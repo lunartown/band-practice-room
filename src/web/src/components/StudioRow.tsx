@@ -43,6 +43,15 @@ function ClockIcon() {
   );
 }
 
+// 외부 예약 페이지로 나가는 표시. 유니코드 ↗ 대신 옵티컬 정렬된 SVG로 통일한다.
+function BookArrow() {
+  return (
+    <svg className="book-arrow" width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden>
+      <path d="M7 17L17 7M9 7h8v8" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
 function RoomRow({ room }: { room: RoomAvailability }) {
   return (
     <div className="room-row">
@@ -58,7 +67,7 @@ function RoomRow({ room }: { room: RoomAvailability }) {
       </div>
       <TimeSlots chips={room.chips} />
       <a className="book-room" href={room.bookingUrl ?? '#'} target="_blank" rel="noreferrer">
-        이 방 예약 <span className="book-arrow" aria-hidden>↗</span>
+        이 방 예약 <BookArrow />
       </a>
     </div>
   );
@@ -106,11 +115,15 @@ export function StudioRow({ studio }: StudioRowProps) {
           <div className="studio-meta">
             <span className="studio-area">{studio.areaName}</span>
             {reviewCount != null && reviewCount > 0 && (
-              <span className="studio-reviews">리뷰 {reviewCount}</span>
+              <>
+                <span className="meta-dot" aria-hidden>·</span>
+                <span className="studio-reviews">리뷰 {reviewCount}</span>
+              </>
             )}
+            <span className="meta-dot" aria-hidden>·</span>
+            <span className="studio-price">{studio.priceLabel}</span>
           </div>
         </div>
-        <div className="studio-price">{studio.priceLabel}</div>
       </div>
 
       {/* 리뷰 배지: 신원(아바타+이름) 헤더 밖, 예약 칩과 같은 게터 라인에 둔다 */}
@@ -135,7 +148,7 @@ export function StudioRow({ studio }: StudioRowProps) {
 
       {/* 카드당 단 하나의 주 액션: 합주실 예약 페이지로(거기서 방 선택) */}
       <a className="book-primary" href={studio.bookingUrl ?? '#'} target="_blank" rel="noreferrer">
-        예약하기 <span className="book-arrow" aria-hidden>↗</span>
+        예약하기 <BookArrow />
       </a>
 
       {/* 방별 보기(보조): 방 1개여도 방별 뎁스를 제공한다 */}
@@ -146,9 +159,9 @@ export function StudioRow({ studio }: StudioRowProps) {
         onClick={() => setExpanded((v) => !v)}
       >
         {expanded ? '방별 시간 접기' : `방 ${studio.rooms.length}개 · 방별로 보기`}
-        <span className="room-toggle-arrow" aria-hidden>
-          ▾
-        </span>
+        <svg className="room-toggle-arrow" width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden>
+          <path d="M7 10l5 5 5-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
       </button>
 
       {expanded && (

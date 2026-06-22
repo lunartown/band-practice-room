@@ -176,6 +176,7 @@ export function App() {
 
             {popover.kind === 'area' && (
               <>
+                <p className="popover-hint">여러 지역을 함께 고를 수 있어요</p>
                 <button
                   role="menuitemradio"
                   aria-checked={filters.areaIds.length === 0}

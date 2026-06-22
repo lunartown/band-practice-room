@@ -140,7 +140,7 @@ function formatPricePerHour(prices: number[]): string {
   const min = Math.min(...valid);
   const max = Math.max(...valid);
   const man = (won: number) => (won / 10000).toFixed(1);
-  return min === max ? `${man(min)}만원/시간` : `${man(min)}–${man(max)}만원/시간`;
+  return min === max ? `${man(min)}만원/시간` : `${man(min)}~${man(max)}만원/시간`;
 }
 
 /**

@@ -205,7 +205,7 @@ button {
   align-items: center;
   justify-content: center;
   gap: var(--sp-1);
-  min-height: 36px;
+  min-height: var(--tap-chip);
   border-radius: var(--r-md);
   padding: var(--sp-fine) var(--sp-3);
   background: var(--surface-sunken);
@@ -255,9 +255,9 @@ button {
    pill과 같은 높이의 정사각 */
 .filter-button {
   margin-left: auto;
-  width: 36px;
-  height: 36px;
-  min-width: 36px;
+  width: var(--tap-chip);
+  height: var(--tap-chip);
+  min-width: var(--tap-chip);
   padding: 0;
   background: transparent;
   color: var(--text-2);
@@ -315,11 +315,6 @@ button {
   background: var(--accent-soft);
 }
 
-.date-heading .count-pill::before {
-  content: '✓';
-  font-size: 10px;
-}
-
 .date-heading .count-pill.empty {
   color: var(--text-3);
   background: var(--surface-sunken);
@@ -371,12 +366,12 @@ button {
   min-width: 0;
 }
 
+/* 가격은 헤더 우측이 아니라 이름 아래 메타 줄에 둔다 — 길어도 합주실 이름(주인공)을
+   자르지 않는다. 메타 안에서 색·굵기로 약간 강조해 가격 가독성은 유지한다. */
 .studio-price {
-  flex: 0 0 auto;
-  align-self: center;
-  color: var(--text-2);
-  font-size: var(--fs-sm);
-  font-weight: var(--fw-semibold);
+  color: var(--text-1);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-bold);
   white-space: nowrap;
 }
 
@@ -466,7 +461,8 @@ button {
   background: var(--gray-100);
 }
 
-/* 예약하기 = 카드당 단 하나의 주(主) 액션. 솔리드 틸 + 살짝 떠 있게 */
+/* 예약하기 = 카드당 단 하나의 주(主) 액션. 리스트에 반복되므로 솔리드 대신
+   소프트 틸(tint + 강조 텍스트)로 무게를 낮춰, 카드 비교(스캐닝)를 방해하지 않게 한다. */
 .book-primary {
   display: flex;
   align-items: center;
@@ -476,12 +472,12 @@ button {
   height: 44px;
   margin-top: var(--sp-3);
   border-radius: var(--r-md);
-  background: var(--accent);
-  color: var(--white);
+  background: var(--accent-soft);
+  color: var(--accent-strong);
   font-size: var(--fs-lg);
   font-weight: var(--fw-bold);
   text-decoration: none;
-  box-shadow: 0 1px 2px rgba(20, 28, 42, 0.12);
+  box-shadow: inset 0 0 0 1px var(--accent-border);
 }
 
 .book-arrow {
@@ -493,8 +489,9 @@ button {
   display: inline-flex;
   align-items: center;
   gap: var(--sp-1);
-  margin-top: var(--sp-3);
-  padding: 0;
+  min-height: var(--tap);
+  margin-top: var(--sp-1);
+  padding: var(--sp-3) 0;
   border: 0;
   background: none;
   color: var(--text-3);
@@ -571,22 +568,24 @@ button {
   white-space: nowrap;
 }
 
-/* 방별 예약: 요약 주버튼보다 작게(36) — 움푹 들어간 레일 안이라 자연히 종속된다 */
+/* 방별 예약: 주버튼보다 작게(36) — 움푹 들어간 레일 안이라 자연히 종속된다.
+   레일 폭을 꽉 채워(좌측정렬 들쭉날쭉 제거) 정렬선을 살리고, 소프트 틸로 통일한다. */
 .book-room {
-  display: inline-flex;
+  display: flex;
   align-items: center;
   justify-content: center;
   gap: 5px;
+  width: 100%;
   height: 36px;
   padding: 0 var(--sp-4);
   margin-top: var(--sp-2);
-  border-radius: var(--r-sm);
-  background: var(--accent);
-  color: var(--white);
+  border-radius: var(--r-md);
+  background: var(--accent-soft);
+  color: var(--accent-strong);
   font-size: var(--fs-sm);
   font-weight: var(--fw-bold);
   text-decoration: none;
-  box-shadow: 0 1px 2px rgba(20, 28, 42, 0.12);
+  box-shadow: inset 0 0 0 1px var(--accent-border);
 }
 
 /* ============================================================
@@ -749,9 +748,9 @@ button {
   flex: 1;
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  justify-content: flex-start;
   gap: var(--sp-8);
-  padding: var(--sp-8) var(--gutter) calc(var(--sp-8) + var(--sp-6));
+  padding: 18vh var(--gutter) calc(var(--sp-8) + var(--sp-6));
   text-align: center;
 }
 
@@ -810,7 +809,7 @@ button {
 
 .open-area {
   min-height: var(--tap-chip);
-  border-radius: var(--r-pill);
+  border-radius: var(--r-md);
   padding: var(--sp-2) var(--sp-4);
   background: var(--surface);
   box-shadow: inset 0 0 0 1px var(--border);
@@ -830,7 +829,7 @@ button {
 .open-area-skeleton {
   width: 64px;
   height: var(--tap-chip);
-  border-radius: var(--r-pill);
+  border-radius: var(--r-md);
 }
 
 .open-all {
@@ -838,11 +837,9 @@ button {
   min-height: var(--tap);
   padding: 0 var(--sp-3);
   background: transparent;
-  color: var(--text-3);
+  color: var(--text-2);
   font-size: var(--fs-sm);
   font-weight: var(--fw-semibold);
-  text-decoration: underline;
-  text-underline-offset: 3px;
 }
 
 /* ============================================================
@@ -980,7 +977,7 @@ button {
 
 .time-range-row select {
   flex: 1;
-  border: 1.5px solid var(--gray-150);
+  border: 1.5px solid var(--gray-300);
   border-radius: var(--r-md);
   padding: var(--sp-3);
   font-size: var(--fs-md);
@@ -990,7 +987,7 @@ button {
   background: var(--surface);
   appearance: none;
   -webkit-appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg width='10' height='6' viewBox='0 0 10 6' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23adb5bd' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg width='10' height='6' viewBox='0 0 10 6' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%236b7684' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: right 12px center;
   cursor: pointer;
@@ -1064,7 +1061,7 @@ button {
 
 .filter-sheet footer button {
   height: 50px;
-  border-radius: var(--r-lg);
+  border-radius: var(--r-md);
   font-size: var(--fs-lg);
   font-weight: var(--fw-extrabold);
 }
@@ -1123,6 +1120,13 @@ button {
   }
 }
 
+.popover-hint {
+  margin: var(--sp-1) var(--sp-3) var(--sp-2);
+  font-size: var(--fs-2xs);
+  font-weight: var(--fw-medium);
+  color: var(--text-3);
+}
+
 .popover-option {
   display: flex;
   align-items: center;
@@ -1177,13 +1181,17 @@ button {
   width: var(--tap);
   height: var(--tap);
   border-radius: var(--r-md);
-  background: var(--surface-sunken);
+  background: transparent;
   color: var(--text-2);
   font-size: var(--fs-xl);
   font-weight: var(--fw-bold);
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+.calendar-nav button:not(:disabled):hover {
+  background: var(--surface-sunken);
 }
 
 .calendar-nav button:disabled {
