@@ -6,10 +6,12 @@
   "scripts": {
     "dev": "tsx watch src/main.ts",
     "start": "tsx src/main.ts",
+    "thumbnail": "tsx scripts/set-thumbnail.ts",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "pg": "^8.13.1",
+    "sharp": "^0.33.5",
     "tsx": "^4.20.3"
   },
   "devDependencies": {
