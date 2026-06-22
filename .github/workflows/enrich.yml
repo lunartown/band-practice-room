@@ -1,0 +1,44 @@
+name: Enrich studios
+
+# 합주실 대표 이미지·리뷰수·키워드를 네이버 예약에서 보강한다(image_url_scraped 등).
+# slots 스크래퍼(scrape.yml, 매시간)와 달리 자주 바뀌지 않으므로 하루 1회면 충분하다.
+# - 정기 실행(schedule): 매일 보강
+# - 수동 실행(workflow_dispatch): 필요할 때 즉시 보강
+#
+# 사전 준비: 저장소 Settings → Secrets and variables → Actions 에
+#   DATABASE_URL = Neon 연결 문자열(?sslmode=require) 등록
+# 전제: studios/studio_sources 가 이미 시드돼 있어야 한다(scrape.yml 수동 실행으로 1회 시드).
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '30 18 * * *' # 매일 03:30 KST (18:30 UTC)
+
+concurrency:
+  group: enrich
+  cancel-in-progress: false
+
+jobs:
+  enrich:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Migrate (idempotent)
+        working-directory: src/api
+        run: |
+          npm ci
+          npm run db:migrate
+
+      - name: Enrich studios (images/reviews)
+        working-directory: src/scraper
+        run: |
+          npm ci
+          npx tsx scripts/enrich-studios.ts
