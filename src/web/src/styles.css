@@ -417,26 +417,51 @@ button {
   white-space: nowrap;
 }
 
-.studio-chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--sp-fine);
+/* 비는 시간 = 정보(액션 아님). 라벨 + 플랫 텍스트로 내려서 "예약 버튼"과 분리한다 */
+.studio-times {
   margin-top: var(--sp-3);
 }
 
-/* 윤곽은 fill만으로. 흐린 보더는 일을 안 해서 제거하고, 높이를 살짝 키워 숨통을 튼다 */
-.time-chip {
-  display: inline-flex;
+.times-label {
+  display: flex;
   align-items: center;
-  gap: var(--sp-1);
-  min-height: 32px;
-  padding: var(--sp-fine) var(--sp-3);
-  border-radius: var(--r-md);
-  font-size: var(--fs-sm);
+  gap: var(--sp-fine);
+  font-size: var(--fs-2xs);
+  font-weight: var(--fw-bold);
+  color: var(--text-3);
+}
+
+.times-label svg {
+  color: var(--text-faint);
+}
+
+.times-text {
+  margin-top: var(--sp-fine);
+  font-size: var(--fs-md);
   font-weight: var(--fw-semibold);
+  color: var(--text-2);
+}
+
+/* 예약하기 = 카드당 단 하나의 주(主) 액션. 솔리드 틸 + 살짝 떠 있게 */
+.book-primary {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-fine);
+  width: 100%;
+  height: 48px;
+  margin-top: var(--sp-3);
+  border-radius: var(--r-md);
+  background: var(--accent);
+  color: var(--white);
+  font-size: var(--fs-lg);
+  font-weight: var(--fw-bold);
   text-decoration: none;
-  color: var(--accent-strong);
-  background: var(--accent-soft);
+  box-shadow: 0 1px 2px rgba(20, 28, 42, 0.12);
+}
+
+.book-arrow {
+  font-size: var(--fs-md);
 }
 
 /* 방별 펼침(인라인 아코디언) ------------------------------------ */
@@ -522,11 +547,29 @@ button {
   white-space: nowrap;
 }
 
-.room-chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--sp-fine);
+.room-times {
   margin-top: var(--sp-2);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-semibold);
+  color: var(--text-2);
+}
+
+/* 방별 예약: 요약 주버튼보다 작게(36) — 움푹 들어간 레일 안이라 자연히 종속된다 */
+.book-room {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  height: 36px;
+  padding: 0 var(--sp-4);
+  margin-top: var(--sp-2);
+  border-radius: var(--r-sm);
+  background: var(--accent);
+  color: var(--white);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-bold);
+  text-decoration: none;
+  box-shadow: 0 1px 2px rgba(20, 28, 42, 0.12);
 }
 
 /* ============================================================
