@@ -29,17 +29,35 @@ const BADGE_WORD: Record<string, string> = {
   '집중하기 좋아요': '집중',
 };
 
+// 뱃지 노출 문턱(빡세게): 아래 두 조건을 "모두" 만족한 키워드만 노출한다.
+// - MIN_COUNT: 그 키워드를 고른 최소 인원수(절대치)
+// - MIN_RATIO: 전체 리뷰 수(reviewCount) 대비 최소 비율
+// "개나소나" 붙는 걸 막기 위한 값. 더 느슨/빡세게 하려면 여기만 고치면 된다.
+export const BADGE_MIN_COUNT = 15;
+export const BADGE_MIN_RATIO = 0.3;
+
 /**
  * 리뷰 키워드를 뱃지용 단어 배열로 변환한다.
  * - count 내림차순(서버가 이미 정렬해 줌)을 유지하며 축약어로 매핑
  * - 축약 결과가 겹치면(예: 스피커 성능/음향 → 음향) 중복 제거
  * - 매핑에 없는 라벨은 제외(노이즈 방지)
+ * - 인원수/비율 문턱을 못 넘는 키워드는 제외(대표성 없는 뱃지 차단)
+ *
+ * @param reviewCount 전체 리뷰 수. 없거나 0이면 비율 판정이 불가능하므로 뱃지를 노출하지 않는다.
  */
-export function toReviewBadges(keywords: ReviewKeyword[] | undefined, limit = 3): string[] {
+export function toReviewBadges(
+  keywords: ReviewKeyword[] | undefined,
+  reviewCount: number | null | undefined,
+  limit = 3,
+): string[] {
   if (!keywords?.length) return [];
+  // 전체 리뷰 수를 모르면 "전체의 몇 %"를 판정할 수 없어 노출하지 않는다.
+  if (!reviewCount || reviewCount <= 0) return [];
   const out: string[] = [];
   const seen = new Set<string>();
-  for (const { keyword } of keywords) {
+  for (const { keyword, count } of keywords) {
+    if (count < BADGE_MIN_COUNT) continue;
+    if (count / reviewCount < BADGE_MIN_RATIO) continue;
     const word = BADGE_WORD[keyword];
     if (!word || seen.has(word)) continue;
     seen.add(word);
