@@ -88,8 +88,8 @@ export function App() {
     ? areas.filter((a) => filters.areaIds.includes(a.id)).map((a) => a.name).join('·')
     : '전체 지역';
 
-  // 모든 칩은 기본값에서 바꾼(지정한) 경우에만 활성 표시
-  const durationActive = filters.minDuration !== defaultFilters.minDuration;
+  // 시간 칩은 항상 활성. 나머지는 기본값에서 바꾼(지정한) 경우만 활성
+  const durationActive = true;
   const dateActive = filters.dates.length > 0;
   const areaActive = filters.areaIds.length > 0;
   const sheetActive =
