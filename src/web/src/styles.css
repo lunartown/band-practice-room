@@ -446,24 +446,34 @@ button {
   color: var(--text-faint);
 }
 
-/* 비는 시간 = 중립 회색 칩(슬롯 단위는 또렷, 틸 아니라 비액션). 지점·방 공통 */
+/* 비는 시간 = 정보(액션 아님). 채운 pill은 범위(09~20)가 한 묶음임은 또렷했으나
+   둥근 채움 형태 탓에 버튼처럼 보여 탭 어포던스를 유발했다. 종(種)을 바꾼다:
+   - 채움 제거(transparent) — 버튼의 1순위 신호 제거
+   - 각진 모서리(radius 10→4) — 액션 요소(칩·예약버튼)는 전부 둥금이라
+     각진 모서리가 "다른 종류=데이터"라는 신호가 된다
+   - snug 높이(min-height 32 삭제) — 버튼의 탭 패딩 제거
+   - 하한선(border)으로 범위 그룹핑은 유지, tabular-nums로 값처럼 정렬
+   지점·방 공통. */
 .time-slots {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--sp-fine);
+  gap: var(--sp-2);
   margin-top: var(--sp-2);
 }
 
 .time-slot {
   display: inline-flex;
   align-items: center;
-  min-height: 32px;
-  padding: 5px var(--sp-3);
-  border-radius: var(--r-md);
+  padding: 1px var(--sp-2);
+  border-radius: 4px;
+  border: 1px solid var(--border);
   font-size: var(--fs-sm);
-  font-weight: var(--fw-semibold);
+  font-weight: var(--fw-medium);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+  line-height: 1.55;
   color: var(--text-2);
-  background: var(--gray-100);
+  background: transparent;
 }
 
 /* 예약하기 = 카드당 단 하나의 주(主) 액션. 솔리드 틸 + 살짝 떠 있게 */
