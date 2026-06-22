@@ -215,6 +215,17 @@ button {
   white-space: nowrap;
 }
 
+/* 라벨이 길어도 칩이 줄 밖으로 넘쳐 필터 버튼을 밀어내지 않도록,
+   칩은 줄어들 수 있게 두고 안쪽 텍스트는 말줄임 처리한다. */
+.chip {
+  min-width: 0;
+}
+
+.chip > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 /* 셰브론: 텍스트 글리프 대신 옵티컬 정렬된 SVG. 무게는 라벨에 양보 */
 .chip-chevron {
   flex: 0 0 auto;
