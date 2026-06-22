@@ -435,11 +435,24 @@ button {
   color: var(--text-faint);
 }
 
-.times-text {
-  margin-top: var(--sp-fine);
-  font-size: var(--fs-md);
+/* 비는 시간 = 중립 회색 칩(슬롯 단위는 또렷, 틸 아니라 비액션). 지점·방 공통 */
+.time-slots {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-fine);
+  margin-top: var(--sp-2);
+}
+
+.time-slot {
+  display: inline-flex;
+  align-items: center;
+  min-height: 32px;
+  padding: 5px var(--sp-3);
+  border-radius: var(--r-md);
+  font-size: var(--fs-sm);
   font-weight: var(--fw-semibold);
   color: var(--text-2);
+  background: var(--gray-100);
 }
 
 /* 예약하기 = 카드당 단 하나의 주(主) 액션. 솔리드 틸 + 살짝 떠 있게 */
@@ -449,7 +462,7 @@ button {
   justify-content: center;
   gap: var(--sp-fine);
   width: 100%;
-  height: 48px;
+  height: 44px;
   margin-top: var(--sp-3);
   border-radius: var(--r-md);
   background: var(--accent);
@@ -545,13 +558,6 @@ button {
   font-size: var(--fs-xs);
   font-weight: var(--fw-bold);
   white-space: nowrap;
-}
-
-.room-times {
-  margin-top: var(--sp-2);
-  font-size: var(--fs-sm);
-  font-weight: var(--fw-semibold);
-  color: var(--text-2);
 }
 
 /* 방별 예약: 요약 주버튼보다 작게(36) — 움푹 들어간 레일 안이라 자연히 종속된다 */
