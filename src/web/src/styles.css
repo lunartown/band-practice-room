@@ -481,11 +481,13 @@ button {
    살짝 넓혀(negative margin) 행 전체가 눌리는 느낌을 주고, 호버/탭 시 옅게 깔린다. */
 .studio-main {
   display: block;
-  margin: 0 calc(-1 * var(--gutter));
-  padding: 0 var(--gutter);
+  /* 카드의 상하/좌우 패딩까지 링크가 통째로 덮게 한다(네거티브 마진으로 끌어내고
+     같은 만큼 패딩으로 복원). 이래야 상단 패딩 영역도 클릭·호버 대상이 된다.
+     라운드는 빼서 호버 회색이 카드 폭에 꽉 찬 직사각형으로 떨어지게 한다. */
+  margin: calc(-1 * var(--sp-4)) calc(-1 * var(--gutter)) 0;
+  padding: var(--sp-4) var(--gutter) 0;
   color: inherit;
   text-decoration: none;
-  border-radius: var(--r-md);
   transition: background-color 0.12s ease;
 }
 
