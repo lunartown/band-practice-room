@@ -10,12 +10,8 @@ function chipLabel(chip: AvailabilityChip): string {
   return chip.kind === 'single' ? chip.start : `${chip.start}~${chip.end}`;
 }
 
-function TimeChip({ chip, href }: { chip: AvailabilityChip; href: string | null }) {
-  return (
-    <a className="time-chip" href={href ?? '#'} target="_blank" rel="noreferrer">
-      {chipLabel(chip)}
-    </a>
-  );
+function timesText(chips: AvailabilityChip[]): string {
+  return chips.map(chipLabel).join(' · ');
 }
 
 function PersonIcon() {
@@ -23,6 +19,15 @@ function PersonIcon() {
     <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
       <circle cx="12" cy="7" r="4" />
       <path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7" />
+    </svg>
+  );
+}
+
+function ClockIcon() {
+  return (
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" aria-hidden>
+      <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="2" />
+      <path d="M12 7.5v5l3 1.8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
 }
@@ -40,11 +45,10 @@ function RoomRow({ room }: { room: RoomAvailability }) {
         )}
         <span className="room-price">{room.priceLabel}</span>
       </div>
-      <div className="room-chips">
-        {room.chips.map((chip, i) => (
-          <TimeChip key={i} chip={chip} href={room.bookingUrl} />
-        ))}
-      </div>
+      <div className="room-times">{timesText(room.chips)}</div>
+      <a className="book-room" href={room.bookingUrl ?? '#'} target="_blank" rel="noreferrer">
+        이 방 예약 <span className="book-arrow" aria-hidden>↗</span>
+      </a>
     </div>
   );
 }
@@ -59,6 +63,7 @@ export function StudioRow({ studio }: StudioRowProps) {
   // 떨어져, 행마다 좌측 정렬이 흔들리지 않게 한다.
   const showImg = Boolean(imageUrl) && !imgFailed;
   const initial = name.trim().charAt(0);
+  const singleRoom = studio.rooms.length <= 1;
 
   return (
     <div className="studio-row">
@@ -93,31 +98,43 @@ export function StudioRow({ studio }: StudioRowProps) {
         </div>
       )}
 
-      {/* 접힌 상태: 지금처럼 지점 요약 시간 칩을 그대로 노출 */}
-      <div className="studio-chips">
-        {studio.chips.map((chip, i) => (
-          <TimeChip key={i} chip={chip} href={studio.bookingUrl} />
-        ))}
+      {/* 비는 시간 = 정보(액션 아님) */}
+      <div className="studio-times">
+        <div className="times-label">
+          <ClockIcon />
+          비는 시간{singleRoom ? ' · 방 1개' : ''}
+        </div>
+        <div className="times-text">{timesText(studio.chips)}</div>
       </div>
 
-      <button
-        type="button"
-        className={`room-toggle${expanded ? ' open' : ''}`}
-        aria-expanded={expanded}
-        onClick={() => setExpanded((v) => !v)}
-      >
-        {expanded ? '방별 시간 접기' : `방 ${studio.rooms.length}개 · 방별로 보기`}
-        <span className="room-toggle-arrow" aria-hidden>
-          ▾
-        </span>
-      </button>
+      {/* 카드당 단 하나의 주 액션: 합주실 예약 페이지로(거기서 방 선택) */}
+      <a className="book-primary" href={studio.bookingUrl ?? '#'} target="_blank" rel="noreferrer">
+        예약하기 <span className="book-arrow" aria-hidden>↗</span>
+      </a>
 
-      {expanded && (
-        <div className="room-list">
-          {studio.rooms.map((room) => (
-            <RoomRow key={room.room.id} room={room} />
-          ))}
-        </div>
+      {/* 방이 여럿일 때만 방별 보기(보조). 방 1개면 위 예약 버튼으로 충분 */}
+      {!singleRoom && (
+        <>
+          <button
+            type="button"
+            className={`room-toggle${expanded ? ' open' : ''}`}
+            aria-expanded={expanded}
+            onClick={() => setExpanded((v) => !v)}
+          >
+            {expanded ? '방별 시간 접기' : `방 ${studio.rooms.length}개 · 방별로 보기`}
+            <span className="room-toggle-arrow" aria-hidden>
+              ▾
+            </span>
+          </button>
+
+          {expanded && (
+            <div className="room-list">
+              {studio.rooms.map((room) => (
+                <RoomRow key={room.room.id} room={room} />
+              ))}
+            </div>
+          )}
+        </>
       )}
     </div>
   );
