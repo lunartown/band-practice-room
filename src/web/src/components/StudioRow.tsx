@@ -80,7 +80,6 @@ export function StudioRow({ studio }: StudioRowProps) {
     else setImgFailed(true);
   };
   const initial = name.trim().charAt(0);
-  const singleRoom = studio.rooms.length <= 1;
 
   return (
     <div className="studio-row">
@@ -119,7 +118,7 @@ export function StudioRow({ studio }: StudioRowProps) {
       <div className="studio-times">
         <div className="times-label">
           <ClockIcon />
-          비는 시간{singleRoom ? ' · 방 1개' : ''}
+          비는 시간
         </div>
         <div className="times-text">{timesText(studio.chips)}</div>
       </div>
@@ -129,29 +128,25 @@ export function StudioRow({ studio }: StudioRowProps) {
         예약하기 <span className="book-arrow" aria-hidden>↗</span>
       </a>
 
-      {/* 방이 여럿일 때만 방별 보기(보조). 방 1개면 위 예약 버튼으로 충분 */}
-      {!singleRoom && (
-        <>
-          <button
-            type="button"
-            className={`room-toggle${expanded ? ' open' : ''}`}
-            aria-expanded={expanded}
-            onClick={() => setExpanded((v) => !v)}
-          >
-            {expanded ? '방별 시간 접기' : `방 ${studio.rooms.length}개 · 방별로 보기`}
-            <span className="room-toggle-arrow" aria-hidden>
-              ▾
-            </span>
-          </button>
+      {/* 방별 보기(보조): 방 1개여도 방별 뎁스를 제공한다 */}
+      <button
+        type="button"
+        className={`room-toggle${expanded ? ' open' : ''}`}
+        aria-expanded={expanded}
+        onClick={() => setExpanded((v) => !v)}
+      >
+        {expanded ? '방별 시간 접기' : `방 ${studio.rooms.length}개 · 방별로 보기`}
+        <span className="room-toggle-arrow" aria-hidden>
+          ▾
+        </span>
+      </button>
 
-          {expanded && (
-            <div className="room-list">
-              {studio.rooms.map((room) => (
-                <RoomRow key={room.room.id} room={room} />
-              ))}
-            </div>
-          )}
-        </>
+      {expanded && (
+        <div className="room-list">
+          {studio.rooms.map((room) => (
+            <RoomRow key={room.room.id} room={room} />
+          ))}
+        </div>
       )}
     </div>
   );
