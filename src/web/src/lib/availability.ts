@@ -235,8 +235,11 @@ function buildStudios(slots: Slot[], minDuration: number): StudioAvailability[] 
     });
   }
 
+  // 리뷰 많은 순으로 정렬한다(평점은 대표성이 약해 쓰지 않는다).
+  // 리뷰 수가 같거나 없으면 이름 가나다순으로 안정 정렬한다.
   return studios.sort((a, b) => {
-    const area = a.areaName.localeCompare(b.areaName, 'ko');
-    return area !== 0 ? area : a.studio.name.localeCompare(b.studio.name, 'ko');
+    const reviewA = a.studio.reviewCount ?? 0;
+    const reviewB = b.studio.reviewCount ?? 0;
+    return reviewB - reviewA || a.studio.name.localeCompare(b.studio.name, 'ko');
   });
 }
