@@ -2,17 +2,18 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { getAreas, getSlots } from './api/client';
 import type { Area, Slot } from './api/types';
 import { StudioRow } from './components/StudioRow';
-import { FilterSheet, defaultFilters, DURATION_OPTIONS } from './components/FilterSheet';
+import { FilterSheet, defaultFilters } from './components/FilterSheet';
 import type { FilterState } from './components/FilterSheet';
 import { CalendarPicker } from './components/CalendarPicker';
+import { TimeWindowPicker, timeWindowLabel } from './components/TimeWindowPicker';
 import { Popover } from './components/Popover';
 import { OpenScreen } from './components/OpenScreen';
 import { buildAvailability } from './lib/availability';
 import { dateLabel } from './lib/date';
 import { loadFilters, saveFilters } from './lib/prefs';
 
-type PopoverKind = 'duration' | 'date' | 'area';
-const POP_WIDTH: Record<PopoverKind, number> = { duration: 168, date: 340, area: 220 };
+type PopoverKind = 'time' | 'date' | 'area';
+const POP_WIDTH: Record<PopoverKind, number> = { time: 320, date: 340, area: 220 };
 interface PopoverState {
   kind: PopoverKind;
   top: number;
@@ -88,12 +89,12 @@ export function App() {
     ? areas.filter((a) => filters.areaIds.includes(a.id)).map((a) => a.name).join('·')
     : '전체 지역';
 
-  // 시간 칩은 항상 활성. 나머지는 기본값에서 바꾼(지정한) 경우만 활성
-  const durationActive = true;
+  // 기본값에서 바꾼(지정한) 경우만 활성으로 표시한다.
+  const timeActive = filters.timeWindows.length > 0;
   const dateActive = filters.dates.length > 0;
   const areaActive = filters.areaIds.length > 0;
   const sheetActive =
-    filters.timeWindows.length > 0 || filters.people !== defaultFilters.people;
+    filters.minDuration !== defaultFilters.minDuration || filters.people !== defaultFilters.people;
 
   const syncLabel = updatedAt ? formatUpdatedAt(updatedAt) : '–';
 
@@ -121,7 +122,7 @@ export function App() {
         </header>
 
         <div className="chip-row">
-          <button className={`chip strong${durationActive ? ' active' : ''}${popover?.kind === 'duration' ? ' open' : ''}`} aria-pressed={durationActive} onClick={(e) => openPopover('duration', e)}><span>{filters.minDuration}시간</span><ChevronIcon /></button>
+          <button className={`chip strong${timeActive ? ' active' : ''}${popover?.kind === 'time' ? ' open' : ''}`} aria-pressed={timeActive} onClick={(e) => openPopover('time', e)}><span>{timeWindowLabel(filters.timeWindows)}</span><ChevronIcon /></button>
           <button className={`chip${dateActive ? ' active' : ''}${popover?.kind === 'date' ? ' open' : ''}`} aria-pressed={dateActive} onClick={(e) => openPopover('date', e)}><span>{buildDateChipLabel(filters.dates)}</span><ChevronIcon /></button>
           <button className={`chip${areaActive ? ' active' : ''}${popover?.kind === 'area' ? ' open' : ''}`} aria-pressed={areaActive} onClick={(e) => openPopover('area', e)}><span>{areaChipLabel}</span><ChevronIcon /></button>
           <button className={`filter-button${sheetActive ? ' active' : ''}`} aria-pressed={sheetActive} aria-label="필터" onClick={() => setIsFilterOpen(true)}>
@@ -165,28 +166,15 @@ export function App() {
             top={popover.top}
             left={popover.left}
             width={popover.width}
-            className={popover.kind === 'date' ? 'padded' : undefined}
+            className={popover.kind === 'date' || popover.kind === 'time' ? 'padded' : undefined}
             onClose={() => setPopover(null)}
           >
-            {popover.kind === 'duration' &&
-              DURATION_OPTIONS.map((opt) => {
-                const on = filters.minDuration === opt.value;
-                return (
-                  <button
-                    key={opt.value}
-                    role="menuitemradio"
-                    aria-checked={on}
-                    className={`popover-option${on ? ' selected' : ''}`}
-                    onClick={() => {
-                      setFilters((f) => ({ ...f, minDuration: opt.value }));
-                      setPopover(null);
-                    }}
-                  >
-                    <span>{opt.label}</span>
-                    {on && <span className="pop-check">✓</span>}
-                  </button>
-                );
-              })}
+            {popover.kind === 'time' && (
+              <TimeWindowPicker
+                value={filters.timeWindows}
+                onChange={(timeWindows) => setFilters((f) => ({ ...f, timeWindows }))}
+              />
+            )}
 
             {popover.kind === 'area' && (
               <>
