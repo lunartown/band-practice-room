@@ -56,7 +56,7 @@ function RoomRow({ room }: { room: RoomAvailability }) {
 
 export function StudioRow({ studio }: StudioRowProps) {
   const { name, imageUrl, reviewCount, reviewKeywords } = studio.studio;
-  const badges = toReviewBadges(reviewKeywords);
+  const badges = toReviewBadges(reviewKeywords, reviewCount);
   const [expanded, setExpanded] = useState(false);
   const [imgFailed, setImgFailed] = useState(false);
   // 리사이즈 URL 부터 시도하고, 실패하면 원본 URL 로 한 번 더 시도(self-healing).
