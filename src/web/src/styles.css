@@ -773,8 +773,9 @@ button {
 }
 
 .open-logo {
-  font-size: 40px;
-  line-height: 1;
+  width: 88px;
+  height: 88px;
+  object-fit: contain;
 }
 
 .open-wordmark {
