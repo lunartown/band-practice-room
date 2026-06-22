@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import type { AvailabilityChip, RoomAvailability, StudioAvailability } from '../lib/availability';
 import { toReviewBadges } from '../lib/reviewKeywords';
+import { thumbnailUrl } from '../lib/imageUrl';
 
 interface StudioRowProps {
   studio: StudioAvailability;
@@ -65,7 +66,12 @@ export function StudioRow({ studio }: StudioRowProps) {
       <div className="studio-head">
         <div className="studio-avatar" aria-hidden>
           {showImg ? (
-            <img src={imageUrl!} alt="" loading="lazy" onError={() => setImgFailed(true)} />
+            <img
+              src={thumbnailUrl(imageUrl) ?? imageUrl!}
+              alt=""
+              loading="lazy"
+              onError={() => setImgFailed(true)}
+            />
           ) : (
             initial
           )}
