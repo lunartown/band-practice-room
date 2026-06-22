@@ -43,9 +43,26 @@ function ClockIcon() {
   );
 }
 
+// 카드/방행 전체가 예약 링크라는 어포던스. 큰 솔리드 버튼 대신 우측 셰브론 하나로
+// "탭하면 예약 페이지로 넘어간다"를 알린다.
+function BookChevron() {
+  return (
+    <svg className="book-chevron" width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden>
+      <path d="M9 6l6 6-6 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+// 방행 전체가 예약 링크. 우측 셰브론으로 행이 통째로 탭 대상임을 알린다.
 function RoomRow({ room }: { room: RoomAvailability }) {
   return (
-    <div className="room-row">
+    <a
+      className="room-row"
+      href={room.bookingUrl ?? '#'}
+      target="_blank"
+      rel="noreferrer"
+      aria-label={`${room.room.name} 예약`}
+    >
       <div className="room-info">
         <span className="room-name">{room.room.name}</span>
         {room.capacityLabel && (
@@ -55,12 +72,10 @@ function RoomRow({ room }: { room: RoomAvailability }) {
           </span>
         )}
         <span className="room-price">{room.priceLabel}</span>
+        <BookChevron />
       </div>
       <TimeSlots chips={room.chips} />
-      <a className="book-room" href={room.bookingUrl ?? '#'} target="_blank" rel="noreferrer">
-        이 방 예약 <span className="book-arrow" aria-hidden>↗</span>
-      </a>
-    </div>
+    </a>
   );
 }
 
@@ -93,49 +108,55 @@ export function StudioRow({ studio }: StudioRowProps) {
 
   return (
     <div className="studio-row">
-      <div className="studio-head">
-        <div className="studio-avatar" aria-hidden>
-          {showImg ? (
-            <img src={imgSrc} alt="" loading="lazy" onError={handleImgError} />
-          ) : (
-            initial
-          )}
-        </div>
-        <div className="studio-name-area">
-          <div className="studio-name">{name}</div>
-          <div className="studio-meta">
-            <span className="studio-area">{studio.areaName}</span>
-            {reviewCount != null && reviewCount > 0 && (
-              <span className="studio-reviews">리뷰 {reviewCount}</span>
+      {/* 카드 본문(헤더+비는시간) 전체가 단 하나의 주 액션 = 예약 링크.
+          우측 셰브론이 어포던스. 방별 토글·방별 링크는 중첩될 수 없으므로 형제로 분리한다. */}
+      <a
+        className="studio-main"
+        href={studio.bookingUrl ?? '#'}
+        target="_blank"
+        rel="noreferrer"
+        aria-label={`${name} 예약`}
+      >
+        <div className="studio-head">
+          <div className="studio-avatar" aria-hidden>
+            {showImg ? (
+              <img src={imgSrc} alt="" loading="lazy" onError={handleImgError} />
+            ) : (
+              initial
             )}
           </div>
+          <div className="studio-name-area">
+            <div className="studio-name">{name}</div>
+            <div className="studio-meta">
+              <span className="studio-area">{studio.areaName}</span>
+              {reviewCount != null && reviewCount > 0 && (
+                <span className="studio-reviews">리뷰 {reviewCount}</span>
+              )}
+            </div>
+          </div>
+          <div className="studio-price">{studio.priceLabel}</div>
+          <BookChevron />
         </div>
-        <div className="studio-price">{studio.priceLabel}</div>
-      </div>
 
-      {/* 리뷰 배지: 신원(아바타+이름) 헤더 밖, 예약 칩과 같은 게터 라인에 둔다 */}
-      {badges.length > 0 && (
-        <div className="review-badges">
-          {badges.map((word) => (
-            <span key={word} className="review-badge">
-              {word}
-            </span>
-          ))}
+        {/* 리뷰 배지: 신원(아바타+이름) 헤더 밖, 예약 칩과 같은 게터 라인에 둔다 */}
+        {badges.length > 0 && (
+          <div className="review-badges">
+            {badges.map((word) => (
+              <span key={word} className="review-badge">
+                {word}
+              </span>
+            ))}
+          </div>
+        )}
+
+        {/* 비는 시간 = 정보(액션 아님) */}
+        <div className="studio-times">
+          <div className="times-label">
+            <ClockIcon />
+            비는 시간
+          </div>
+          <TimeSlots chips={studio.chips} />
         </div>
-      )}
-
-      {/* 비는 시간 = 정보(액션 아님) */}
-      <div className="studio-times">
-        <div className="times-label">
-          <ClockIcon />
-          비는 시간
-        </div>
-        <TimeSlots chips={studio.chips} />
-      </div>
-
-      {/* 카드당 단 하나의 주 액션: 합주실 예약 페이지로(거기서 방 선택) */}
-      <a className="book-primary" href={studio.bookingUrl ?? '#'} target="_blank" rel="noreferrer">
-        예약하기 <span className="book-arrow" aria-hidden>↗</span>
       </a>
 
       {/* 방별 보기(보조): 방 1개여도 방별 뎁스를 제공한다 */}
