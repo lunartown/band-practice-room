@@ -234,6 +234,7 @@ function SkeletonList() {
           {[0, 1, 2].map((r) => (
             <div className="studio-row" key={r}>
               <div className="studio-head">
+                <span className="skeleton sk-avatar" />
                 <div className="studio-name-area">
                   <span className="skeleton sk-title" />
                   <span className="skeleton sk-sub" />

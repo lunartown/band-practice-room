@@ -53,15 +53,23 @@ export function StudioRow({ studio }: StudioRowProps) {
   const { name, imageUrl, reviewCount, reviewKeywords } = studio.studio;
   const badges = toReviewBadges(reviewKeywords);
   const [expanded, setExpanded] = useState(false);
+  const [imgFailed, setImgFailed] = useState(false);
+
+  // 아바타는 항상 렌더한다. 이미지가 없거나(또는 로드 실패하면) 이니셜 폴백으로
+  // 떨어져, 행마다 좌측 정렬이 흔들리지 않게 한다.
+  const showImg = Boolean(imageUrl) && !imgFailed;
+  const initial = name.trim().charAt(0);
 
   return (
     <div className="studio-row">
       <div className="studio-head">
-        {imageUrl && (
-          <div className="studio-avatar" aria-hidden>
-            <img src={imageUrl} alt="" loading="lazy" />
-          </div>
-        )}
+        <div className="studio-avatar" aria-hidden>
+          {showImg ? (
+            <img src={imageUrl!} alt="" loading="lazy" onError={() => setImgFailed(true)} />
+          ) : (
+            initial
+          )}
+        </div>
         <div className="studio-name-area">
           <div className="studio-name">{name}</div>
           <div className="studio-meta">
@@ -70,18 +78,20 @@ export function StudioRow({ studio }: StudioRowProps) {
               <span className="studio-reviews">리뷰 {reviewCount}</span>
             )}
           </div>
-          {badges.length > 0 && (
-            <div className="review-badges">
-              {badges.map((word) => (
-                <span key={word} className="review-badge">
-                  {word}
-                </span>
-              ))}
-            </div>
-          )}
         </div>
         <div className="studio-price">{studio.priceLabel}</div>
       </div>
+
+      {/* 리뷰 배지: 신원(아바타+이름) 헤더 밖, 예약 칩과 같은 게터 라인에 둔다 */}
+      {badges.length > 0 && (
+        <div className="review-badges">
+          {badges.map((word) => (
+            <span key={word} className="review-badge">
+              {word}
+            </span>
+          ))}
+        </div>
+      )}
 
       {/* 접힌 상태: 지금처럼 지점 요약 시간 칩을 그대로 노출 */}
       <div className="studio-chips">

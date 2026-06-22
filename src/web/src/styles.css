@@ -579,7 +579,7 @@ button {
 }
 
 .sk-heading { width: 88px; height: 13px; }
-.sk-avatar { flex: 0 0 auto; width: 40px; height: 40px; border-radius: var(--r-md); }
+.sk-avatar { flex: 0 0 auto; width: 44px; height: 44px; border-radius: var(--r-md); }
 .sk-title { width: 55%; height: 15px; }
 .sk-sub { width: 32%; height: 12px; margin-top: var(--sp-fine); }
 .sk-price { width: 48px; height: 13px; }
