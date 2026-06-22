@@ -85,9 +85,7 @@ export function App() {
 
   const totalStudios = dateGroups.reduce((sum, g) => sum + g.studios.length, 0);
 
-  const areaChipLabel = filters.areaIds.length
-    ? areas.filter((a) => filters.areaIds.includes(a.id)).map((a) => a.name).join('·')
-    : '전체 지역';
+  const areaChipLabel = buildAreaChipLabel(areas, filters.areaIds);
 
   // 기본값에서 바꾼(지정한) 경우만 활성으로 표시한다.
   const timeActive = filters.timeWindows.length > 0;
@@ -338,6 +336,15 @@ function ChevronIcon() {
 function buildDateChipLabel(dates: string[]) {
   if (dates.length === 0) return '일주일 내';
   return `${dates.length}일 선택`;
+}
+
+// 선택한 지역을 모두 이어 붙이면 칩이 길어져 옆의 필터 버튼을 밀어낸다.
+// 1곳은 이름 그대로, 2곳부터는 "첫 지역 외 N" 으로 묶어 칩 길이를 고정한다.
+function buildAreaChipLabel(areas: Area[], areaIds: number[]) {
+  if (areaIds.length === 0) return '전체 지역';
+  const selected = areas.filter((a) => areaIds.includes(a.id));
+  if (selected.length <= 1) return selected[0]?.name ?? '전체 지역';
+  return `${selected[0].name} 외 ${selected.length - 1}`;
 }
 
 function formatUpdatedAt(date: Date) {
