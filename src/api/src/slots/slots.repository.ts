@@ -107,12 +107,26 @@ export class SlotsRepository {
           sl.price,
           sl.price_source,
           sl.scraped_at,
-          -- 방별 예약 링크: room_sources.url 이 있으면 그대로,
-          -- 없으면 합주실 URL의 /items/{대표} 를 그 방의 bizItemId 로 치환해 방 단위로 연결.
+          -- 방별 예약 링크 + 그 슬롯의 날짜(startDate)까지 실어 보낸다.
+          --  ① room_sources.url 이 따로 있으면 그대로 쓰되 startDate 만 덧붙임.
+          --  ② 합주실 소스 + 방 bizItemId 가 있으면, 합주실 URL이 bare(/items/ 없음)든
+          --     deep든 상관없이 booking/{typeId}/bizes/{bizId}/items/{bizItemId} 를
+          --     부품으로 직접 재구성한다(기존 regexp 치환은 bare URL에서 동작 안 함).
+          --  ③ 그 외엔 합주실 일반 링크에 startDate 만 덧붙임.
           CASE
-            WHEN rs.url IS NOT NULL THEN rs.url
+            WHEN rs.url IS NOT NULL
+              THEN rs.url || (CASE WHEN rs.url LIKE '%?%' THEN '&' ELSE '?' END)
+                   || 'startDate=' || sl.date::text
             WHEN ss.url IS NOT NULL AND rs.external_key IS NOT NULL
-              THEN regexp_replace(ss.url, '/items/[^/?]+', '/items/' || rs.external_key)
+              THEN 'https://m.booking.naver.com/booking/'
+                   || COALESCE(substring(ss.url from '/booking/([0-9]+)/'), '10')
+                   || '/bizes/'
+                   || COALESCE(ss.external_key, substring(ss.url from '/bizes/([0-9]+)'))
+                   || '/items/' || rs.external_key
+                   || '?startDate=' || sl.date::text
+            WHEN ss.url IS NOT NULL
+              THEN ss.url || (CASE WHEN ss.url LIKE '%?%' THEN '&' ELSE '?' END)
+                   || 'startDate=' || sl.date::text
             ELSE ss.url
           END AS booking_url,
           s.id      AS studio_id,
