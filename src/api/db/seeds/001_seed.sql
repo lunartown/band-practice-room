@@ -25,14 +25,18 @@ VALUES
   (1, 1)
 ON CONFLICT (studio_id, area_id) DO NOTHING;
 
-INSERT INTO sources (id, name, url, auth_kind, is_active)
+-- code 컬럼은 006 마이그레이션에서 추가된다(migrate → seed 순서 보장).
+INSERT INTO sources (id, name, url, auth_kind, credential_key, is_active, code)
 VALUES
-  (1, '네이버 예약', 'https://booking.naver.com/', 'NONE', true)
+  (1, '네이버 예약', 'https://booking.naver.com/', 'NONE', NULL, true, 'naver'),
+  (2, '스페이스클라우드', 'https://www.spacecloud.kr/', 'MANUAL_SESSION', 'SPACECLOUD_API_TOKEN', true, 'spacecloud')
 ON CONFLICT (id) DO UPDATE SET
   name = EXCLUDED.name,
   url = EXCLUDED.url,
   auth_kind = EXCLUDED.auth_kind,
-  is_active = EXCLUDED.is_active;
+  credential_key = EXCLUDED.credential_key,
+  is_active = EXCLUDED.is_active,
+  code = EXCLUDED.code;
 
 -- url: 네이버 예약 모바일 URL (스크래퍼가 이 URL로 접근)
 INSERT INTO studio_sources (studio_id, source_id, external_key, url)

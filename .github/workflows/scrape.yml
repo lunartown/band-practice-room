@@ -22,6 +22,8 @@ jobs:
     timeout-minutes: 30
     env:
       DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      # 스페이스클라우드 가용성 API 가 개인 토큰을 요구하면 시크릿으로 주입(없으면 토큰 없이 시도).
+      SPACECLOUD_API_TOKEN: ${{ secrets.SPACECLOUD_API_TOKEN }}
       RUN_ONCE: 'true'
     steps:
       - uses: actions/checkout@v4
@@ -41,7 +43,7 @@ jobs:
         working-directory: src/api
         run: npm run db:seed
 
-      - name: Scrape Naver → slots
+      - name: Scrape (Naver + SpaceCloud) → slots
         working-directory: src/scraper
         run: |
           npm ci

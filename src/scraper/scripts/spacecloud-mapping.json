@@ -1,0 +1,12 @@
+{
+  "_comment": "스페이스클라우드 합주실 매핑 수집표. 키=합주실명(또는 002 slug), spaceId=스페이스클라우드 space id, rooms[].external_key='productId:reservationTypeId'. 브라우저 개발자도구 네트워크 탭에서 날짜 클릭 시 뜨는 GET /products/{productId}/prices 요청으로 값을 채운다. 채운 뒤 004_spacecloud_sources.sql 에 옮긴다.",
+  "_example": {
+    "한스": {
+      "spaceId": "3452",
+      "url": "https://www.spacecloud.kr/space/3452",
+      "rooms": [
+        { "name": "A룸", "external_key": "116331:203716" }
+      ]
+    }
+  }
+}
