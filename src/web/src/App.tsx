@@ -11,6 +11,7 @@ import { OpenScreen } from './components/OpenScreen';
 import { buildAvailability } from './lib/availability';
 import { dateLabel } from './lib/date';
 import { loadFilters, saveFilters } from './lib/prefs';
+import { useFavorites } from './lib/useFavorites';
 
 type PopoverKind = 'time' | 'date' | 'area';
 const POP_WIDTH: Record<PopoverKind, number> = { time: 320, date: 340, area: 220 };
@@ -30,7 +31,9 @@ export function App() {
   // 저장된 조건이 있으면 오픈 화면을 건너뛰고 바로 결과로 진입한다.
   const [entered, setEntered] = useState(savedFilters !== null);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [favOnly, setFavOnly] = useState(false);
   const [popover, setPopover] = useState<PopoverState | null>(null);
+  const favorites = useFavorites();
   const [error, setError] = useState<string | null>(null);
   const [areasError, setAreasError] = useState(false);
   const [updatedAt, setUpdatedAt] = useState<Date | null>(null);
@@ -89,7 +92,17 @@ export function App() {
     [slots, responseDates, filters.minDuration],
   );
 
-  const totalStudios = dateGroups.reduce((sum, g) => sum + g.studios.length, 0);
+  // 즐겨찾기만 보기: 즐겨찾은 합주실만 남긴다(빈 날도 헤더는 유지해 흐름을 보존).
+  const visibleGroups = useMemo(() => {
+    if (!favOnly) return dateGroups;
+    return dateGroups.map((g) => ({
+      ...g,
+      studios: g.studios.filter((s) => favorites.has(s.studio.id)),
+    }));
+  }, [dateGroups, favOnly, favorites]);
+
+  const totalStudios = visibleGroups.reduce((sum, g) => sum + g.studios.length, 0);
+  const hasFavorites = favorites.size > 0;
 
   const areaChipLabel = buildAreaChipLabel(areas, filters.areaIds);
 
@@ -129,6 +142,14 @@ export function App() {
           <button className={`chip${timeActive ? ' active' : ''}${popover?.kind === 'time' ? ' open' : ''}`} aria-pressed={timeActive} onClick={(e) => openPopover('time', e)}><span>{timeWindowLabel(filters.timeWindows)}</span><ChevronIcon /></button>
           <button className={`chip${dateActive ? ' active' : ''}${popover?.kind === 'date' ? ' open' : ''}`} aria-pressed={dateActive} onClick={(e) => openPopover('date', e)}><span>{buildDateChipLabel(filters.dates)}</span><ChevronIcon /></button>
           <button className={`chip${areaActive ? ' active' : ''}${popover?.kind === 'area' ? ' open' : ''}`} aria-pressed={areaActive} onClick={(e) => openPopover('area', e)}><span>{areaChipLabel}</span><ChevronIcon /></button>
+          <button
+            className={`fav-chip${favOnly ? ' active' : ''}`}
+            aria-pressed={favOnly}
+            aria-label="즐겨찾기만 보기"
+            onClick={() => setFavOnly((v) => !v)}
+          >
+            <HeartChipIcon filled={favOnly} />
+          </button>
           <button className={`filter-button${sheetActive ? ' active' : ''}`} aria-pressed={sheetActive} aria-label="필터" onClick={() => setIsFilterOpen(true)}>
             <FilterIcon />
           </button>
@@ -140,10 +161,12 @@ export function App() {
         <div className={`result-list${loading && totalStudios > 0 ? ' is-refreshing' : ''}`}>
           {loading && totalStudios === 0 ? (
             <SkeletonList />
+          ) : favOnly && totalStudios === 0 ? (
+            <FavoritesEmpty hasFavorites={hasFavorites} onShowAll={() => setFavOnly(false)} />
           ) : totalStudios === 0 ? (
             <EmptyState filters={filters} setFilters={setFilters} />
           ) : (
-            dateGroups.map((group) => (
+            visibleGroups.map((group) => (
               <section className="date-section" key={group.date}>
                 <div className="date-heading">
                   <span>{dateLabel(group.date)}</span>
@@ -157,6 +180,10 @@ export function App() {
                   group.studios.map((studio) => (
                     <StudioRow key={studio.studio.id} studio={studio} />
                   ))
+                ) : favOnly ? (
+                  <div className="empty-day">
+                    <span>이 날은 즐겨찾기한 곳이 비어 있어요</span>
+                  </div>
                 ) : (
                   <EmptyDay minDuration={filters.minDuration} setFilters={setFilters} />
                 )}
@@ -319,6 +346,47 @@ function EmptyState({ filters, setFilters }: { filters: FilterState; setFilters:
           ))}
         </div>
       )}
+    </div>
+  );
+}
+
+function HeartChipIcon({ filled }: { filled: boolean }) {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill={filled ? 'currentColor' : 'none'} style={{ display: 'block' }} aria-hidden>
+      <path
+        d="M12 20.5l-1.45-1.32C5.4 14.5 2 11.42 2 7.65 2 4.6 4.42 2.2 7.5 2.2c1.74 0 3.41.81 4.5 2.1 1.09-1.29 2.76-2.1 4.5-2.1 3.08 0 5.5 2.4 5.5 5.45 0 3.77-3.4 6.85-8.55 11.53L12 20.5z"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+function FavoritesEmpty({ hasFavorites, onShowAll }: { hasFavorites: boolean; onShowAll: () => void }) {
+  return (
+    <div className="empty-state">
+      <div className="empty-icon">
+        <svg width="30" height="30" viewBox="0 0 24 24" fill="none">
+          <path
+            d="M12 20.5l-1.45-1.32C5.4 14.5 2 11.42 2 7.65 2 4.6 4.42 2.2 7.5 2.2c1.74 0 3.41.81 4.5 2.1 1.09-1.29 2.76-2.1 4.5-2.1 3.08 0 5.5 2.4 5.5 5.45 0 3.77-3.4 6.85-8.55 11.53L12 20.5z"
+            stroke="#adb5bd"
+            strokeWidth="2"
+            strokeLinejoin="round"
+          />
+        </svg>
+      </div>
+      <h2>{hasFavorites ? '즐겨찾기한 곳이 지금은 비어 있어요' : '아직 즐겨찾기한 합주실이 없어요'}</h2>
+      <p>
+        {hasFavorites ? (
+          <>즐겨찾은 합주실 중 이 조건에 맞는 빈 시간이<br />없어요. 날짜·시간을 넓혀보세요</>
+        ) : (
+          <>합주실 카드의 하트를 누르면 여기에 모여요.<br />자주 가는 곳을 저장해두고 빠르게 확인하세요</>
+        )}
+      </p>
+      <div className="empty-actions">
+        <button onClick={onShowAll}>전체 합주실 보기</button>
+      </div>
     </div>
   );
 }

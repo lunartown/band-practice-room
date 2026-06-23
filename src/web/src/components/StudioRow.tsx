@@ -2,6 +2,9 @@ import { useEffect, useState } from 'react';
 import type { AvailabilityChip, RoomAvailability, StudioAvailability } from '../lib/availability';
 import { toReviewBadges } from '../lib/reviewKeywords';
 import { thumbnailUrl } from '../lib/imageUrl';
+import { useFavorites } from '../lib/useFavorites';
+import { toggleFavorite } from '../lib/favorites';
+import { shareStudio } from '../lib/share';
 
 interface StudioRowProps {
   studio: StudioAvailability;
@@ -53,6 +56,29 @@ function BookChevron() {
   );
 }
 
+function HeartIcon({ filled }: { filled: boolean }) {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill={filled ? 'currentColor' : 'none'} aria-hidden>
+      <path
+        d="M12 20.5l-1.45-1.32C5.4 14.5 2 11.42 2 7.65 2 4.6 4.42 2.2 7.5 2.2c1.74 0 3.41.81 4.5 2.1 1.09-1.29 2.76-2.1 4.5-2.1 3.08 0 5.5 2.4 5.5 5.45 0 3.77-3.4 6.85-8.55 11.53L12 20.5z"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+function ShareIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden>
+      <path d="M12 3v12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+      <path d="M8 7l4-4 4 4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M5 12v6a2 2 0 002 2h10a2 2 0 002-2v-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
 // 방행 전체가 예약 링크. 우측 셰브론으로 행이 통째로 탭 대상임을 알린다.
 function RoomRow({ room }: { room: RoomAvailability }) {
   return (
@@ -80,8 +106,10 @@ function RoomRow({ room }: { room: RoomAvailability }) {
 }
 
 export function StudioRow({ studio }: StudioRowProps) {
-  const { name, imageUrl, reviewCount, reviewKeywords } = studio.studio;
+  const { id, name, imageUrl, reviewCount, reviewKeywords } = studio.studio;
   const badges = toReviewBadges(reviewKeywords, reviewCount);
+  const favorites = useFavorites();
+  const isFav = favorites.has(id);
   const [expanded, setExpanded] = useState(false);
   const [imgFailed, setImgFailed] = useState(false);
   // 리사이즈 URL 부터 시도하고, 실패하면 원본 URL 로 한 번 더 시도(self-healing).
@@ -159,18 +187,37 @@ export function StudioRow({ studio }: StudioRowProps) {
         </div>
       </a>
 
-      {/* 방별 보기(보조): 방 1개여도 방별 뎁스를 제공한다 */}
-      <button
-        type="button"
-        className={`room-toggle${expanded ? ' open' : ''}`}
-        aria-expanded={expanded}
-        onClick={() => setExpanded((v) => !v)}
-      >
-        {expanded ? '방별 시간 접기' : `방 ${studio.rooms.length}개 · 방별로 보기`}
-        <span className="room-toggle-arrow" aria-hidden>
-          ▾
-        </span>
-      </button>
+      {/* 하단 보조 액션: 즐겨찾기 + 방별 보기(주) + 네이티브 공유 */}
+      <div className="studio-actions">
+        <button
+          type="button"
+          className={`fav-button${isFav ? ' on' : ''}`}
+          aria-pressed={isFav}
+          aria-label={isFav ? `${name} 즐겨찾기 해제` : `${name} 즐겨찾기`}
+          onClick={() => toggleFavorite(id)}
+        >
+          <HeartIcon filled={isFav} />
+        </button>
+        <button
+          type="button"
+          className={`room-toggle${expanded ? ' open' : ''}`}
+          aria-expanded={expanded}
+          onClick={() => setExpanded((v) => !v)}
+        >
+          {expanded ? '방별 시간 접기' : `방 ${studio.rooms.length}개 · 방별로 보기`}
+          <span className="room-toggle-arrow" aria-hidden>
+            ▾
+          </span>
+        </button>
+        <button
+          type="button"
+          className="share-button"
+          aria-label={`${name} 공유`}
+          onClick={() => shareStudio(name, studio.bookingUrl)}
+        >
+          <ShareIcon />
+        </button>
+      </div>
 
       {expanded && (
         <div className="room-list">
