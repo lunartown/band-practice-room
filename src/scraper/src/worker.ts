@@ -1,6 +1,7 @@
 import { query } from './db.js';
 import { NaverReservationScraper } from './naver/scraper.js';
-import type { AvailabilitySlot, ScrapeRoom } from './naver/types.js';
+import { SpaceCloudScraper } from './spacecloud/scraper.js';
+import type { AvailabilitySlot, ScrapeRoom, StudioScrapeResult } from './types.js';
 
 const MAX_ATTEMPTS = 5;
 // 수집 성공 후 재수집까지 간격(분). 운영에선 10 정도가 적당하나, 개발 단계라 기본 60.
@@ -21,6 +22,7 @@ interface JobRow {
 interface StudioSourceRow {
   studio_id: string;
   source_id: string;
+  source_code: string | null;
   url: string | null;
   external_key: string | null;
   studio_name: string;
@@ -29,7 +31,7 @@ interface StudioSourceRow {
 interface RoomRow {
   id: string;
   name: string;
-  biz_item_id: string;
+  external_key: string;
 }
 
 export async function runOnce(): Promise<boolean> {
@@ -39,21 +41,22 @@ export async function runOnce(): Promise<boolean> {
   if (!job) return false;
 
   const source = await getStudioSource(job.studio_source_id);
-  if (!source || !source.url || !source.external_key) {
-    await failJob(job.id, 'studio_source URL/식별자가 없습니다', 'UNKNOWN');
-    return true;
-  }
-
-  const businessTypeId = parseBusinessTypeId(source.url);
-  if (businessTypeId === null) {
-    await failJob(job.id, `URL에서 businessTypeId 파싱 실패: ${source.url}`, 'UNKNOWN');
+  if (!source) {
+    await failJob(job.id, 'studio_source 를 찾을 수 없습니다', 'UNKNOWN');
     return true;
   }
 
   const rooms = await getMappedRooms(source.studio_id, source.source_id);
   if (rooms.length === 0) {
-    // 네이버 매핑(room_sources)이 없는 스튜디오 → 수집 대상 아님. 재시도해도 의미 없음.
-    await failJob(job.id, '네이버에 매핑된 방이 없습니다', 'UNKNOWN');
+    // 매핑(room_sources)이 없는 스튜디오 → 수집 대상 아님. 재시도해도 의미 없음.
+    await failJob(job.id, '매핑된 방이 없습니다(room_sources)', 'UNKNOWN');
+    return true;
+  }
+
+  // 소스 종류(naver/spacecloud)에 따라 스크래퍼를 고른다.
+  const dispatch = buildScraper(source, rooms, job.studio_source_id);
+  if ('error' in dispatch) {
+    await failJob(job.id, dispatch.error, 'UNKNOWN');
     return true;
   }
 
@@ -62,23 +65,7 @@ export async function runOnce(): Promise<boolean> {
 
   try {
     const roomIdByName = new Map(rooms.map((r) => [r.name, r.id]));
-    const scrapeRooms: ScrapeRoom[] = rooms.map((r) => ({
-      roomName: r.name,
-      bizItemId: r.biz_item_id,
-    }));
-
-    const scraper = new NaverReservationScraper({ debug: process.env.DEBUG === 'true' });
-    const result = await scraper.scrape(
-      {
-        studioSourceId: job.studio_source_id,
-        studioName: source.studio_name,
-        businessId: source.external_key,
-        businessTypeId,
-        rooms: scrapeRooms,
-      },
-      job.date_from,
-      job.date_to,
-    );
+    const result = await dispatch.scrape(job.date_from, job.date_to);
 
     const erroredRooms = result.rooms.filter((r) => r.error);
     if (erroredRooms.length === result.rooms.length) {
@@ -146,6 +133,71 @@ function parseBusinessTypeId(url: string): number | null {
   return m ? Number(m[1]) : null;
 }
 
+// source.code 가 없는(마이그레이션 전) DB 대비: URL 호스트로 소스 종류를 추정.
+function resolveSourceCode(source: StudioSourceRow): string {
+  if (source.source_code) return source.source_code;
+  if (source.url?.includes('spacecloud')) return 'spacecloud';
+  return 'naver';
+}
+
+type Dispatch =
+  | { scrape: (dateFrom: string, dateTo: string) => Promise<StudioScrapeResult> }
+  | { error: string };
+
+// 소스 종류별로 적절한 스크래퍼를 구성한다. 영구 실패할 설정 오류는 { error } 로 돌려준다.
+function buildScraper(source: StudioSourceRow, rooms: RoomRow[], studioSourceId: string): Dispatch {
+  const debug = process.env.DEBUG === 'true';
+  const code = resolveSourceCode(source);
+
+  if (code === 'spacecloud') {
+    const scRooms = [];
+    for (const r of rooms) {
+      // external_key = "productId:reservationTypeId"
+      const [productId, reservationTypeId] = r.external_key.split(':');
+      if (!productId || !reservationTypeId) {
+        return {
+          error: `스페이스클라우드 external_key 형식 오류(productId:reservationTypeId): ${r.external_key}`,
+        };
+      }
+      scRooms.push({ roomName: r.name, productId, reservationTypeId });
+    }
+    const scraper = new SpaceCloudScraper(
+      { studioName: source.studio_name, rooms: scRooms },
+      { debug },
+    );
+    return { scrape: (from, to) => scraper.scrape(from, to) };
+  }
+
+  // 기본: 네이버
+  if (!source.url || !source.external_key) {
+    return { error: 'studio_source URL/식별자가 없습니다(naver)' };
+  }
+  const businessTypeId = parseBusinessTypeId(source.url);
+  if (businessTypeId === null) {
+    return { error: `URL에서 businessTypeId 파싱 실패: ${source.url}` };
+  }
+  const scrapeRooms: ScrapeRoom[] = rooms.map((r) => ({
+    roomName: r.name,
+    externalKey: r.external_key,
+  }));
+  const scraper = new NaverReservationScraper({ debug });
+  const businessId = source.external_key;
+  return {
+    scrape: (from, to) =>
+      scraper.scrape(
+        {
+          studioSourceId,
+          studioName: source.studio_name,
+          businessId,
+          businessTypeId,
+          rooms: scrapeRooms,
+        },
+        from,
+        to,
+      ),
+  };
+}
+
 async function provisionJobs() {
   // PENDING/RUNNING 잡이 있거나, 최근(6시간 내) 영구 FAILED 한 스튜디오는 재생성하지 않는다.
   // → 일시 장애로 죽은 잡을 곧바로 되살려 백오프를 무력화하던 문제를 막는다.
@@ -197,9 +249,11 @@ async function claimJob(): Promise<JobRow | null> {
 async function getStudioSource(studioSourceId: string): Promise<StudioSourceRow | null> {
   const result = await query<StudioSourceRow>(
     `
-    SELECT ss.studio_id, ss.source_id, ss.url, ss.external_key, st.name AS studio_name
+    SELECT ss.studio_id, ss.source_id, src.code AS source_code,
+           ss.url, ss.external_key, st.name AS studio_name
     FROM studio_sources ss
     INNER JOIN studios st ON st.id = ss.studio_id
+    INNER JOIN sources src ON src.id = ss.source_id
     WHERE ss.id = $1
   `,
     [studioSourceId],
@@ -207,11 +261,11 @@ async function getStudioSource(studioSourceId: string): Promise<StudioSourceRow 
   return result.rows[0] ?? null;
 }
 
-// 네이버 bizItemId 가 매핑된(room_sources 가 있는) 활성 방만 가져온다.
+// 해당 소스의 external_key 가 매핑된(room_sources 가 있는) 활성 방만 가져온다.
 async function getMappedRooms(studioId: string, sourceId: string): Promise<RoomRow[]> {
   const result = await query<RoomRow>(
     `
-    SELECT r.id, r.name, rs.external_key AS biz_item_id
+    SELECT r.id, r.name, rs.external_key AS external_key
     FROM rooms r
     INNER JOIN room_sources rs ON rs.room_id = r.id AND rs.source_id = $2
     WHERE r.studio_id = $1 AND r.is_active = true AND rs.external_key IS NOT NULL
