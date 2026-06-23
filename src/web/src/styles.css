@@ -338,68 +338,74 @@ button {
   border-bottom: 1px solid var(--border-subtle);
 }
 
-/* 하단 액션 줄: [즐겨찾기] [방별 보기(늘어남)] [공유].
-   주 액션(예약)은 카드 본문 링크이므로, 여기는 모두 보조 액션이다. */
+/* 하단 액션 줄: [방별 보기(늘어남)] ............ [즐겨찾기][공유].
+   주 액션(예약)은 카드 본문 링크이므로, 여기는 모두 보조 액션이다.
+   회색 박스 대신 가벼운 고스트 아이콘으로 카드의 절제된 톤을 유지한다. */
 .studio-actions {
   display: flex;
   align-items: center;
-  gap: var(--sp-2);
+  gap: var(--sp-1);
   margin-top: var(--sp-3);
 }
 
-/* 행에서 직접 배치하므로 토글 자체 margin-top 은 제거(정렬은 컨테이너가 잡는다). */
+/* 방별 보기는 좌측 텍스트 링크로 두고, 아이콘 버튼들을 우측으로 민다. */
 .studio-actions .room-toggle {
   flex: 1 1 auto;
   margin-top: 0;
 }
 
-/* 즐겨찾기/공유: 같은 정사각 고스트 버튼. 즐겨찾기는 켜지면 핑크로 채워진다. */
+/* 즐겨찾기/공유: 배경 없는 고스트 아이콘. "비는 시간"처럼 플랫하게 두어
+   주 액션(예약 셰브론)과 무게로 구분한다. */
 .fav-button,
 .share-button {
   flex: 0 0 auto;
   display: grid;
   place-items: center;
-  width: 40px;
-  height: 36px;
-  border-radius: var(--r-md);
-  color: var(--text-3);
-  background: var(--surface-sunken);
+  width: 34px;
+  height: 34px;
+  border-radius: var(--r-sm);
+  color: var(--text-faint);
+  background: transparent;
 }
 
 .fav-button {
-  transition: transform 0.12s ease, color 0.12s ease, background-color 0.12s ease;
+  transition: transform 0.12s ease, color 0.12s ease;
 }
 
 .fav-button:active {
-  transform: scale(0.9);
+  transform: scale(0.86);
 }
 
+/* 저장됨: 앱 단일 액센트(틸)로 채운다. 별도 색(핑크)을 들이지 않는다. */
 .fav-button.on {
-  color: #f0356f;
-  background: rgba(240, 53, 111, 0.12);
+  color: var(--accent);
 }
 
 .share-button:active {
-  background: var(--accent-soft);
   color: var(--accent-strong);
 }
 
-/* 즐겨찾기만 보기 칩: 필터 버튼과 같은 정사각 고스트 버튼, 켜지면 핑크 채움 */
+/* 즐겨찾기만 보기 칩: 옆 필터 버튼과 똑같은 정사각 고스트(보더 링),
+   켜지면 액센트(틸) 솔리드로 채운다. 두 아이콘 버튼은 우측에 붙인다. */
 .fav-chip {
-  flex: 0 0 auto;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 36px;
+  margin-left: auto;
   width: 36px;
-  border-radius: var(--r-md);
-  background: var(--surface-sunken);
-  color: var(--text-3);
+  height: 36px;
+  min-width: 36px;
+  padding: 0;
+  background: transparent;
+  color: var(--text-2);
+  box-shadow: inset 0 0 0 1px var(--border);
+}
+
+.fav-chip + .filter-button {
+  margin-left: var(--sp-2);
 }
 
 .fav-chip.active {
-  background: rgba(240, 53, 111, 0.12);
-  color: #f0356f;
+  background: var(--accent);
+  color: var(--white);
+  box-shadow: none;
 }
 
 /* 헤더: 썸네일 | 이름·지역 | 가격 — 썸네일 높이가 이름·지역 영역과 맞는다 */
