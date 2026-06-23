@@ -388,6 +388,9 @@ button {
 /* 즐겨찾기만 보기 칩: 옆 필터 버튼과 똑같은 정사각 고스트(보더 링),
    켜지면 액센트(틸) 솔리드로 채운다. 두 아이콘 버튼은 우측에 붙인다. */
 .fav-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   margin-left: auto;
   width: 36px;
   height: 36px;
