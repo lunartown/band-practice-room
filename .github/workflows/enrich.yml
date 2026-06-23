@@ -1,6 +1,6 @@
 name: Enrich studios
 
-# 합주실 대표 이미지·리뷰수·키워드를 네이버 예약에서 보강한다(image_url_scraped 등).
+# 합주실 대표 이미지·리뷰수·키워드를 네이버 예약 + 스페이스클라우드에서 보강한다(image_url_scraped 등).
 # slots 스크래퍼(scrape.yml, 매시간)와 달리 자주 바뀌지 않으므로 하루 1회면 충분하다.
 # - 정기 실행(schedule): 매일 보강
 # - 수동 실행(workflow_dispatch): 필요할 때 즉시 보강
@@ -42,3 +42,9 @@ jobs:
         run: |
           npm ci
           npx tsx scripts/enrich-studios.ts
+
+      - name: Enrich SpaceCloud studios (images)
+        working-directory: src/scraper
+        env:
+          SPACECLOUD_API_TOKEN: ${{ secrets.SPACECLOUD_API_TOKEN }}
+        run: npx tsx scripts/enrich-spacecloud.ts
