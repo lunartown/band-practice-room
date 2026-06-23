@@ -15,7 +15,7 @@
       "spaceId": "25558",
       "url": "https://www.spacecloud.kr/space/25558",
       "rooms": [
-        { "name": "합주실", "productId": "", "reservationTypeId": "" }
+        { "name": "합주실", "productId": "41963", "reservationTypeId": "80189" }
       ]
     },
     "studio-신촌-신촌fms": {
@@ -29,7 +29,7 @@
       "spaceId": "27007",
       "url": "https://www.spacecloud.kr/space/27007",
       "rooms": [
-        { "name": "1번방", "productId": "", "reservationTypeId": "" }
+        { "name": "1번방", "productId": "44815", "reservationTypeId": "84988" }
       ]
     },
     "studio-강남-레드스튜디오": {
@@ -50,14 +50,14 @@
       "spaceId": "59441",
       "url": "https://www.spacecloud.kr/space/59441",
       "rooms": [
-        { "name": "리엠뮤직합주실", "productId": "", "reservationTypeId": "" }
+        { "name": "리엠뮤직합주실", "productId": "98507", "reservationTypeId": "174256" }
       ]
     },
     "studio-기타-서울-리엠뮤직-숙대입구": {
       "spaceId": "63705",
       "url": "https://www.spacecloud.kr/space/63705",
       "rooms": [
-        { "name": "리엠뮤직합주실", "productId": "", "reservationTypeId": "" }
+        { "name": "리엠뮤직합주실", "productId": "105117", "reservationTypeId": "185125" }
       ]
     },
     "studio-기타-서울-리엠뮤직-건대": {
