@@ -21,8 +21,9 @@
     "studio-신촌-신촌fms": {
       "spaceId": "4817",
       "url": "https://www.spacecloud.kr/space/4817",
-      "_note": "002 에 방(room)이 없음 → 방을 먼저 추가해야 room_sources 배선 가능",
-      "rooms": []
+      "rooms": [
+        { "name": "합주실", "productId": "7459", "reservationTypeId": "39277" }
+      ]
     },
     "studio-혜화/성신여대-성북천-음악소": {
       "spaceId": "27007",
@@ -77,8 +78,10 @@
     "studio-기타-서울-헤르츠": {
       "spaceId": "20018",
       "url": "https://www.spacecloud.kr/space/20018",
-      "_note": "002 에 방(room)이 없음 → 방을 먼저 추가해야 room_sources 배선 가능",
-      "rooms": []
+      "rooms": [
+        { "name": "메인합주실", "productId": "32699", "reservationTypeId": "63729" },
+        { "name": "그랜드합주실 B Room", "productId": "66375", "reservationTypeId": "120194" }
+      ]
     },
     "studio-기타-서울-한스": {
       "spaceId": "3452",
