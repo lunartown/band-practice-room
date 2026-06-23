@@ -672,7 +672,7 @@ INSERT INTO studio_areas (studio_id, area_id) SELECT id, 12 FROM studios WHERE s
 INSERT INTO studios (slug, name, description, primary_area_id, address, is_active) VALUES ('studio-기타-서울-리엠뮤직-건대', '리엠뮤직 건대', '리엠뮤직 건대 합주실 정보', 12, '기타 서울 지역', true);
 INSERT INTO studio_areas (studio_id, area_id) SELECT id, 12 FROM studios WHERE slug='studio-기타-서울-리엠뮤직-건대';
 INSERT INTO rooms (studio_id, name, price_per_hour, price_source, capacity_min, capacity_max, is_active) SELECT id, '2번방', 17000, 'SCRAPED', 15, 15, true FROM studios WHERE slug='studio-기타-서울-리엠뮤직-건대';
-INSERT INTO rooms (studio_id, name, price_per_hour, price_source, capacity_min, capacity_max, is_active) SELECT id, '1번방', 22, 'SCRAPED', 20, 20, true FROM studios WHERE slug='studio-기타-서울-리엠뮤직-건대';
+INSERT INTO rooms (studio_id, name, price_per_hour, price_source, capacity_min, capacity_max, is_active) SELECT id, '1번방', 22000, 'SCRAPED', 20, 20, true FROM studios WHERE slug='studio-기타-서울-리엠뮤직-건대';
 
 INSERT INTO studios (slug, name, description, primary_area_id, address, is_active) VALUES ('studio-기타-서울-리엠뮤직-금호', '리엠뮤직 금호', '리엠뮤직 금호 합주실 정보', 12, '기타 서울 지역', true);
 INSERT INTO studio_areas (studio_id, area_id) SELECT id, 12 FROM studios WHERE slug='studio-기타-서울-리엠뮤직-금호';
