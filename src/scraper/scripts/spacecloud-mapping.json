@@ -84,12 +84,12 @@
       ]
     },
     "studio-기타-서울-한스": {
-      "spaceId": "3452",
-      "url": "https://www.spacecloud.kr/space/3452",
+      "spaceId": "72955",
+      "url": "https://www.spacecloud.kr/space/72955",
       "rooms": [
-        { "name": "A룸", "productId": "", "reservationTypeId": "" },
-        { "name": "B룸", "productId": "", "reservationTypeId": "" },
-        { "name": "C룸", "productId": "", "reservationTypeId": "" }
+        { "name": "A룸", "productId": "119326", "reservationTypeId": "208677" },
+        { "name": "B룸", "productId": "119354", "reservationTypeId": "208717" },
+        { "name": "C룸", "productId": "119355", "reservationTypeId": "208719" }
       ]
     }
   }
