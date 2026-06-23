@@ -187,17 +187,9 @@ export function StudioRow({ studio }: StudioRowProps) {
         </div>
       </a>
 
-      {/* 하단 보조 액션: 즐겨찾기 + 방별 보기(주) + 네이티브 공유 */}
+      {/* 하단 보조 액션: 방별 보기(좌) + 즐겨찾기·공유 아이콘(우 그룹).
+          주 액션(예약)은 카드 본문 링크라, 여기는 전부 가벼운 보조 액션이다. */}
       <div className="studio-actions">
-        <button
-          type="button"
-          className={`fav-button${isFav ? ' on' : ''}`}
-          aria-pressed={isFav}
-          aria-label={isFav ? `${name} 즐겨찾기 해제` : `${name} 즐겨찾기`}
-          onClick={() => toggleFavorite(id)}
-        >
-          <HeartIcon filled={isFav} />
-        </button>
         <button
           type="button"
           className={`room-toggle${expanded ? ' open' : ''}`}
@@ -208,6 +200,15 @@ export function StudioRow({ studio }: StudioRowProps) {
           <span className="room-toggle-arrow" aria-hidden>
             ▾
           </span>
+        </button>
+        <button
+          type="button"
+          className={`fav-button${isFav ? ' on' : ''}`}
+          aria-pressed={isFav}
+          aria-label={isFav ? `${name} 즐겨찾기 해제` : `${name} 즐겨찾기`}
+          onClick={() => toggleFavorite(id)}
+        >
+          <HeartIcon filled={isFav} />
         </button>
         <button
           type="button"
