@@ -1,30 +1,6 @@
--- 스페이스클라우드 예약 합주실 배선(studio_sources / room_sources, source_id=2).
---
--- 002_studios.sql 가 studio_sources/room_sources 를 TRUNCATE 후 재생성하므로,
--- 그보다 뒤(004)에서 스페이스클라우드 매핑을 "추가"한다. 002 의 스튜디오는 그대로 두고
--- 여기서는 소스 연결만 더한다.
---
+-- 스페이스클라우드 예약 합주실 배선 (source_id=2).
+-- ⚠️ 이 파일은 scripts/apply-spacecloud-mapping.ts 로 생성된다. 직접 수정하지 말고
+--    spacecloud-mapping.json 을 고친 뒤 스크립트를 다시 실행할 것.
 -- room_sources.external_key 형식: 'productId:reservationTypeId'
---   - productId / reservation_type_id 는 스페이스클라우드 가격 API 캡처에서 얻는다:
---     GET https://api.spacecloud.kr/products/{productId}/prices?reservation_type_id={rtId}&year=YYYY&month=MM
---   - studio_sources.url = 합주실 스페이스클라우드 페이지(예약 링크로 노출됨)
---   - studio_sources.external_key = space id (선택)
---
--- ID 수집이 끝나면 아래 템플릿을 합주실마다 복제해 채운다.
--- (slug 는 002_studios.sql 의 studios.slug 와 정확히 일치해야 한다)
 
--- ┌─ 템플릿 (실제 값으로 채운 뒤 주석 해제) ─────────────────────────────
--- INSERT INTO studio_sources (studio_id, source_id, external_key, url)
--- SELECT id, 2, '<spaceId>', 'https://www.spacecloud.kr/space/<spaceId>'
--- FROM studios WHERE slug = '<studio-slug>'
--- ON CONFLICT (studio_id, source_id) DO UPDATE SET
---   external_key = EXCLUDED.external_key, url = EXCLUDED.url;
---
--- INSERT INTO room_sources (room_id, source_id, external_key, url)
--- SELECT r.id, 2, '<productId>:<reservationTypeId>',
---        'https://www.spacecloud.kr/space/<spaceId>'
--- FROM rooms r JOIN studios s ON r.studio_id = s.id
--- WHERE s.slug = '<studio-slug>' AND r.name = '<방 이름>'
--- ON CONFLICT (room_id, source_id) DO UPDATE SET
---   external_key = EXCLUDED.external_key, url = EXCLUDED.url;
--- └──────────────────────────────────────────────────────────────────────
+-- (아직 채워진 매핑이 없음. spacecloud-mapping.json 의 productId/reservationTypeId 를 채운 뒤 재실행)
