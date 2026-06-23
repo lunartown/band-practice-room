@@ -302,8 +302,9 @@ INSERT INTO room_sources (room_id, source_id, external_key) SELECT r.id, 1, '559
 INSERT INTO rooms (studio_id, name, price_per_hour, price_source, capacity_min, capacity_max, is_active) SELECT id, 'A룸', 17000, 'SCRAPED', 8, 8, true FROM studios WHERE slug='studio-신촌-신촌-그라운드';
 INSERT INTO room_sources (room_id, source_id, external_key) SELECT r.id, 1, '5591709' FROM rooms r JOIN studios s ON r.studio_id=s.id WHERE s.slug='studio-신촌-신촌-그라운드' AND r.name='A룸';
 
-INSERT INTO studios (slug, name, description, primary_area_id, address, is_active) VALUES ('studio-신촌-신촌fms', '신촌FMS', '신촌FMS 합주실 정보', 2, '신촌 지역', true);
+INSERT INTO studios (slug, name, description, primary_area_id, address, is_active) VALUES ('studio-신촌-신촌fms', '신촌FMS', '신촌FMS 합주실 정보', 2, '서울특별시 서대문구 연세로2마길 19, 지하', true);
 INSERT INTO studio_areas (studio_id, area_id) SELECT id, 2 FROM studios WHERE slug='studio-신촌-신촌fms';
+INSERT INTO rooms (studio_id, name, price_per_hour, price_source, capacity_min, capacity_max, is_active) SELECT id, '합주실', 15000, 'SCRAPED', NULL, 15, true FROM studios WHERE slug='studio-신촌-신촌fms';
 
 INSERT INTO studios (slug, name, description, primary_area_id, address, is_active) VALUES ('studio-사당/이수-그루브-사당점', '그루브 사당점', '그루브 사당점 합주실 정보', 3, '사당/이수 지역', true);
 INSERT INTO studio_areas (studio_id, area_id) SELECT id, 3 FROM studios WHERE slug='studio-사당/이수-그루브-사당점';
@@ -709,8 +710,10 @@ INSERT INTO rooms (studio_id, name, price_per_hour, price_source, capacity_min, 
 INSERT INTO rooms (studio_id, name, price_per_hour, price_source, capacity_min, capacity_max, is_active) SELECT id, 'C룸', 14000, 'SCRAPED', 8, 8, true FROM studios WHERE slug='studio-기타-서울-한스';
 INSERT INTO rooms (studio_id, name, price_per_hour, price_source, capacity_min, capacity_max, is_active) SELECT id, 'A룸', 25000, 'SCRAPED', 30, 30, true FROM studios WHERE slug='studio-기타-서울-한스';
 
-INSERT INTO studios (slug, name, description, primary_area_id, address, is_active) VALUES ('studio-기타-서울-헤르츠', '헤르츠', '헤르츠 합주실 정보', 12, '기타 서울 지역', true);
+INSERT INTO studios (slug, name, description, primary_area_id, address, is_active) VALUES ('studio-기타-서울-헤르츠', '헤르츠', '헤르츠 합주실 정보', 12, '서울특별시 관악구 신림동 1437-23, 지하1층', true);
 INSERT INTO studio_areas (studio_id, area_id) SELECT id, 12 FROM studios WHERE slug='studio-기타-서울-헤르츠';
+INSERT INTO rooms (studio_id, name, price_per_hour, price_source, capacity_min, capacity_max, is_active) SELECT id, '메인합주실', 15000, 'SCRAPED', 8, 12, true FROM studios WHERE slug='studio-기타-서울-헤르츠';
+INSERT INTO rooms (studio_id, name, price_per_hour, price_source, capacity_min, capacity_max, is_active) SELECT id, '그랜드합주실 B Room', 10000, 'SCRAPED', 5, 6, true FROM studios WHERE slug='studio-기타-서울-헤르츠';
 
 -- Sequence 업데이트
 SELECT setval(pg_get_serial_sequence('areas', 'id'), COALESCE((SELECT MAX(id) FROM areas), 1));
