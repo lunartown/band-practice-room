@@ -131,9 +131,19 @@ export function App() {
         <header className="top-bar">
           <div className="top-bar-inner">
             <h1>예약 가능 시간</h1>
-            <div className="sync-status">
-              <span className="fresh-dot" />
-              <span className="sync-label">{syncLabel}</span>
+            <div className="top-bar-right">
+              <div className="sync-status">
+                <span className="fresh-dot" />
+                <span className="sync-label">{syncLabel}</span>
+              </div>
+              <button
+                className={`fav-toggle${favOnly ? ' active' : ''}`}
+                aria-pressed={favOnly}
+                aria-label="즐겨찾기만 보기"
+                onClick={() => setFavOnly((v) => !v)}
+              >
+                <HeartChipIcon filled={favOnly} />
+              </button>
             </div>
           </div>
         </header>
@@ -142,14 +152,6 @@ export function App() {
           <button className={`chip${timeActive ? ' active' : ''}${popover?.kind === 'time' ? ' open' : ''}`} aria-pressed={timeActive} onClick={(e) => openPopover('time', e)}><span>{timeWindowLabel(filters.timeWindows)}</span><ChevronIcon /></button>
           <button className={`chip${dateActive ? ' active' : ''}${popover?.kind === 'date' ? ' open' : ''}`} aria-pressed={dateActive} onClick={(e) => openPopover('date', e)}><span>{buildDateChipLabel(filters.dates)}</span><ChevronIcon /></button>
           <button className={`chip${areaActive ? ' active' : ''}${popover?.kind === 'area' ? ' open' : ''}`} aria-pressed={areaActive} onClick={(e) => openPopover('area', e)}><span>{areaChipLabel}</span><ChevronIcon /></button>
-          <button
-            className={`fav-chip${favOnly ? ' active' : ''}`}
-            aria-pressed={favOnly}
-            aria-label="즐겨찾기만 보기"
-            onClick={() => setFavOnly((v) => !v)}
-          >
-            <HeartChipIcon filled={favOnly} />
-          </button>
           <button className={`filter-button${sheetActive ? ' active' : ''}`} aria-pressed={sheetActive} aria-label="필터" onClick={() => setIsFilterOpen(true)}>
             <FilterIcon />
           </button>
