@@ -148,3 +148,24 @@ SELECT r.id, 2, '66375:120194', 'https://www.spacecloud.kr/space/20018' FROM roo
 WHERE s.slug = 'studio-기타-서울-헤르츠' AND r.name = '그랜드합주실 B Room'
 ON CONFLICT (room_id, source_id) DO UPDATE SET
   external_key = EXCLUDED.external_key, url = EXCLUDED.url;
+
+-- studio-기타-서울-한스
+INSERT INTO studio_sources (studio_id, source_id, external_key, url)
+SELECT id, 2, '72955', 'https://www.spacecloud.kr/space/72955' FROM studios WHERE slug = 'studio-기타-서울-한스'
+ON CONFLICT (studio_id, source_id) DO UPDATE SET
+  external_key = EXCLUDED.external_key, url = EXCLUDED.url;
+INSERT INTO room_sources (room_id, source_id, external_key, url)
+SELECT r.id, 2, '119326:208677', 'https://www.spacecloud.kr/space/72955' FROM rooms r JOIN studios s ON r.studio_id = s.id
+WHERE s.slug = 'studio-기타-서울-한스' AND r.name = 'A룸'
+ON CONFLICT (room_id, source_id) DO UPDATE SET
+  external_key = EXCLUDED.external_key, url = EXCLUDED.url;
+INSERT INTO room_sources (room_id, source_id, external_key, url)
+SELECT r.id, 2, '119354:208717', 'https://www.spacecloud.kr/space/72955' FROM rooms r JOIN studios s ON r.studio_id = s.id
+WHERE s.slug = 'studio-기타-서울-한스' AND r.name = 'B룸'
+ON CONFLICT (room_id, source_id) DO UPDATE SET
+  external_key = EXCLUDED.external_key, url = EXCLUDED.url;
+INSERT INTO room_sources (room_id, source_id, external_key, url)
+SELECT r.id, 2, '119355:208719', 'https://www.spacecloud.kr/space/72955' FROM rooms r JOIN studios s ON r.studio_id = s.id
+WHERE s.slug = 'studio-기타-서울-한스' AND r.name = 'C룸'
+ON CONFLICT (room_id, source_id) DO UPDATE SET
+  external_key = EXCLUDED.external_key, url = EXCLUDED.url;
