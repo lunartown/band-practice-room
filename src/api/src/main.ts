@@ -12,7 +12,14 @@ async function bootstrap() {
   // 예: 추가 고정 도메인이 필요하면 Render 환경변수에 CORS_ORIGIN 설정.
   const corsOrigin: (string | RegExp)[] = process.env.CORS_ORIGIN
     ? process.env.CORS_ORIGIN.split(',').map((o) => o.trim()).filter(Boolean)
-    : ['https://hapjusil.com', 'https://www.hapjusil.com'];
+    : [
+        'https://hapjusil.com',
+        'https://www.hapjusil.com',
+        // Capacitor 네이티브 앱(iOS·Android)이 웹뷰에서 쓰는 출처.
+        // Android 기본 스킴은 https://localhost, iOS는 capacitor://localhost.
+        'https://localhost',
+        'capacitor://localhost',
+      ];
 
   // Vercel 프리뷰 배포는 브랜치마다 동적 URL을 받는다
   // (band-practice-room-git-<브랜치>-<해시>-...vercel.app).
