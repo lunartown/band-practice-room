@@ -2,13 +2,13 @@
   "_comment": "스페이스클라우드 합주실 매핑 수집표. 12곳 슬러그/방이름은 002 시드 기준으로 미리 채워뒀다. 각 방의 productId/reservationTypeId 만 채우면 된다(브라우저 개발자도구 네트워크 탭에서 날짜 클릭 시 뜨는 GET api.spacecloud.kr/products/{productId}/prices?reservation_type_id={rtId} 요청에서 확인). spaceId/url 은 검색으로 찾은 추정값이라 실제와 다르면 교정. 채운 뒤 `npx tsx scripts/apply-spacecloud-mapping.ts` 로 004 시드를 생성한다.",
   "studios": {
     "studio-합정/홍대-앨리": {
-      "spaceId": "",
-      "url": "https://www.spacecloud.kr/host/baivai",
+      "spaceId": "9391",
+      "url": "https://www.spacecloud.kr/space/9391",
       "rooms": [
-        { "name": "부스1", "productId": "", "reservationTypeId": "" },
-        { "name": "부스2", "productId": "", "reservationTypeId": "" },
-        { "name": "부스3", "productId": "", "reservationTypeId": "" },
-        { "name": "부스4", "productId": "", "reservationTypeId": "" }
+        { "name": "부스1", "productId": "14175", "reservationTypeId": "42936" },
+        { "name": "부스2", "productId": "14176", "reservationTypeId": "42933" },
+        { "name": "부스3", "productId": "14177", "reservationTypeId": "42934" },
+        { "name": "부스4", "productId": "14178", "reservationTypeId": "42935" }
       ]
     },
     "studio-합정/홍대-홍대리엠뮤직": {
@@ -33,17 +33,17 @@
       ]
     },
     "studio-강남-레드스튜디오": {
-      "spaceId": "",
-      "url": "https://www.spacecloud.kr/host/redstudiokr",
+      "spaceId": "4572",
+      "url": "https://www.spacecloud.kr/space/4572",
       "rooms": [
-        { "name": "합주실", "productId": "", "reservationTypeId": "" }
+        { "name": "합주실", "productId": "7042", "reservationTypeId": "38765" }
       ]
     },
     "studio-강남-리엠뮤직-강남": {
-      "spaceId": "",
-      "url": "https://www.spacecloud.kr/host/woo960918",
+      "spaceId": "46871",
+      "url": "https://www.spacecloud.kr/space/46871",
       "rooms": [
-        { "name": "리엠뮤직합주실", "productId": "", "reservationTypeId": "" }
+        { "name": "리엠뮤직합주실", "productId": "78000", "reservationTypeId": "139605" }
       ]
     },
     "studio-강동/송파-리엠뮤직-잠실": {
@@ -61,18 +61,18 @@
       ]
     },
     "studio-기타-서울-리엠뮤직-건대": {
-      "spaceId": "",
-      "url": "https://www.spacecloud.kr/host/woo960918",
+      "spaceId": "19861",
+      "url": "https://www.spacecloud.kr/space/19861",
       "rooms": [
-        { "name": "1번방", "productId": "", "reservationTypeId": "" },
-        { "name": "2번방", "productId": "", "reservationTypeId": "" }
+        { "name": "1번방", "productId": "34500", "reservationTypeId": "68254" },
+        { "name": "2번방", "productId": "32428", "reservationTypeId": "63621" }
       ]
     },
     "studio-기타-서울-리엠뮤직-금호": {
-      "spaceId": "",
-      "url": "https://www.spacecloud.kr/host/woo960918",
+      "spaceId": "69512",
+      "url": "https://www.spacecloud.kr/space/69512",
       "rooms": [
-        { "name": "리엠뮤직합주실", "productId": "", "reservationTypeId": "" }
+        { "name": "리엠뮤직합주실", "productId": "114094", "reservationTypeId": "200146" }
       ]
     },
     "studio-기타-서울-헤르츠": {
