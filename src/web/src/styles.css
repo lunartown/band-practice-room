@@ -338,6 +338,70 @@ button {
   border-bottom: 1px solid var(--border-subtle);
 }
 
+/* 하단 액션 줄: [즐겨찾기] [방별 보기(늘어남)] [공유].
+   주 액션(예약)은 카드 본문 링크이므로, 여기는 모두 보조 액션이다. */
+.studio-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  margin-top: var(--sp-3);
+}
+
+/* 행에서 직접 배치하므로 토글 자체 margin-top 은 제거(정렬은 컨테이너가 잡는다). */
+.studio-actions .room-toggle {
+  flex: 1 1 auto;
+  margin-top: 0;
+}
+
+/* 즐겨찾기/공유: 같은 정사각 고스트 버튼. 즐겨찾기는 켜지면 핑크로 채워진다. */
+.fav-button,
+.share-button {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 36px;
+  border-radius: var(--r-md);
+  color: var(--text-3);
+  background: var(--surface-sunken);
+}
+
+.fav-button {
+  transition: transform 0.12s ease, color 0.12s ease, background-color 0.12s ease;
+}
+
+.fav-button:active {
+  transform: scale(0.9);
+}
+
+.fav-button.on {
+  color: #f0356f;
+  background: rgba(240, 53, 111, 0.12);
+}
+
+.share-button:active {
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+}
+
+/* 즐겨찾기만 보기 칩: 필터 버튼과 같은 정사각 고스트 버튼, 켜지면 핑크 채움 */
+.fav-chip {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 36px;
+  width: 36px;
+  border-radius: var(--r-md);
+  background: var(--surface-sunken);
+  color: var(--text-3);
+}
+
+.fav-chip.active {
+  background: rgba(240, 53, 111, 0.12);
+  color: #f0356f;
+}
+
 /* 헤더: 썸네일 | 이름·지역 | 가격 — 썸네일 높이가 이름·지역 영역과 맞는다 */
 .studio-head {
   display: flex;
