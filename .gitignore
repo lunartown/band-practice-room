@@ -10,6 +10,25 @@ coverage/
 .env
 .env.*
 !.env.example
+# 네이티브 앱 빌드용 공개 설정(비밀값 없음, API 공개 URL만 포함)
+!.env.capacitor
+
+# Capacitor 네이티브 빌드 산출물 (네이티브 프로젝트 자체는 커밋한다)
+src/web/android/.gradle/
+src/web/android/build/
+src/web/android/app/build/
+src/web/android/local.properties
+src/web/android/.idea/
+src/web/android/app/release/
+src/web/android/app/src/main/assets/public/
+src/web/ios/App/build/
+src/web/ios/App/Pods/
+src/web/ios/App/App/public/
+src/web/ios/App/output/
+src/web/ios/.gradle/
+src/web/ios/DerivedData/
+*.keystore
+!debug.keystore
 
 # python
 venv/
