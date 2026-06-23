@@ -107,13 +107,16 @@ export class SlotsRepository {
           sl.price,
           sl.price_source,
           sl.scraped_at,
-          -- 방별 예약 링크 + 그 슬롯의 날짜(startDate)까지 실어 보낸다.
-          --  ① room_sources.url 이 따로 있으면 그대로 쓰되 startDate 만 덧붙임.
+          -- 방별 예약 링크. 소스(naver/spacecloud)에 따라 형식이 다르다.
+          --  ⓪ 스페이스클라우드: 방/합주실 URL 을 그대로 쓴다(날짜 쿼리 미지원).
+          --  ① room_sources.url 이 따로 있으면 그대로 쓰되 startDate 만 덧붙임(네이버).
           --  ② 합주실 소스 + 방 bizItemId 가 있으면, 합주실 URL이 bare(/items/ 없음)든
           --     deep든 상관없이 booking/{typeId}/bizes/{bizId}/items/{bizItemId} 를
           --     부품으로 직접 재구성한다(기존 regexp 치환은 bare URL에서 동작 안 함).
           --  ③ 그 외엔 합주실 일반 링크에 startDate 만 덧붙임.
           CASE
+            WHEN COALESCE(rs.code, ss.code) = 'spacecloud'
+              THEN COALESCE(rs.url, ss.url)
             WHEN rs.url IS NOT NULL
               THEN rs.url || (CASE WHEN rs.url LIKE '%?%' THEN '&' ELSE '?' END)
                    || 'startDate=' || sl.date::text
@@ -151,10 +154,16 @@ export class SlotsRepository {
         INNER JOIN studios s ON s.id = r.studio_id
         LEFT JOIN areas a ON a.id = s.primary_area_id
         LEFT JOIN LATERAL (
-          SELECT url, external_key FROM room_sources WHERE room_id = r.id ORDER BY id ASC LIMIT 1
+          SELECT rsx.url, rsx.external_key, src.code
+          FROM room_sources rsx
+          JOIN sources src ON src.id = rsx.source_id
+          WHERE rsx.room_id = r.id ORDER BY rsx.id ASC LIMIT 1
         ) rs ON true
         LEFT JOIN LATERAL (
-          SELECT url, external_key FROM studio_sources WHERE studio_id = s.id ORDER BY id ASC LIMIT 1
+          SELECT ssx.url, ssx.external_key, src.code
+          FROM studio_sources ssx
+          JOIN sources src ON src.id = ssx.source_id
+          WHERE ssx.studio_id = s.id ORDER BY ssx.id ASC LIMIT 1
         ) ss ON true
         WHERE ${baseConditions.join(' AND ')}
       ),

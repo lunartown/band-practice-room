@@ -31,7 +31,7 @@ export class NaverReservationScraper {
         const hourly = await fetchHourlySchedule({
           businessId: target.businessId,
           businessTypeId: target.businessTypeId,
-          bizItemId: room.bizItemId,
+          bizItemId: room.externalKey,
           dateFrom,
           dateTo,
         });
