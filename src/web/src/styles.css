@@ -333,7 +333,9 @@ button {
    Studio row (합주실 단위)
    ============================================================ */
 .studio-row {
-  padding: var(--sp-4) var(--gutter);
+  /* 하단 액션 줄의 아이콘이 24px 박스 안 18px라 잉크가 살짝 떠 보인다.
+     하단 패딩을 한 단계(16→12px) 줄여 위아래 광학 균형을 맞춘다. */
+  padding: var(--sp-4) var(--gutter) var(--sp-3);
   background: var(--surface);
   border-bottom: 1px solid var(--border-subtle);
 }
