@@ -66,7 +66,7 @@ export function MenuSheet({ onClose }: MenuSheetProps) {
 
   return (
     <div className="sheet-layer">
-      <button className="sheet-dim" aria-label="메뉴 닫기" onClick={onClose} />
+      <button className="sheet-dim menu-dim" aria-label="메뉴 닫기" onClick={onClose} />
       <section
         className="menu-drawer"
         role="dialog"
@@ -83,7 +83,10 @@ export function MenuSheet({ onClose }: MenuSheetProps) {
           onPointerUp={onDragEnd}
           onPointerCancel={onDragEnd}
         >
-          <h2>합주실닷컴</h2>
+          <div className="menu-brand">
+            <img className="menu-logo" src="/hapjushil-logo.png" alt="" aria-hidden width={32} height={32} />
+            <span className="menu-wordmark">합주실<span className="menu-dot">닷컴</span></span>
+          </div>
           <button className="menu-close" aria-label="메뉴 닫기" onClick={onClose}>
             <CloseIcon />
           </button>
@@ -120,6 +123,7 @@ export function MenuSheet({ onClose }: MenuSheetProps) {
             <span className="menu-item-text">
               <span className="menu-item-title">개인정보처리방침</span>
             </span>
+            <ChevronIcon />
           </button>
         </div>
 
@@ -186,6 +190,14 @@ function ExternalIcon() {
   return (
     <svg className="menu-item-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden>
       <path d="M9 6h9v9M18 6l-9 9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function ChevronIcon() {
+  return (
+    <svg className="menu-item-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden>
+      <path d="M9 6l6 6-6 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
 }
