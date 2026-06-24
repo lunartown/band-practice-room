@@ -391,7 +391,12 @@ button {
 .top-bar-right {
   display: flex;
   align-items: center;
-  gap: var(--sp-3);
+  gap: var(--sp-2);
+}
+
+/* 즐겨찾기·메뉴는 같은 아이콘 버튼 묶음이라 서로 더 가깝게 붙인다. */
+.fav-toggle + .menu-toggle {
+  margin-left: calc(-1 * var(--sp-1));
 }
 
 /* 즐겨찾기만 보기 토글: 헤더에 두어 칩 줄 혼잡(칩 글자 잘림)을 피한다.
