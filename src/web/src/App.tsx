@@ -23,13 +23,14 @@ interface PopoverState {
 }
 
 export function App() {
-  const savedFilters = useMemo(() => loadFilters(), []);
+  const savedPrefs = useMemo(() => loadFilters(), []);
   const [areas, setAreas] = useState<Area[]>([]);
   const [slots, setSlots] = useState<Slot[]>([]);
   const [responseDates, setResponseDates] = useState<string[]>([]);
-  const [filters, setFilters] = useState<FilterState>(savedFilters ?? defaultFilters);
-  // 저장된 조건이 있으면 오픈 화면을 건너뛰고 바로 결과로 진입한다.
-  const [entered, setEntered] = useState(savedFilters !== null);
+  const [filters, setFilters] = useState<FilterState>(savedPrefs?.filters ?? defaultFilters);
+  // 최근(TTL 이내) 방문이면 오픈 화면을 건너뛰고 바로 결과로 진입한다.
+  // 오랜만의 방문이면 조건은 복원하되 오픈 화면을 다시 보여준다.
+  const [entered, setEntered] = useState(savedPrefs?.fresh ?? false);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [favOnly, setFavOnly] = useState(false);
   const [popover, setPopover] = useState<PopoverState | null>(null);
