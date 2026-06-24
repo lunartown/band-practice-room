@@ -1671,10 +1671,11 @@ button {
     padding-top: env(safe-area-inset-top, 0px);
   }
 
-  /* 드로어 헤더도 메인 상단바와 동일하게 안전영역만 확보한다(추가 여백 없음).
-     viewport-fit=cover라 모바일 웹에서 env 값이 잡히는데, 여기에 여백을 더하면
-     사이드바를 열었을 때 상단이 메인보다 높게 떠 보였다. */
+  /* 드로어 헤더 상단 여백.
+     - 노치 환경(PWA 등): env가 노치값 → 그만큼만 확보(덧셈하면 너무 높아 보였다).
+     - 사파리 일반 탭: env가 0으로 잡혀 닫기 버튼이 상태표시줄에 잘렸다.
+     둘 중 큰 값을 써서 사파리에선 최소 여백을, 노치 환경에선 안전영역만큼 확보한다. */
   .menu-drawer-head {
-    padding-top: env(safe-area-inset-top, 0px);
+    padding-top: max(env(safe-area-inset-top, 0px), var(--sp-5));
   }
 }
