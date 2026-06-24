@@ -3,7 +3,7 @@ import { Capacitor } from '@capacitor/core';
 import { App as CapApp } from '@capacitor/app';
 import { shareApp } from '../lib/share';
 
-const DISMISS_THRESHOLD = 110; // 이 거리 이상 아래로 끌면 닫는다
+const DISMISS_THRESHOLD = 70; // 이 거리 이상 왼쪽으로 끌면 닫는다
 
 const KAKAO_OPENCHAT_URL = 'https://open.kakao.com/o/s5wce6Ai';
 const PRIVACY_PATH = '/privacy.html';
@@ -35,26 +35,27 @@ export function MenuSheet({ onClose }: MenuSheetProps) {
       .catch(() => {});
   }, []);
 
-  const [dragY, setDragY] = useState(0);
+  const [dragX, setDragX] = useState(0);
   const [dragging, setDragging] = useState(false);
-  const startY = useRef(0);
+  const startX = useRef(0);
 
   function onDragStart(e: React.PointerEvent) {
-    startY.current = e.clientY;
+    if ((e.target as HTMLElement).closest('button')) return; // 닫기 버튼 탭은 드래그로 보지 않음
+    startX.current = e.clientX;
     setDragging(true);
     (e.currentTarget as Element).setPointerCapture?.(e.pointerId);
   }
 
   function onDragMove(e: React.PointerEvent) {
     if (!dragging) return;
-    setDragY(Math.max(0, e.clientY - startY.current));
+    setDragX(Math.min(0, e.clientX - startX.current));
   }
 
   function onDragEnd() {
     if (!dragging) return;
     setDragging(false);
-    if (dragY > DISMISS_THRESHOLD) onClose();
-    else setDragY(0);
+    if (dragX < -DISMISS_THRESHOLD) onClose();
+    else setDragX(0);
   }
 
   // 메뉴 항목을 누르면 동작 후 시트를 닫는다.
@@ -67,28 +68,37 @@ export function MenuSheet({ onClose }: MenuSheetProps) {
     <div className="sheet-layer">
       <button className="sheet-dim" aria-label="메뉴 닫기" onClick={onClose} />
       <section
-        className="menu-sheet"
+        className="menu-drawer"
         role="dialog"
         aria-label="메뉴"
         style={{
-          transform: dragY ? `translateY(${dragY}px)` : undefined,
-          transition: dragging ? 'none' : 'transform 0.25s ease',
+          transform: dragX ? `translateX(${dragX}px)` : undefined,
+          transition: dragging ? 'none' : undefined,
         }}
       >
-        <div
-          className="sheet-drag"
+        <header
+          className="menu-drawer-head"
           onPointerDown={onDragStart}
           onPointerMove={onDragMove}
           onPointerUp={onDragEnd}
           onPointerCancel={onDragEnd}
         >
-          <div className="sheet-handle" />
-          <header>
-            <h2>메뉴</h2>
-          </header>
-        </div>
+          <h2>합주실닷컴</h2>
+          <button className="menu-close" aria-label="메뉴 닫기" onClick={onClose}>
+            <CloseIcon />
+          </button>
+        </header>
 
         <div className="menu-list">
+          {/* 카테고리: 현재는 합주실 하나, 추후 개인 연습실·공연장이 형제로 추가된다. */}
+          <nav className="menu-nav" aria-label="카테고리">
+            <button className="nav-item active" aria-current="page" onClick={onClose}>
+              <span className="nav-item-icon"><BandIcon /></span>
+              <span className="nav-item-label">합주실</span>
+            </button>
+          </nav>
+
+          <div className="menu-section-label">지원</div>
           <button className="menu-item" onClick={run(() => openExternal(KAKAO_OPENCHAT_URL))}>
             <span className="menu-item-icon"><ChatIcon /></span>
             <span className="menu-item-text">
@@ -114,10 +124,28 @@ export function MenuSheet({ onClose }: MenuSheetProps) {
         </div>
 
         <footer className="menu-footer">
-          <span>합주실닷컴{version ? ` v${version}` : ''}</span>
+          <span>{version ? `v${version}` : 'hapjusil.com'}</span>
         </footer>
       </section>
     </div>
+  );
+}
+
+function BandIcon() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden>
+      <path d="M9 18V5l11-2v13" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+      <circle cx="6" cy="18" r="3" stroke="currentColor" strokeWidth="1.8" />
+      <circle cx="17" cy="16" r="3" stroke="currentColor" strokeWidth="1.8" />
+    </svg>
+  );
+}
+
+function CloseIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden>
+      <path d="M6 6l12 12M18 6L6 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+    </svg>
   );
 }
 
