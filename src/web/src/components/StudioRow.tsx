@@ -148,7 +148,17 @@ export function StudioRow({ studio }: StudioRowProps) {
         <div className="studio-head">
           <div className="studio-avatar" aria-hidden>
             {showImg ? (
-              <img src={imgSrc} alt="" loading="lazy" onError={handleImgError} />
+              // 합주실 썸네일은 네이버 phinf·스페이스클라우드 등 외부 CDN 원본이다.
+              // 홈화면 PWA(standalone) WebKit 은 모바일 웹과 다른 Referer 를 실어
+              // 보내 CDN 핫링크 보호에 막히곤 한다("이미지 다 깨짐"). Referer 를 아예
+              // 빼서 두 환경의 요청을 통일하고, 깨짐을 막는다(phinf 는 no-referer 로 받힘).
+              <img
+                src={imgSrc}
+                alt=""
+                loading="lazy"
+                referrerPolicy="no-referrer"
+                onError={handleImgError}
+              />
             ) : (
               initial
             )}
