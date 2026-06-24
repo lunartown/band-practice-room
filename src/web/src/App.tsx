@@ -10,7 +10,7 @@ import { Popover } from './components/Popover';
 import { OpenScreen } from './components/OpenScreen';
 import { buildAvailability } from './lib/availability';
 import { dateLabel } from './lib/date';
-import { loadFilters, saveFilters } from './lib/prefs';
+import { loadFilters, saveFilters, markEntered } from './lib/prefs';
 import { useFavorites } from './lib/useFavorites';
 
 type PopoverKind = 'time' | 'date' | 'area';
@@ -64,6 +64,9 @@ export function App() {
 
   useEffect(() => {
     if (!entered) return;
+    // 이번 실행에서 진입했음을 기록한다. 같은 세션 안에서의 새로고침은
+    // 오픈 화면을 다시 띄우지 않지만, 콜드스타트(앱 재실행/새 탭)면 다시 뜬다.
+    markEntered();
     saveFilters(filters);
     setError(null);
     setLoading(true);
