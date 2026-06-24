@@ -10,10 +10,12 @@
     "preview": "vite preview --host 0.0.0.0",
     "app:sync": "npm run build:app && cap sync",
     "app:android": "npm run app:sync && cap open android",
-    "app:ios": "npm run app:sync && cap open ios"
+    "app:ios": "npm run app:sync && cap open ios",
+    "app:ota": "npm run build:app && npx @capgo/cli bundle upload"
   },
   "dependencies": {
     "@capacitor/app": "^8.1.0",
+    "@capgo/capacitor-updater": "^8.49.7",
     "@capacitor/core": "^8.4.1",
     "@capacitor/haptics": "^8.0.2",
     "@capacitor/preferences": "^8.0.1",
