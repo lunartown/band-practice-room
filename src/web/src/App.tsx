@@ -8,6 +8,7 @@ import { CalendarPicker } from './components/CalendarPicker';
 import { TimeWindowPicker, timeWindowLabel } from './components/TimeWindowPicker';
 import { Popover } from './components/Popover';
 import { OpenScreen } from './components/OpenScreen';
+import { MenuSheet } from './components/MenuSheet';
 import { buildAvailability } from './lib/availability';
 import { dateLabel } from './lib/date';
 import { loadFilters, saveFilters, markEntered } from './lib/prefs';
@@ -32,6 +33,7 @@ export function App() {
   // 오랜만의 방문이면 조건은 복원하되 오픈 화면을 다시 보여준다.
   const [entered, setEntered] = useState(savedPrefs?.fresh ?? false);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [favOnly, setFavOnly] = useState(false);
   const [popover, setPopover] = useState<PopoverState | null>(null);
   const favorites = useFavorites();
@@ -134,7 +136,17 @@ export function App() {
       <section className="phone-app" aria-label="예약 가능 시간 검색" ref={phoneRef}>
         <header className="top-bar">
           <div className="top-bar-inner">
-            <h1>예약 가능 시간</h1>
+            <div className="top-bar-left">
+              <button
+                className="menu-toggle"
+                aria-label="메뉴"
+                aria-haspopup="dialog"
+                onClick={() => setIsMenuOpen(true)}
+              >
+                <MenuIcon />
+              </button>
+              <h1>예약 가능 시간</h1>
+            </div>
             <div className="top-bar-right">
               <div className="sync-status">
                 <span className="fresh-dot" />
@@ -265,6 +277,8 @@ export function App() {
             onChange={setFilters}
           />
         )}
+
+        {isMenuOpen && <MenuSheet onClose={() => setIsMenuOpen(false)} />}
       </section>
     </main>
   );
@@ -394,6 +408,14 @@ function FavoritesEmpty({ hasFavorites, onShowAll }: { hasFavorites: boolean; on
         <button onClick={onShowAll}>전체 합주실 보기</button>
       </div>
     </div>
+  );
+}
+
+function MenuIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" style={{ display: 'block' }} aria-hidden>
+      <path d="M4 7h16M4 12h16M4 17h16" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+    </svg>
   );
 }
 
