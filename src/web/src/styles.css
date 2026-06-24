@@ -1670,11 +1670,13 @@ button {
   .top-bar {
     padding-top: env(safe-area-inset-top, 0px);
   }
+}
 
-  /* 드로어 헤더 상단 여백.
-     - 노치 환경(PWA 등): env가 노치값 → 그만큼만 확보(덧셈하면 너무 높아 보였다).
-     - 사파리 일반 탭: env가 0으로 잡혀 닫기 버튼이 상태표시줄에 잘렸다.
-     둘 중 큰 값을 써서 사파리에선 최소 여백을, 노치 환경에선 안전영역만큼 확보한다. */
+/* 드로어 헤더 상단 여백.
+   브라우저 탭(사파리 포함)에선 env(safe-area-inset-top)이 URL바 상태에 따라 0↔노치값으로
+   계속 바뀌어 상단이 들쭉날쭉해졌다. 그래서 탭에선 env를 쓰지 않고 기본 패딩(--sp-5)으로
+   고정해 안정시키고, 상태표시줄이 실제로 겹치는 설치형(standalone)일 때만 안전영역을 더 확보한다. */
+@media (display-mode: standalone) {
   .menu-drawer-head {
     padding-top: max(env(safe-area-inset-top, 0px), var(--sp-5));
   }
