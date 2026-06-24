@@ -1282,7 +1282,7 @@ button {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: calc(var(--sp-5) + env(safe-area-inset-top, 0px)) var(--sp-3) var(--sp-4) var(--sp-5);
+  padding: var(--sp-5) var(--sp-3) var(--sp-4) var(--sp-5);
   border-bottom: 1px solid var(--border-subtle);
   cursor: grab;
   touch-action: none;
@@ -1668,6 +1668,13 @@ button {
 
   /* 노치/상태표시줄에 딱 붙게: 안전영역만큼만(노치 없으면 0) 확보하고 추가 여백 없음 */
   .top-bar {
+    padding-top: env(safe-area-inset-top, 0px);
+  }
+
+  /* 드로어 헤더도 메인 상단바와 동일하게 안전영역만 확보한다(추가 여백 없음).
+     viewport-fit=cover라 모바일 웹에서 env 값이 잡히는데, 여기에 여백을 더하면
+     사이드바를 열었을 때 상단이 메인보다 높게 떠 보였다. */
+  .menu-drawer-head {
     padding-top: env(safe-area-inset-top, 0px);
   }
 }
