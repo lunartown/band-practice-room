@@ -16,20 +16,6 @@ export async function shareStudio(name: string, url: string | null): Promise<voi
   }
 }
 
-// 앱 자체를 공유한다(메뉴의 "앱 공유"). 특정 합주실이 아니라 서비스 홈을 알린다.
-export async function shareApp(): Promise<void> {
-  try {
-    await Share.share({
-      title: '합주실닷컴',
-      text: '합주실 예약 가능 시간을 한곳에서 — 합주실닷컴',
-      url: 'https://hapjusil.com',
-      dialogTitle: '합주실닷컴 공유',
-    });
-  } catch {
-    /* 사용자가 취소했거나 공유 미지원 — 무시 */
-  }
-}
-
 // 공유 가능 여부(데스크톱 일부 브라우저는 미지원). 버튼 노출 판단에 쓴다.
 export async function canShare(): Promise<boolean> {
   try {
