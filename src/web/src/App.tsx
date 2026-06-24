@@ -8,6 +8,7 @@ import { CalendarPicker } from './components/CalendarPicker';
 import { TimeWindowPicker, timeWindowLabel } from './components/TimeWindowPicker';
 import { Popover } from './components/Popover';
 import { OpenScreen } from './components/OpenScreen';
+import { MenuSheet } from './components/MenuSheet';
 import { buildAvailability } from './lib/availability';
 import { dateLabel } from './lib/date';
 import { loadFilters, saveFilters, markEntered } from './lib/prefs';
@@ -32,6 +33,7 @@ export function App() {
   // 오랜만의 방문이면 조건은 복원하되 오픈 화면을 다시 보여준다.
   const [entered, setEntered] = useState(savedPrefs?.fresh ?? false);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [favOnly, setFavOnly] = useState(false);
   const [popover, setPopover] = useState<PopoverState | null>(null);
   const favorites = useFavorites();
@@ -147,6 +149,14 @@ export function App() {
                 onClick={() => setFavOnly((v) => !v)}
               >
                 <HeartChipIcon filled={favOnly} />
+              </button>
+              <button
+                className="menu-toggle"
+                aria-label="메뉴"
+                aria-haspopup="dialog"
+                onClick={() => setIsMenuOpen(true)}
+              >
+                <MenuIcon />
               </button>
             </div>
           </div>
@@ -265,6 +275,8 @@ export function App() {
             onChange={setFilters}
           />
         )}
+
+        {isMenuOpen && <MenuSheet onClose={() => setIsMenuOpen(false)} />}
       </section>
     </main>
   );
@@ -394,6 +406,16 @@ function FavoritesEmpty({ hasFavorites, onShowAll }: { hasFavorites: boolean; on
         <button onClick={onShowAll}>전체 합주실 보기</button>
       </div>
     </div>
+  );
+}
+
+function MenuIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style={{ display: 'block' }} aria-hidden>
+      <circle cx="5" cy="12" r="1.9" />
+      <circle cx="12" cy="12" r="1.9" />
+      <circle cx="19" cy="12" r="1.9" />
+    </svg>
   );
 }
 

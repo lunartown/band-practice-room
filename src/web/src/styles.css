@@ -413,6 +413,19 @@ button {
   background: var(--accent-soft);
 }
 
+/* 메뉴(더보기) 토글: 즐겨찾기 토글과 같은 고스트 아이콘 버튼 톤. */
+.menu-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--r-md);
+  padding: 0;
+  background: transparent;
+  color: var(--text-faint);
+}
+
 /* 헤더: 썸네일 | 이름·지역 | 가격 — 썸네일 높이가 이름·지역 영역과 맞는다 */
 .studio-head {
   display: flex;
@@ -1210,6 +1223,100 @@ button {
   flex: 1 1 auto;
   color: var(--white);
   background: var(--accent);
+}
+
+/* ============================================================
+   Menu sheet (더보기)
+   ============================================================ */
+/* 필터 시트와 달리 내용만큼만 차지하는 자동 높이 바텀시트. */
+.menu-sheet {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  max-height: 90%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--surface);
+  border-radius: var(--r-sheet) var(--r-sheet) 0 0;
+  box-shadow: var(--shadow-sheet);
+}
+
+.menu-sheet header {
+  padding: var(--sp-3) var(--sp-5);
+}
+
+.menu-sheet header h2 {
+  margin: 0;
+  font-size: var(--fs-xl);
+}
+
+.menu-list {
+  flex: 1 1 auto;
+  overflow: auto;
+  padding: var(--sp-2) var(--sp-3) var(--sp-3);
+}
+
+.menu-item {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  width: 100%;
+  min-height: 56px;
+  padding: var(--sp-2) var(--sp-2);
+  border-radius: var(--r-lg);
+  background: transparent;
+  text-align: left;
+  color: var(--text-1);
+}
+
+.menu-item:active {
+  background: var(--surface-sunken);
+}
+
+.menu-item-icon {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--r-md);
+  background: var(--surface-sunken);
+  color: var(--text-2);
+}
+
+.menu-item-text {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.menu-item-title {
+  font-size: var(--fs-lg);
+  font-weight: var(--fw-semibold);
+}
+
+.menu-item-sub {
+  font-size: var(--fs-xs);
+  color: var(--text-3);
+}
+
+.menu-item-arrow {
+  flex: 0 0 auto;
+  color: var(--text-faint);
+}
+
+.menu-footer {
+  flex: 0 0 auto;
+  padding: var(--sp-3) var(--sp-5) var(--sp-6);
+  border-top: 1px solid var(--border-subtle);
+  font-size: var(--fs-xs);
+  color: var(--text-3);
+  text-align: center;
 }
 
 /* ============================================================
