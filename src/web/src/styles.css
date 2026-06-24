@@ -1282,7 +1282,7 @@ button {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: calc(var(--sp-5) + env(safe-area-inset-top, 0px)) var(--sp-3) var(--sp-4) var(--sp-5);
+  padding: var(--sp-5) var(--sp-3) var(--sp-4) var(--sp-5);
   border-bottom: 1px solid var(--border-subtle);
   cursor: grab;
   touch-action: none;
@@ -1669,5 +1669,13 @@ button {
   /* 노치/상태표시줄에 딱 붙게: 안전영역만큼만(노치 없으면 0) 확보하고 추가 여백 없음 */
   .top-bar {
     padding-top: env(safe-area-inset-top, 0px);
+  }
+
+  /* 드로어 헤더 상단 여백.
+     - 노치 환경(PWA 등): env가 노치값 → 그만큼만 확보(덧셈하면 너무 높아 보였다).
+     - 사파리 일반 탭: env가 0으로 잡혀 닫기 버튼이 상태표시줄에 잘렸다.
+     둘 중 큰 값을 써서 사파리에선 최소 여백을, 노치 환경에선 안전영역만큼 확보한다. */
+  .menu-drawer-head {
+    padding-top: max(env(safe-area-inset-top, 0px), var(--sp-5));
   }
 }
