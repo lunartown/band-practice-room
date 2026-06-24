@@ -136,7 +136,17 @@ export function App() {
       <section className="phone-app" aria-label="예약 가능 시간 검색" ref={phoneRef}>
         <header className="top-bar">
           <div className="top-bar-inner">
-            <h1>예약 가능 시간</h1>
+            <div className="top-bar-left">
+              <button
+                className="menu-toggle"
+                aria-label="메뉴"
+                aria-haspopup="dialog"
+                onClick={() => setIsMenuOpen(true)}
+              >
+                <MenuIcon />
+              </button>
+              <h1>예약 가능 시간</h1>
+            </div>
             <div className="top-bar-right">
               <div className="sync-status">
                 <span className="fresh-dot" />
@@ -149,14 +159,6 @@ export function App() {
                 onClick={() => setFavOnly((v) => !v)}
               >
                 <HeartChipIcon filled={favOnly} />
-              </button>
-              <button
-                className="menu-toggle"
-                aria-label="메뉴"
-                aria-haspopup="dialog"
-                onClick={() => setIsMenuOpen(true)}
-              >
-                <MenuIcon />
               </button>
             </div>
           </div>
@@ -411,10 +413,8 @@ function FavoritesEmpty({ hasFavorites, onShowAll }: { hasFavorites: boolean; on
 
 function MenuIcon() {
   return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style={{ display: 'block' }} aria-hidden>
-      <circle cx="5" cy="12" r="1.9" />
-      <circle cx="12" cy="12" r="1.9" />
-      <circle cx="19" cy="12" r="1.9" />
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" style={{ display: 'block' }} aria-hidden>
+      <path d="M4 7h16M4 12h16M4 17h16" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
     </svg>
   );
 }
