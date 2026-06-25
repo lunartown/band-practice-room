@@ -1,0 +1,70 @@
+name: OTA deploy (Capgo)
+
+# 프런트(JS/CSS/HTML) 변경을 스토어 재심사 없이 Capgo 라이브 업데이트로 배포한다.
+# capacitor.config.ts 의 CapacitorUpdater.autoUpdate=true 라서, 새 번들을 올리면
+# 사용자가 앱을 실행/복귀할 때 받아 다음 실행에 자동 적용된다(네이티브 변경은 제외).
+#
+# 트리거
+#   - push(main) + src/web/** 변경: 프런트가 머지되면 자동 배포
+#   - workflow_dispatch: 필요할 때 수동 배포(채널 지정 가능)
+#
+# 사전 준비: 저장소 Settings → Secrets and variables → Actions 에
+#   CAPGO_TOKEN = Capgo API 키(All / Upload 권한) 등록
+#   → https://web.capgo.app 의 Account → API keys 에서 발급
+
+on:
+  workflow_dispatch:
+    inputs:
+      channel:
+        description: '배포 채널 (기본 production)'
+        required: false
+        default: 'production'
+  push:
+    branches: [main]
+    paths:
+      - 'src/web/**'
+      - '.github/workflows/ota.yml'
+
+concurrency:
+  group: ota
+  cancel-in-progress: false
+
+jobs:
+  ota:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      CAPGO_TOKEN: ${{ secrets.CAPGO_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Guard - CAPGO_TOKEN 누락 시 친절히 실패
+        run: |
+          if [ -z "$CAPGO_TOKEN" ]; then
+            echo "::error::CAPGO_TOKEN 시크릿이 없습니다. Settings → Secrets and variables → Actions 에 등록하세요."
+            exit 1
+          fi
+
+      - name: Build (capacitor 모드)
+        working-directory: src/web
+        run: |
+          npm ci
+          npm run build:app
+
+      # 번들 버전은 채널 내에서 유일해야 하므로 run_number 로 단조 증가시킨다.
+      # 앱 내장 번들보다 높은 버전이어야 OTA 가 적용되므로 9.x 대역을 쓴다
+      # (네이티브 앱 버전이 8.x 대인 점과 충돌하지 않게 여유를 둔다).
+      - name: Upload bundle to Capgo
+        working-directory: src/web
+        run: |
+          CHANNEL="${{ github.event.inputs.channel || 'production' }}"
+          BUNDLE="9.0.${{ github.run_number }}"
+          echo "Uploading bundle $BUNDLE to channel $CHANNEL"
+          npx @capgo/cli@^8 bundle upload \
+            --apikey "$CAPGO_TOKEN" \
+            --channel "$CHANNEL" \
+            --bundle "$BUNDLE"
