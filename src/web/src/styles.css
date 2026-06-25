@@ -1666,27 +1666,16 @@ button {
     box-shadow: none;
   }
 
-  /* 모바일 웹은 노치 안전영역 보정을 쓰지 않고 상단에 딱 붙인다. */
+  /* 노치/상태표시줄에 딱 붙게: 안전영역만큼만(노치 없으면 0) 확보하고 추가 여백 없음 */
   .top-bar {
-    padding: 0 var(--gutter) var(--sp-2);
-  }
-
-  html[data-runtime='native'] .top-bar {
     padding-top: env(safe-area-inset-top, 0px);
   }
 
-  /* 웹 드로어도 상단에 붙인다. 네이티브 앱에서만 기존 안전영역 여백을 유지한다. */
+  /* 드로어 헤더 상단 여백.
+     - 노치 환경(PWA 등): env가 노치값 → 그만큼만 확보(덧셈하면 너무 높아 보였다).
+     - 사파리 일반 탭: env가 0으로 잡혀 닫기 버튼이 상태표시줄에 잘렸다.
+     둘 중 큰 값을 써서 사파리에선 최소 여백을, 노치 환경에선 안전영역만큼 확보한다. */
   .menu-drawer-head {
-    padding-top: 0;
-  }
-
-  html[data-runtime='native'] .menu-drawer-head {
     padding-top: max(env(safe-area-inset-top, 0px), var(--sp-5));
-  }
-
-  /* 첫 진입 화면도 중앙 정렬 때문에 생기는 상단 빈 공간을 없앤다. */
-  html[data-runtime='web'] .open-screen {
-    justify-content: flex-start;
-    padding-top: 0;
   }
 }
