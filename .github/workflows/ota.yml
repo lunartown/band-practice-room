@@ -4,27 +4,33 @@ name: OTA deploy (Capgo)
 # capacitor.config.ts 의 CapacitorUpdater.autoUpdate=true 라서, 새 번들을 올리면
 # 사용자가 앱을 실행/복귀할 때 받아 다음 실행에 자동 적용된다(네이티브 변경은 제외).
 #
-# 채널 매핑 (브랜치 = 채널)
-#   - push(main) → production 채널: 실유저용. 확정된 변경만 main 에 올린다.
-#   - push(dev)  → dev 채널: 테스트 기기 전용.
-#   - workflow_dispatch: channel 을 직접 지정(비우면 브랜치로 자동 판별).
+# 배포 대상 (브랜치 = 앱)
+#   - push(main) → 프로덕션 앱  com.hapjusil.app      (production 채널, 실유저)
+#   - push(dev)  → dev 앱        com.hapjusil.app.dev  (production 채널, 별도 테스트 앱)
+#   - workflow_dispatch: appid/channel 을 직접 지정(비우면 브랜치로 자동 판별).
 #
-# ⚠️ dev 채널에 올려도, 그 채널에 배정된 기기만 받는다. 테스트 기기를 Capgo
-#    대시보드(또는 앱의 setChannel)로 dev 채널에 배정해 둬야 실제로 내려간다.
-#    배정 안 된 기기는 기본 채널(production)만 받으므로 영향 없다.
+# dev 앱은 번들 ID 가 달라(iOS Debug 빌드 = com.hapjusil.app.dev) Capgo 에서도
+# 완전히 별개의 앱이다. "합주실 DEV" 를 폰에 한 번 네이티브로 깔아 두면, 그 앱은
+# 자기 앱(com.hapjusil.app.dev)의 기본 채널을 autoUpdate 로 받으므로 채널 배정이
+# 필요 없다. 프로덕션 앱(com.hapjusil.app)은 전혀 영향받지 않는다.
 #
 # 사전 준비:
 #   - 저장소 Settings → Secrets and variables → Actions 에
 #     CAPGO_TOKEN = Capgo API 키(All / Upload 권한) 등록
 #     → https://web.capgo.app 의 Account → API keys 에서 발급
-#   - Capgo 에 dev 채널 생성(최초 1회):
-#     npx @capgo/cli channel add dev com.hapjusil.app   # --default 안 붙임
+#   - Capgo 에 dev 앱 등록(최초 1회):
+#     npx @capgo/cli app add com.hapjusil.app.dev
+#     npx @capgo/cli channel add production com.hapjusil.app.dev --default
 
 on:
   workflow_dispatch:
     inputs:
+      appid:
+        description: '대상 앱 ID (비우면 브랜치로 판별: main→com.hapjusil.app, 그 외→com.hapjusil.app.dev)'
+        required: false
+        default: ''
       channel:
-        description: '배포 채널 (비우면 브랜치로 자동 판별: main→production, 그 외→dev)'
+        description: '배포 채널 (기본 production)'
         required: false
         default: ''
   push:
@@ -72,18 +78,19 @@ jobs:
       - name: Upload bundle to Capgo
         working-directory: src/web
         run: |
-          # 채널 결정: dispatch 로 직접 준 값이 최우선, 없으면 브랜치로 판별.
-          CHANNEL="${{ github.event.inputs.channel }}"
-          if [ -z "$CHANNEL" ]; then
-            case "${{ github.ref_name }}" in
-              main) CHANNEL="production" ;;
-              *)    CHANNEL="dev" ;;
-            esac
-          fi
+          # 브랜치 = 배포 대상 앱. main 은 프로덕션 앱, dev 는 별도 dev 앱.
+          case "${{ github.ref_name }}" in
+            main) APP_ID="com.hapjusil.app";     CHANNEL="production" ;;
+            *)    APP_ID="com.hapjusil.app.dev"; CHANNEL="production" ;;
+          esac
+          # 수동 실행(dispatch) 입력이 있으면 덮어쓴다.
+          [ -n "${{ github.event.inputs.appid }}" ]   && APP_ID="${{ github.event.inputs.appid }}"
+          [ -n "${{ github.event.inputs.channel }}" ] && CHANNEL="${{ github.event.inputs.channel }}"
           BASE="1.0"
           BUNDLE="$BASE.${{ github.run_number }}"
-          echo "Uploading bundle $BUNDLE to channel $CHANNEL"
+          echo "Uploading bundle $BUNDLE to app $APP_ID (channel $CHANNEL)"
           npx @capgo/cli@^8 bundle upload \
             --apikey "$CAPGO_TOKEN" \
+            --appid "$APP_ID" \
             --channel "$CHANNEL" \
             --bundle "$BUNDLE"
