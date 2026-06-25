@@ -1674,6 +1674,6 @@ button {
   }
 
   .menu-drawer-head {
-    padding-top: 0;
+    padding-top: var(--sp-2);
   }
 }
