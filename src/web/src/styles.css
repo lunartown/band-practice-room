@@ -1666,9 +1666,9 @@ button {
     box-shadow: none;
   }
 
-  /* 노치/상태표시줄에 딱 붙게: 안전영역만큼만(노치 없으면 0) 확보하고 추가 여백 없음 */
+  /* 웹 배포는 viewport-fit=cover 를 쓰지 않으므로 env가 0이고, 앱 빌드만 노치값을 받는다. */
   .top-bar {
-    padding-top: env(safe-area-inset-top, 0px);
+    padding-top: max(env(safe-area-inset-top, 0px), var(--sp-5));
   }
 
   /* 드로어 헤더 상단 여백.

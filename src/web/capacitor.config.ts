@@ -6,7 +6,7 @@ const config: CapacitorConfig = {
   webDir: 'dist',
   backgroundColor: '#ffffff',
   ios: {
-    // iOS 노치/홈 인디케이터 영역까지 콘텐츠가 채워지도록 (웹의 viewport-fit=cover와 맞춤)
+    // iOS 앱 빌드에서만 viewport-fit=cover 를 켜고, 네이티브 안전영역까지 콘텐츠를 채운다.
     contentInset: 'never',
   },
   plugins: {
