@@ -1684,7 +1684,10 @@ button {
     padding-top: calc(var(--sp-2) + env(safe-area-inset-top, 0px));
   }
 
-  .is-native .menu-drawer-head {
-    padding-top: calc(var(--sp-3) + env(safe-area-inset-top, 0px));
+  /* 드로어 패널은 상태표시줄 아래에서 시작하게 한다. top-bar 처럼 안전영역을
+     헤더 패딩으로 흡수하면 좌측 패널만 상태표시줄을 덮어 상단이 갈라져 보였다.
+     패널 자체를 내려 상태표시줄 영역은 딤(스크림)만 남긴다. (헤더 패딩은 기본값 유지) */
+  .is-native .menu-drawer {
+    top: env(safe-area-inset-top, 0px);
   }
 }
