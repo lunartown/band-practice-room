@@ -55,14 +55,18 @@ jobs:
           npm ci
           npm run build:app
 
-      # 번들 버전은 채널 내에서 유일해야 하므로 run_number 로 단조 증가시킨다.
-      # 앱 내장 번들보다 높은 버전이어야 OTA 가 적용되므로 9.x 대역을 쓴다
-      # (네이티브 앱 버전이 8.x 대인 점과 충돌하지 않게 여유를 둔다).
+      # 번들 버전 규칙: 네이티브 앱과 같은 메이저.마이너(현재 1.0)를 유지하고
+      # patch 만 run_number 로 단조 증가시킨다 → 1.0.<run_number>.
+      # Capgo 는 기본적으로 메이저가 다른 번들의 자동 적용을 막으므로(채널 기본 정책),
+      # 네이티브 버전(iOS MARKETING_VERSION / Android versionName, 현재 1.0)과
+      # 메이저를 반드시 맞춰야 기기에 실제로 내려간다.
+      # 네이티브 앱 버전을 올리면(예: 1.1) 아래 BASE 도 같이 바꾼다.
       - name: Upload bundle to Capgo
         working-directory: src/web
         run: |
           CHANNEL="${{ github.event.inputs.channel || 'production' }}"
-          BUNDLE="9.0.${{ github.run_number }}"
+          BASE="1.0"
+          BUNDLE="$BASE.${{ github.run_number }}"
           echo "Uploading bundle $BUNDLE to channel $CHANNEL"
           npx @capgo/cli@^8 bundle upload \
             --apikey "$CAPGO_TOKEN" \
