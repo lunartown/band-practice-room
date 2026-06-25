@@ -1668,7 +1668,7 @@ button {
 
   /* 모바일 웹은 노치 안전영역 보정을 쓰지 않고 상단에 딱 붙인다. */
   .top-bar {
-    padding-top: 0;
+    padding: 0 var(--gutter) var(--sp-2);
   }
 
   html[data-runtime='native'] .top-bar {
@@ -1682,5 +1682,11 @@ button {
 
   html[data-runtime='native'] .menu-drawer-head {
     padding-top: max(env(safe-area-inset-top, 0px), var(--sp-5));
+  }
+
+  /* 첫 진입 화면도 중앙 정렬 때문에 생기는 상단 빈 공간을 없앤다. */
+  html[data-runtime='web'] .open-screen {
+    justify-content: flex-start;
+    padding-top: 0;
   }
 }
