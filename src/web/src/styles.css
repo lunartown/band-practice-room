@@ -1647,13 +1647,15 @@ button {
 /* ============================================================
    Responsive — full-bleed on phones
    ============================================================ */
-@media (max-width: 520px) {
+@media (max-width: 520px), (hover: none) and (pointer: coarse) {
   /* 폰에서는 카드 프레임 없이 화면을 꽉 채우고, 상태표시줄 영역까지 흰색으로 이어지게 */
   body {
     background: var(--surface);
   }
 
   .app-shell {
+    display: block;
+    min-height: 100dvh;
     padding: 0;
   }
 
@@ -1666,23 +1668,12 @@ button {
     box-shadow: none;
   }
 
-  /* 모바일 브라우저는 주소창 아래에 이미 배치되므로 safe-area 값을 더하지 않는다. */
   .top-bar {
-    padding-top: 0;
+    margin: 0;
+    padding: 0 var(--gutter) var(--sp-2);
   }
 
-  html[data-runtime='native'] .top-bar,
-  html[data-runtime='standalone'] .top-bar {
-    padding-top: env(safe-area-inset-top, 0px);
-  }
-
-  /* 드로어도 브라우저에서는 기본 헤더 여백만 쓰고, 앱/홈화면에서만 안전영역을 반영한다. */
   .menu-drawer-head {
-    padding-top: var(--sp-5);
-  }
-
-  html[data-runtime='native'] .menu-drawer-head,
-  html[data-runtime='standalone'] .menu-drawer-head {
-    padding-top: max(env(safe-area-inset-top, 0px), var(--sp-5));
+    padding-top: 0;
   }
 }
