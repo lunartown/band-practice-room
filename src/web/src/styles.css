@@ -1676,4 +1676,15 @@ button {
   .menu-drawer-head {
     padding-top: var(--sp-3);
   }
+
+  /* 네이티브 앱에서만: WebView가 상태표시줄/노치 아래까지 채우므로
+     안전영역만큼 상단을 더 밀어 콘텐츠가 가려지지 않게 한다.
+     웹/PWA(.is-native 없음)에선 위의 최소 여백을 그대로 쓴다. */
+  .is-native .top-bar {
+    padding-top: calc(var(--sp-2) + env(safe-area-inset-top, 0px));
+  }
+
+  .is-native .menu-drawer-head {
+    padding-top: calc(var(--sp-3) + env(safe-area-inset-top, 0px));
+  }
 }
