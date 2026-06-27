@@ -369,18 +369,6 @@ export function App() {
   const sheetActive =
     filters.minDuration !== defaultFilters.minDuration || filters.people !== defaultFilters.people;
   const favFilterActive = favOnly;
-  const visibleStudioCount = countVisibleStudios(visibleGroups);
-  const visibleDayCount = visibleGroups.filter((group) => group.studios.length > 0).length;
-  const resultScopeLabel = buildResultScopeLabel({
-    areaActive,
-    areaLabel: areaChipLabel,
-    favOnly: favFilterActive,
-    selectedCount: filters.studioIds.length,
-  });
-  const resultSummaryLabel =
-    loading && visibleGroups.length === 0
-      ? `${resultScopeLabel} · 확인 중`
-      : `${resultScopeLabel} · ${visibleStudioCount}곳 · ${visibleDayCount}일`;
 
   const syncLabel = updatedAt ? formatUpdatedAt(updatedAt) : '–';
 
@@ -521,6 +509,16 @@ export function App() {
                     >
                       <HeartChipIcon filled={favFilterActive} />
                     </button>
+                    <button
+                      className={`sort-toggle${sortOption !== 'popular' ? ' active' : ''}${popover?.kind === 'sort' ? ' open' : ''}`}
+                      aria-haspopup="menu"
+                      aria-expanded={popover?.kind === 'sort'}
+                      aria-label={`정렬 기준: ${sortOptionLabel(sortOption)}`}
+                      title={`정렬 기준: ${sortOptionLabel(sortOption)}`}
+                      onClick={(e) => openPopover('sort', e)}
+                    >
+                      <SortIcon />
+                    </button>
                   </div>
                 </div>
               </div>
@@ -549,21 +547,6 @@ export function App() {
                 ))}
               </div>
             )}
-            <div className="result-toolbar">
-              <span className="result-summary">{resultSummaryLabel}</span>
-              <button
-                className={`result-sort-button${popover?.kind === 'sort' ? ' open' : ''}`}
-                aria-haspopup="menu"
-                aria-expanded={popover?.kind === 'sort'}
-                aria-label={`정렬 기준: ${sortOptionLabel(sortOption)}`}
-                onClick={(e) => openPopover('sort', e)}
-              >
-                <SortIcon />
-                <span>{sortOptionLabel(sortOption)}</span>
-                <ChevronIcon />
-              </button>
-            </div>
-
             {error && <div className="error-banner">{error}</div>}
             {loading && <div className="loading-bar" aria-hidden />}
 
@@ -1007,31 +990,6 @@ function buildDateChipLabel(dates: string[]) {
 
 function sortOptionLabel(value: StudioSortOption) {
   return SORT_OPTIONS.find((option) => option.value === value)?.label ?? '인기순';
-}
-
-function countVisibleStudios(groups: ReturnType<typeof buildAvailability>) {
-  const ids = new Set<number>();
-  for (const group of groups) {
-    for (const studio of group.studios) ids.add(studio.studio.id);
-  }
-  return ids.size;
-}
-
-function buildResultScopeLabel({
-  areaActive,
-  areaLabel,
-  favOnly,
-  selectedCount,
-}: {
-  areaActive: boolean;
-  areaLabel: string;
-  favOnly: boolean;
-  selectedCount: number;
-}) {
-  if (selectedCount > 0) return `선택한 ${selectedCount}곳`;
-  if (favOnly) return '즐겨찾기';
-  if (areaActive) return areaLabel;
-  return '전체 합주실';
 }
 
 function buildSlotsQuery(

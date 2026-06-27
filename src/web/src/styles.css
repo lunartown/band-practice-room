@@ -320,47 +320,6 @@ button {
   background: var(--white);
 }
 
-.result-toolbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--sp-3);
-  min-height: 42px;
-  padding: 0 var(--gutter) var(--sp-2);
-  border-bottom: 1px solid var(--border-subtle);
-  color: var(--text-3);
-}
-
-.result-summary {
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-size: var(--fs-xs);
-  font-weight: var(--fw-semibold);
-}
-
-.result-sort-button {
-  flex: 0 0 auto;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--sp-1);
-  min-height: 32px;
-  padding: var(--sp-fine) var(--sp-2);
-  border-radius: var(--r-md);
-  background: transparent;
-  color: var(--text-2);
-  font-size: var(--fs-xs);
-  font-weight: var(--fw-bold);
-  white-space: nowrap;
-}
-
-.result-sort-button.open {
-  background: var(--accent-soft);
-  color: var(--accent-strong);
-}
-
 /* ============================================================
    Studio search mode
    ============================================================ */
@@ -974,17 +933,17 @@ button {
   gap: var(--sp-2);
 }
 
-/* 검색/즐겨찾기 토글: 버튼 박스는 붙여 아이콘끼리 멀어 보이지 않게 한다. */
+/* 검색/즐겨찾기/정렬 액션: 버튼 박스는 붙여 아이콘끼리 멀어 보이지 않게 한다. */
 .top-bar-actions {
   display: flex;
   align-items: center;
   gap: 0;
 }
 
-/* 즐겨찾기만 보기 토글: 헤더에 두어 칩 줄 혼잡(칩 글자 잘림)을 피한다.
-   배경 없는 고스트 하트, 켜지면 액센트(틸)로 채운다. */
+/* 결과 전역 액션은 헤더에 두어 칩 줄 혼잡(칩 글자 잘림)을 피한다. */
 .fav-toggle,
-.search-toggle {
+.search-toggle,
+.sort-toggle {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -997,7 +956,9 @@ button {
 }
 
 .fav-toggle.active,
-.search-toggle.active {
+.search-toggle.active,
+.sort-toggle.active,
+.sort-toggle.open {
   color: var(--accent);
   background: var(--accent-soft);
 }
