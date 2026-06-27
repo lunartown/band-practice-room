@@ -396,7 +396,7 @@ export function App() {
                 disabled={filters.studioIds.length === 0 && !favOnly}
                 onClick={showAllStudios}
               >
-                전체 보기
+                선택 해제
               </button>
               <button
                 className="studio-search-apply"
@@ -723,7 +723,7 @@ function EmptyState({
 
 function HeartChipIcon({ filled }: { filled: boolean }) {
   return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill={filled ? 'currentColor' : 'none'} style={{ display: 'block' }} aria-hidden>
+    <svg width="18" height="18" viewBox="0 0 24 24" fill={filled ? 'currentColor' : 'none'} style={{ display: 'block' }} aria-hidden>
       <path
         d="M12 20.5l-1.45-1.32C5.4 14.5 2 11.42 2 7.65 2 4.6 4.42 2.2 7.5 2.2c1.74 0 3.41.81 4.5 2.1 1.09-1.29 2.76-2.1 4.5-2.1 3.08 0 5.5 2.4 5.5 5.45 0 3.77-3.4 6.85-8.55 11.53L12 20.5z"
         stroke="currentColor"
@@ -788,7 +788,7 @@ function BackIcon() {
 
 function SearchIcon() {
   return (
-    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" style={{ display: 'block' }} aria-hidden>
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" style={{ display: 'block' }} aria-hidden>
       <circle cx="11" cy="11" r="7" stroke="currentColor" strokeWidth="2" />
       <path d="M20 20l-3.8-3.8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
     </svg>

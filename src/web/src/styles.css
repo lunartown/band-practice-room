@@ -181,6 +181,7 @@ button {
   display: flex;
   align-items: center;
   gap: var(--sp-1);
+  margin-right: var(--sp-1);
 }
 
 .sync-label {
@@ -678,7 +679,7 @@ button {
 .top-bar-right {
   display: flex;
   align-items: center;
-  gap: var(--sp-3);
+  gap: var(--sp-2);
 }
 
 /* 즐겨찾기만 보기 토글: 헤더에 두어 칩 줄 혼잡(칩 글자 잘림)을 피한다.
@@ -688,8 +689,8 @@ button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
+  width: 34px;
+  height: 34px;
   border-radius: var(--r-md);
   padding: 0;
   background: transparent;
