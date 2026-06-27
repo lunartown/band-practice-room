@@ -1,0 +1,106 @@
+name: Android build (AAB)
+
+# 서명된 Android App Bundle(.aab)을 CI에서 빌드해 아티팩트로 올린다.
+# Android Studio 없이 PC/클라우드 어디서든 Play Console 업로드용 .aab 를 얻을 수 있다.
+# (Play 자동 업로드까지는 하지 않는다 — 빌드된 .aab 를 받아 수동 업로드한다.)
+#
+# 수동 실행 전용(workflow_dispatch). version_name/version_code 를 직접 줄 수 있고,
+# version_code 를 비우면 GitHub run_number 로 단조 증가시킨다(Play 는 versionCode
+# 가 매번 커져야 한다).
+#
+# 사전 준비 — 저장소 Settings → Secrets and variables → Actions 에 등록:
+#   - ANDROID_KEYSTORE_BASE64    : keystore 파일을 base64 로 인코딩한 값
+#       (생성:  base64 -w0 hapjusil-release.keystore   /  macOS: base64 -i ...)
+#   - ANDROID_KEYSTORE_PASSWORD  : 키스토어 비밀번호
+#   - ANDROID_KEY_ALIAS          : 키 alias (예: hapjusil)
+#   - ANDROID_KEY_PASSWORD       : 키 비밀번호 (alias 비밀번호)
+#
+# 키스토어 최초 생성(로컬 1회, 안전하게 보관 — 분실 시 앱 업데이트 영구 불가):
+#   keytool -genkey -v -keystore hapjusil-release.keystore \
+#     -alias hapjusil -keyalg RSA -keysize 2048 -validity 10000
+
+on:
+  workflow_dispatch:
+    inputs:
+      version_name:
+        description: 'versionName (예: 1.0.1). 비우면 1.0'
+        required: false
+        default: ''
+      version_code:
+        description: 'versionCode 정수. 비우면 run_number 사용'
+        required: false
+        default: ''
+
+concurrency:
+  group: android-build
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+      ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+      ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Guard - 서명 시크릿 누락 시 친절히 실패
+        env:
+          KS_B64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+        run: |
+          missing=""
+          [ -z "$KS_B64" ] && missing="$missing ANDROID_KEYSTORE_BASE64"
+          [ -z "$ANDROID_KEYSTORE_PASSWORD" ] && missing="$missing ANDROID_KEYSTORE_PASSWORD"
+          [ -z "$ANDROID_KEY_ALIAS" ] && missing="$missing ANDROID_KEY_ALIAS"
+          [ -z "$ANDROID_KEY_PASSWORD" ] && missing="$missing ANDROID_KEY_PASSWORD"
+          if [ -n "$missing" ]; then
+            echo "::error::서명 시크릿 누락:$missing — Settings → Secrets and variables → Actions 에 등록하세요."
+            exit 1
+          fi
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: 웹 빌드 + Android 동기화
+        working-directory: src/web
+        run: |
+          npm ci
+          npm run build:app
+          npx cap sync android
+
+      - name: 키스토어 복원
+        run: |
+          echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 -d > "$RUNNER_TEMP/release.keystore"
+          echo "ANDROID_KEYSTORE_PATH=$RUNNER_TEMP/release.keystore" >> "$GITHUB_ENV"
+
+      - name: versionCode/Name 결정
+        run: |
+          VC="${{ github.event.inputs.version_code }}"
+          [ -z "$VC" ] && VC="${{ github.run_number }}"
+          VN="${{ github.event.inputs.version_name }}"
+          [ -z "$VN" ] && VN="1.0"
+          echo "ANDROID_VERSION_CODE=$VC" >> "$GITHUB_ENV"
+          echo "ANDROID_VERSION_NAME=$VN" >> "$GITHUB_ENV"
+          echo "versionCode=$VC versionName=$VN"
+
+      - name: AAB 빌드(서명 포함)
+        working-directory: src/web/android
+        run: |
+          chmod +x ./gradlew
+          ./gradlew bundleRelease --no-daemon
+
+      - name: AAB 아티팩트 업로드
+        uses: actions/upload-artifact@v4
+        with:
+          name: hapjusil-release-aab
+          path: src/web/android/app/build/outputs/bundle/release/*.aab
+          if-no-files-found: error
+          retention-days: 14
