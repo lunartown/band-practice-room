@@ -11,6 +11,8 @@
 const NAVER_CDN = 'pstatic.net';
 const THUMB_W = 176; // 44px 아바타의 레티나(최대 ~4x) 대응.
 
+export const STUDIO_FALLBACK_IMAGE_URL = '/studios/fallback-drum.jpg';
+
 export function thumbnailUrl(url: string | null | undefined): string | null {
   if (!url) return null;
   try {

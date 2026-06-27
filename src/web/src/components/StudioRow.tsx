@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import type { Studio } from '../api/types';
 import type { AvailabilityChip, RoomAvailability, StudioAvailability } from '../lib/availability';
 import { toReviewBadges } from '../lib/reviewKeywords';
-import { thumbnailUrl } from '../lib/imageUrl';
+import { STUDIO_FALLBACK_IMAGE_URL, thumbnailUrl } from '../lib/imageUrl';
 import { useFavorites } from '../lib/useFavorites';
 import { toggleFavorite } from '../lib/favorites';
 import { shareStudio } from '../lib/share';
@@ -73,6 +73,7 @@ function HeartIcon({ filled }: { filled: boolean }) {
 function StudioAvatar({ studio }: { studio: Pick<Studio, 'imageUrl' | 'name'> }) {
   const { imageUrl, name } = studio;
   const [imgFailed, setImgFailed] = useState(false);
+  const [fallbackFailed, setFallbackFailed] = useState(false);
   // 리사이즈 URL 부터 시도하고, 실패하면 원본 URL 로 한 번 더 시도(self-healing).
   // 리사이즈 타입이 호스트에서 안 먹혀도 이미지가 사라지지 않게 보장한다.
   const [useOriginal, setUseOriginal] = useState(false);
@@ -81,18 +82,22 @@ function StudioAvatar({ studio }: { studio: Pick<Studio, 'imageUrl' | 'name'> })
   // studio(이미지)가 바뀌면 폴백 상태를 초기화한다(행 재사용 대비).
   useEffect(() => {
     setImgFailed(false);
+    setFallbackFailed(false);
     setUseOriginal(false);
   }, [imageUrl]);
 
-  // 아바타는 항상 렌더한다. 이미지가 없거나(또는 로드 실패하면) 이니셜 폴백으로
+  // 아바타는 항상 렌더한다. 이미지가 없거나(또는 로드 실패하면) 로컬 폴백 이미지로
   // 떨어져, 행마다 좌측 정렬이 흔들리지 않게 한다.
-  const showImg = Boolean(imageUrl) && !imgFailed;
-  const imgSrc = !useOriginal && resized ? resized : imageUrl!;
+  const sourceImgSrc = !useOriginal && resized ? resized : imageUrl ?? null;
+  const showSourceImg = Boolean(sourceImgSrc) && !imgFailed;
+  const imgSrc = showSourceImg && sourceImgSrc ? sourceImgSrc : STUDIO_FALLBACK_IMAGE_URL;
+  const showImg = showSourceImg || !fallbackFailed;
   const handleImgError = () => {
-    // 1차(리사이즈) 실패 → 원본 재시도, 2차(원본) 실패 → 이니셜.
+    // 1차(리사이즈) 실패 → 원본 재시도, 2차(원본) 실패 → 로컬 폴백.
     if (!useOriginal && resized && resized !== imageUrl) setUseOriginal(true);
     else setImgFailed(true);
   };
+  const handleFallbackError = () => setFallbackFailed(true);
   const initial = name.trim().charAt(0);
 
   return (
@@ -107,7 +112,7 @@ function StudioAvatar({ studio }: { studio: Pick<Studio, 'imageUrl' | 'name'> })
           alt=""
           loading="lazy"
           referrerPolicy="no-referrer"
-          onError={handleImgError}
+          onError={showSourceImg ? handleImgError : handleFallbackError}
         />
       ) : (
         initial
