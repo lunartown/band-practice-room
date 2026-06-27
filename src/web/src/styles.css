@@ -2570,16 +2570,16 @@ button {
     --app-safe-area-top: max(env(safe-area-inset-top, 0px), var(--native-safe-area-top));
   }
 
-  /* 네이티브 앱에서만: CSS env 값과 StatusBar 플러그인 높이 중 유효한 값을 사용해
-     상태표시줄/노치 아래로 콘텐츠를 내린다. 웹/PWA 는 기본 최소 여백을 유지한다. */
-  .is-native .top-bar {
+  /* iOS 앱에서만: CSS env 값이 0이면 StatusBar 플러그인 높이를 fallback 으로 써
+     상태표시줄/노치 아래로 콘텐츠를 내린다. 웹/PWA 와 Android 는 기존 여백을 유지한다. */
+  .is-ios .top-bar {
     padding-top: calc(var(--sp-2) + var(--app-safe-area-top));
   }
 
   /* 드로어 패널은 상태표시줄 아래에서 시작하게 한다. top-bar 처럼 안전영역을
      헤더 패딩으로 흡수하면 좌측 패널만 상태표시줄을 덮어 상단이 갈라져 보였다.
      패널 자체를 내려 상태표시줄 영역은 딤(스크림)만 남긴다. (헤더 패딩은 기본값 유지) */
-  .is-native .menu-drawer {
+  .is-ios .menu-drawer {
     top: var(--app-safe-area-top);
   }
 }
