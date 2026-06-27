@@ -17,6 +17,7 @@ export interface StudioRow {
   image_url: string | null;
   rating: string | null;
   review_count: number | null;
+  has_online_booking: boolean;
 }
 
 @Injectable()
@@ -98,7 +99,14 @@ export class CatalogRepository {
             ELSE COALESCE(s.image_url_manual, s.image_url_scraped)
           END AS image_url,
           s.rating,
-          s.review_count
+          s.review_count,
+          -- 방이 실제 온라인 소스에 매핑(room_sources)됐는지. studio_sources만 있고
+          -- bizId가 죽은 곳(매핑 0)은 슬롯이 안 나오므로 전화예약으로 본다(프론트 뱃지/안내용).
+          EXISTS (
+            SELECT 1 FROM room_sources rs
+            JOIN rooms r2 ON r2.id = rs.room_id
+            WHERE r2.studio_id = s.id
+          ) AS has_online_booking
         FROM studios s
         LEFT JOIN studio_areas sa ON sa.studio_id = s.id
         WHERE ${where.join(' AND ')}

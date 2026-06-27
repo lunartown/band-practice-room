@@ -60,6 +60,7 @@ export class CatalogService {
       imageUrl: studio.image_url ?? null,
       rating: studio.rating == null ? null : Number(studio.rating),
       reviewCount: studio.review_count ?? null,
+      hasOnlineBooking: studio.has_online_booking,
     };
   }
 }

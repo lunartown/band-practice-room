@@ -20,6 +20,8 @@ export interface Studio {
   rating?: number | null;
   reviewCount?: number | null;
   reviewKeywords?: ReviewKeyword[];
+  /** 온라인(네이버/스페이스클라우드) 예약 소스 보유 여부. false면 전화예약 합주실. */
+  hasOnlineBooking?: boolean;
 }
 
 export interface ReviewKeyword {
