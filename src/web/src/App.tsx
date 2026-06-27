@@ -19,7 +19,8 @@ import {
   upsertAlert,
 } from './lib/alerts';
 import type { AlertDraft, SavedAlert } from './lib/alerts';
-import { buildAvailability } from './lib/availability';
+import { buildAvailability, sortDateAvailabilityGroups } from './lib/availability';
+import type { StudioSortOption } from './lib/availability';
 import { dateLabel } from './lib/date';
 import { loadFilters, saveFilters, markEntered } from './lib/prefs';
 import { loadRecentStudioIds, recordRecentStudioSelections } from './lib/recentStudios';
@@ -37,8 +38,14 @@ import {
 } from './lib/studioSearch';
 import { useFavorites } from './lib/useFavorites';
 
-type PopoverKind = 'time' | 'date' | 'area';
-const POP_WIDTH: Record<PopoverKind, number> = { time: 320, date: 340, area: 220 };
+type PopoverKind = 'time' | 'date' | 'area' | 'sort';
+const POP_WIDTH: Record<PopoverKind, number> = { time: 320, date: 340, area: 220, sort: 180 };
+const SORT_OPTIONS: { value: StudioSortOption; label: string }[] = [
+  { value: 'popular', label: '인기순' },
+  { value: 'name_asc', label: '이름순' },
+  { value: 'price_asc', label: '가격 낮은순' },
+  { value: 'price_desc', label: '가격 높은순' },
+];
 interface PopoverState {
   kind: PopoverKind;
   top: number;
@@ -65,6 +72,7 @@ export function App() {
   const [alertDraft, setAlertDraft] = useState<AlertDraft | null>(null);
   const [alerts, setAlerts] = useState<SavedAlert[]>(() => loadAlerts());
   const [favOnly, setFavOnly] = useState(false);
+  const [sortOption, setSortOption] = useState<StudioSortOption>('popular');
   const [collapsedDates, setCollapsedDates] = useState<Set<string>>(() => new Set());
   const [studioSearchQuery, setStudioSearchQuery] = useState('');
   const [recentStudioIds, setRecentStudioIds] = useState<number[]>(() => loadRecentStudioIds());
@@ -297,8 +305,11 @@ export function App() {
   );
 
   const visibleGroups = useMemo(
-    () => buildVisibleGroups(dateGroups, filters.studioIds, favOnly, favorites),
-    [dateGroups, favOnly, favorites, filters.studioIds],
+    () => sortDateAvailabilityGroups(
+      buildVisibleGroups(dateGroups, filters.studioIds, favOnly, favorites),
+      sortOption,
+    ),
+    [dateGroups, favOnly, favorites, filters.studioIds, sortOption],
   );
 
   const totalStudios = visibleGroups.reduce((sum, g) => sum + g.studios.length, 0);
@@ -355,6 +366,7 @@ export function App() {
   const dateActive = filters.dates.length > 0;
   const areaActive = filters.areaIds.length > 0;
   const studioActive = filters.studioIds.length > 0;
+  const sortActive = sortOption !== 'popular';
   const sheetActive =
     filters.minDuration !== defaultFilters.minDuration || filters.people !== defaultFilters.people;
   const favFilterActive = favOnly;
@@ -507,6 +519,7 @@ export function App() {
               <button className={`chip${timeActive ? ' active' : ''}${popover?.kind === 'time' ? ' open' : ''}`} aria-pressed={timeActive} onClick={(e) => openPopover('time', e)}><span>{timeWindowLabel(filters.timeWindows)}</span><ChevronIcon /></button>
               <button className={`chip${dateActive ? ' active' : ''}${popover?.kind === 'date' ? ' open' : ''}`} aria-pressed={dateActive} onClick={(e) => openPopover('date', e)}><span>{buildDateChipLabel(filters.dates)}</span><ChevronIcon /></button>
               <button className={`chip${areaActive ? ' active' : ''}${popover?.kind === 'area' ? ' open' : ''}`} aria-pressed={areaActive} onClick={(e) => openPopover('area', e)}><span>{areaChipLabel}</span><ChevronIcon /></button>
+              <button className={`chip${sortActive ? ' active' : ''}${popover?.kind === 'sort' ? ' open' : ''}`} aria-pressed={sortActive} onClick={(e) => openPopover('sort', e)}><span>{sortOptionLabel(sortOption)}</span><ChevronIcon /></button>
               <button className={`filter-button${sheetActive ? ' active' : ''}`} aria-pressed={sheetActive} aria-label="필터" onClick={() => setIsFilterOpen(true)}>
                 <FilterIcon />
               </button>
@@ -668,6 +681,26 @@ export function App() {
                 selected={filters.dates}
                 onChange={(dates) => setFilters((f) => ({ ...f, dates }))}
               />
+            )}
+
+            {popover.kind === 'sort' && (
+              <>
+                {SORT_OPTIONS.map((option) => (
+                  <button
+                    key={option.value}
+                    role="menuitemradio"
+                    aria-checked={sortOption === option.value}
+                    className={`popover-option${sortOption === option.value ? ' selected' : ''}`}
+                    onClick={() => {
+                      setSortOption(option.value);
+                      setPopover(null);
+                    }}
+                  >
+                    <span>{option.label}</span>
+                    {sortOption === option.value && <span className="pop-check">✓</span>}
+                  </button>
+                ))}
+              </>
             )}
           </Popover>
         )}
@@ -938,6 +971,10 @@ function RemoveChipIcon() {
 function buildDateChipLabel(dates: string[]) {
   if (dates.length === 0) return '일주일 내';
   return `${dates.length}일 선택`;
+}
+
+function sortOptionLabel(value: StudioSortOption) {
+  return SORT_OPTIONS.find((option) => option.value === value)?.label ?? '인기순';
 }
 
 function buildSlotsQuery(

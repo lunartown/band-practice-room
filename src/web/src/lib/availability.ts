@@ -28,6 +28,8 @@ export interface StudioAvailability {
   studio: Studio;
   areaName: string;
   priceLabel: string;
+  pricePerHourMin: number | null;
+  pricePerHourMax: number | null;
   bookingUrl: string | null;
   chips: AvailabilityChip[];
   rooms: RoomAvailability[];
@@ -37,6 +39,8 @@ export interface DateAvailability {
   date: string;
   studios: StudioAvailability[];
 }
+
+export type StudioSortOption = 'popular' | 'name_asc' | 'price_asc' | 'price_desc';
 
 const COLLAPSE_THRESHOLD = 3; // 시작점이 이 개수를 넘으면 범위로 접는다
 
@@ -150,13 +154,18 @@ function perHourPrice(
   return minDuration > 0 ? slotPrice / minDuration : slotPrice;
 }
 
-function formatPricePerHour(prices: number[]): string {
+function priceRange(prices: number[]): { min: number; max: number } | null {
   const valid = prices.filter((p) => p >= MIN_PRICE && p <= MAX_PRICE);
-  if (valid.length === 0) return '가격 확인 불가';
-  const min = Math.min(...valid);
-  const max = Math.max(...valid);
+  if (valid.length === 0) return null;
+  return { min: Math.min(...valid), max: Math.max(...valid) };
+}
+
+function formatPricePerHour(range: { min: number; max: number } | null): string {
+  if (!range) return '가격 확인 불가';
   const man = (won: number) => (won / 10000).toFixed(1);
-  return min === max ? `${man(min)}만원/시간` : `${man(min)}–${man(max)}만원/시간`;
+  return range.min === range.max
+    ? `${man(range.min)}만원/시간`
+    : `${man(range.min)}–${man(range.max)}만원/시간`;
 }
 
 /**
@@ -214,11 +223,12 @@ function buildStudios(slots: Slot[], minDuration: number): StudioAvailability[] 
       for (const h of startHours) studioStartHours.add(h);
       const room = roomSlots[0].room;
       const price = perHourPrice(room.pricePerHour, roomSlots[0].price, minDuration);
+      const roomPriceRange = priceRange([price]);
       rooms.push({
         room,
         chips,
         bookingUrl: roomSlots.find((s) => s.bookingUrl)?.bookingUrl ?? null,
-        priceLabel: formatPricePerHour([price]),
+        priceLabel: formatPricePerHour(roomPriceRange),
         capacityLabel: capacityLabel(room.capacityMin, room.capacityMax),
       });
     }
@@ -240,22 +250,64 @@ function buildStudios(slots: Slot[], minDuration: number): StudioAvailability[] 
 
     const studio = studioSlots[0].studio;
     const prices = studioSlots.map((s) => perHourPrice(s.room.pricePerHour, s.price, minDuration));
+    const studioPriceRange = priceRange(prices);
 
     studios.push({
       studio,
       areaName: studio.primaryAreaName ?? '지역 미확인',
-      priceLabel: formatPricePerHour(prices),
+      priceLabel: formatPricePerHour(studioPriceRange),
+      pricePerHourMin: studioPriceRange?.min ?? null,
+      pricePerHourMax: studioPriceRange?.max ?? null,
       bookingUrl: toStudioBookingUrl(studioSlots.find((s) => s.bookingUrl)?.bookingUrl ?? null),
       chips,
       rooms,
     });
   }
 
-  // 리뷰 많은 순으로 정렬한다(평점은 대표성이 약해 쓰지 않는다).
+  return sortStudios(studios, 'popular');
+}
+
+export function sortDateAvailabilityGroups(
+  groups: DateAvailability[],
+  sortOption: StudioSortOption,
+): DateAvailability[] {
+  return groups.map((group) => ({
+    ...group,
+    studios: sortStudios(group.studios, sortOption),
+  }));
+}
+
+function sortStudios(studios: StudioAvailability[], sortOption: StudioSortOption): StudioAvailability[] {
+  return [...studios].sort((a, b) => compareStudios(a, b, sortOption));
+}
+
+function compareStudios(a: StudioAvailability, b: StudioAvailability, sortOption: StudioSortOption): number {
+  if (sortOption === 'name_asc') return compareByName(a, b);
+  if (sortOption === 'price_asc') return compareByPrice(a, b, 'asc');
+  if (sortOption === 'price_desc') return compareByPrice(a, b, 'desc');
+
+  // 인기순은 리뷰 많은 순이다(평점은 대표성이 약해 쓰지 않는다).
   // 리뷰 수가 같거나 없으면 이름 가나다순으로 안정 정렬한다.
-  return studios.sort((a, b) => {
-    const reviewA = a.studio.reviewCount ?? 0;
-    const reviewB = b.studio.reviewCount ?? 0;
-    return reviewB - reviewA || a.studio.name.localeCompare(b.studio.name, 'ko');
-  });
+  return compareByPopularity(a, b);
+}
+
+function compareByPopularity(a: StudioAvailability, b: StudioAvailability): number {
+  const reviewA = a.studio.reviewCount ?? 0;
+  const reviewB = b.studio.reviewCount ?? 0;
+  return reviewB - reviewA || compareByName(a, b);
+}
+
+function compareByName(a: StudioAvailability, b: StudioAvailability): number {
+  return a.studio.name.localeCompare(b.studio.name, 'ko');
+}
+
+function compareByPrice(a: StudioAvailability, b: StudioAvailability, direction: 'asc' | 'desc'): number {
+  const priceA = a.pricePerHourMin;
+  const priceB = b.pricePerHourMin;
+  if (priceA == null && priceB == null) return compareByName(a, b);
+  if (priceA == null) return 1;
+  if (priceB == null) return -1;
+
+  const priceDiff = direction === 'asc' ? priceA - priceB : priceB - priceA;
+  return priceDiff || compareByName(a, b);
 }
