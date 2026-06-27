@@ -25,6 +25,8 @@ jobs:
       # 스페이스클라우드 가용성 API 가 개인 토큰을 요구하면 시크릿으로 주입(없으면 토큰 없이 시도).
       SPACECLOUD_API_TOKEN: ${{ secrets.SPACECLOUD_API_TOKEN }}
       RUN_ONCE: 'true'
+      # FCM 서비스 계정(JSON 또는 base64 JSON). 없으면 알림 단계는 dry-run(발송 없이 매칭만).
+      FCM_SERVICE_ACCOUNT: ${{ secrets.FCM_SERVICE_ACCOUNT }}
     steps:
       - uses: actions/checkout@v4
 
@@ -48,3 +50,10 @@ jobs:
         run: |
           npm ci
           npm start
+
+      # 스크랩으로 새로 '예약 가능'으로 바뀐 슬롯을 구독과 매칭해 푸시 발송.
+      # 스크랩이 일부 실패해도 수집된 변동분은 알리도록 cancelled 가 아니면 항상 실행한다.
+      - name: Dispatch availability notifications
+        if: ${{ !cancelled() }}
+        working-directory: src/api
+        run: npm run notify:dispatch
