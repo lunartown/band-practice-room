@@ -4,6 +4,8 @@ import { toReviewBadges } from '../lib/reviewKeywords';
 import { thumbnailUrl } from '../lib/imageUrl';
 import { useFavorites } from '../lib/useFavorites';
 import { toggleFavorite } from '../lib/favorites';
+import { useAlarms } from '../lib/useAlarms';
+import { toggleAlarm } from '../lib/alarms';
 import { shareStudio } from '../lib/share';
 
 interface StudioRowProps {
@@ -66,6 +68,58 @@ function HeartIcon({ filled }: { filled: boolean }) {
         strokeLinejoin="round"
       />
     </svg>
+  );
+}
+
+function BellIcon({ filled }: { filled: boolean }) {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill={filled ? 'currentColor' : 'none'} aria-hidden>
+      <path
+        d="M6 9a6 6 0 1112 0c0 3.5.8 5.3 1.6 6.3.4.5.1 1.2-.6 1.2H5c-.7 0-1-.7-.6-1.2C5.2 14.3 6 12.5 6 9z"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinejoin="round"
+      />
+      <path d="M10 20a2 2 0 004 0" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+// 이름순 정렬에서만 나타나는 "빈 합주실" 행. 카탈로그엔 있으나 이 날 빈자리가 없는
+// 곳이다. 목록에서 사라지지 않고 제자리(가나다 위치)에 흐릿하게 남아 "있는데 다 찼다"를
+// 보여주고, 우측 벨로 "자리 나면 알림"을 걸 자리를 제공한다.
+export function EmptyStudioRow({ studio }: StudioRowProps) {
+  const { id, name } = studio.studio;
+  const alarms = useAlarms();
+  const on = alarms.has(id);
+  const initial = name.trim().charAt(0);
+
+  return (
+    <div className="studio-row empty">
+      <div className="studio-head">
+        <div className="studio-avatar muted" aria-hidden>
+          {initial}
+        </div>
+        <div className="studio-name-area">
+          <div className="studio-name">{name}</div>
+          <div className="studio-meta">
+            <span className="studio-area">{studio.areaName}</span>
+          </div>
+        </div>
+        <span className="empty-flag">빈자리 없음</span>
+      </div>
+
+      <button
+        type="button"
+        className={`alarm-button${on ? ' on' : ''}`}
+        aria-pressed={on}
+        aria-label={on ? `${name} 자리 알림 끄기` : `${name} 자리 나면 알림 받기`}
+        onClick={() => toggleAlarm(id)}
+      >
+        <BellIcon filled={on} />
+        {on ? '자리 나면 알림 받는 중' : '자리 나면 알림 받기'}
+      </button>
+    </div>
   );
 }
 

@@ -395,6 +395,106 @@ button {
   color: var(--accent-strong);
 }
 
+/* ============================================================
+   Sort bar (추천순 | 가나다순)
+   ============================================================ */
+.sort-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: 0 var(--gutter) var(--sp-3);
+}
+
+/* 세그먼트 토글: 둘 중 하나가 항상 켜진 이항 선택. 칩과 같은 sunken 트랙 위에
+   켜진 쪽만 흰 알약으로 띄운다(iOS 세그먼트 컨트롤 관용구). */
+.sort-seg {
+  display: inline-flex;
+  gap: 2px;
+  padding: 2px;
+  border-radius: var(--r-md);
+  background: var(--surface-sunken);
+}
+
+.sort-seg button {
+  min-height: 28px;
+  padding: var(--sp-fine) var(--sp-3);
+  border-radius: calc(var(--r-md) - 2px);
+  background: transparent;
+  color: var(--text-2);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-semibold);
+  white-space: nowrap;
+}
+
+.sort-seg button.on {
+  background: var(--surface);
+  color: var(--text-1);
+  box-shadow: 0 1px 2px rgba(20, 28, 42, 0.08);
+}
+
+.sort-hint {
+  font-size: var(--fs-xs);
+  color: var(--text-faint);
+}
+
+/* ============================================================
+   Empty studio row (이름순에서만: 카탈로그엔 있으나 빈자리 없음)
+   ============================================================ */
+/* 가용 행보다 한 단계 가라앉혀(흐릿하게) 스캔할 때 눈이 가용 행을 먼저 잡게 한다.
+   그래도 가나다 제자리에 남아 "있는데 다 찼다"를 알려주고 알림 앵커가 된다. */
+.studio-row.empty {
+  background: var(--surface-sunken);
+  padding-top: var(--sp-3);
+  padding-bottom: var(--sp-3);
+}
+
+.studio-row.empty .studio-name {
+  color: var(--text-2);
+}
+
+.studio-avatar.muted {
+  background: var(--gray-150);
+  color: var(--text-faint);
+}
+
+/* 우측 상태 배지: "빈자리 없음". 액션이 아니라 사실(정보)이므로 무채색. */
+.empty-flag {
+  flex: 0 0 auto;
+  margin-left: auto;
+  align-self: center;
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-semibold);
+  color: var(--text-faint);
+  white-space: nowrap;
+}
+
+/* 알림 버튼: 빈 행의 유일한 액션. 가벼운 아웃라인으로 두되, 켜지면 액센트로 채워
+   "이 곳 자리 나면 알려줄게" 상태를 또렷이 한다. */
+.alarm-button {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-1);
+  margin-top: var(--sp-2);
+  min-height: 32px;
+  padding: var(--sp-fine) var(--sp-3);
+  border-radius: var(--r-md);
+  background: transparent;
+  color: var(--text-2);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-semibold);
+  box-shadow: inset 0 0 0 1px var(--border);
+}
+
+.alarm-button:active {
+  transform: scale(0.98);
+}
+
+.alarm-button.on {
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+  box-shadow: none;
+}
+
 /* 헤더 우측: 동기화 상태 + 즐겨찾기만 보기 토글을 묶는다. */
 .top-bar-right {
   display: flex;

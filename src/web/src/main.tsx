@@ -5,6 +5,7 @@ import { StatusBar, Style } from '@capacitor/status-bar';
 import { Analytics } from '@vercel/analytics/react';
 import { App } from './App';
 import { initFavorites } from './lib/favorites';
+import { initAlarms } from './lib/alarms';
 import { notifyLiveUpdateReady } from './lib/liveUpdate';
 import './styles.css';
 
@@ -31,6 +32,8 @@ if (Capacitor.isNativePlatform()) {
 
 // 저장된 즐겨찾기를 기기에서 미리 불러온다(렌더 전에 시작, 완료되면 구독자에 반영).
 void initFavorites();
+// 저장된 알림 구독("자리 나면 알려줘")도 함께 끌어온다.
+void initAlarms();
 
 // 앱(Capacitor)에서 OTA 번들이 정상 부팅됐음을 Capgo 에 알린다(웹에선 무동작).
 // 호출이 없으면 새 번들이 자동 롤백되므로 진입 직후 부른다.

@@ -11,12 +11,16 @@ export const DURATION_OPTIONS: { label: string; value: 1 | 2 | 3 | 4 }[] = [
   { label: '4시간', value: 4 },
 ];
 
+export type SortMode = 'recommended' | 'name';
+
 export interface FilterState {
   areaIds: number[];
   dates: string[];
   timeWindows: TimeWindow[];
   minDuration: 1 | 2 | 3 | 4;
   people: number;
+  // 추천순(리뷰 많은 순) | 이름순(가나다 + 빈 합주실 함께 표시).
+  sort: SortMode;
 }
 
 export const defaultFilters: FilterState = {
@@ -25,6 +29,7 @@ export const defaultFilters: FilterState = {
   timeWindows: [],
   minDuration: 1,
   people: 2,
+  sort: 'recommended',
 };
 
 interface FilterSheetProps {

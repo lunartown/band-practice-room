@@ -31,6 +31,10 @@ export interface StudioAvailability {
   bookingUrl: string | null;
   chips: AvailabilityChip[];
   rooms: RoomAvailability[];
+  // 카탈로그엔 있으나 이 날 빈자리가 없는 합주실(이름순 정렬에서만 채워 넣는다).
+  // "검색해도 안 나온다 = 없는 곳"이 아니라 "있는데 다 찼다"를 또렷하게 보여주고,
+  // 이 빈 행이 곧 알림(자리 나면 알려줘)을 걸 자리가 된다.
+  isEmpty?: boolean;
 }
 
 export interface DateAvailability {
@@ -257,5 +261,40 @@ function buildStudios(slots: Slot[], minDuration: number): StudioAvailability[] 
     const reviewA = a.studio.reviewCount ?? 0;
     const reviewB = b.studio.reviewCount ?? 0;
     return reviewB - reviewA || a.studio.name.localeCompare(b.studio.name, 'ko');
+  });
+}
+
+function byName(a: StudioAvailability, b: StudioAvailability): number {
+  return a.studio.name.localeCompare(b.studio.name, 'ko');
+}
+
+/**
+ * 이름순(가나다) 정렬. 추천순과 달리 빈자리가 있는 합주실만이 아니라,
+ * 카탈로그에 있으나 해당 날짜에 빈자리가 없는 합주실도 빈 행으로 함께 깐다.
+ *
+ * 이렇게 해야 "그라운드 자리 있나?"를 스크롤만으로 그 자리(가나다 위치)에서
+ * 확인할 수 있고, 목록에서 사라져 "카탈로그에 없는 건지 다 찬 건지" 모호해지는
+ * 문제가 사라진다. 빈 행은 곧 알림을 걸 앵커가 된다.
+ *
+ * @param catalog 해당 조건(지역 등)에 해당하는 전체 합주실 목록
+ */
+export function sortByNameWithEmpties(
+  groups: DateAvailability[],
+  catalog: Studio[],
+): DateAvailability[] {
+  return groups.map((group) => {
+    const present = new Set(group.studios.map((s) => s.studio.id));
+    const empties: StudioAvailability[] = catalog
+      .filter((s) => !present.has(s.id))
+      .map((s) => ({
+        studio: s,
+        areaName: s.primaryAreaName ?? '지역 미확인',
+        priceLabel: '',
+        bookingUrl: null,
+        chips: [],
+        rooms: [],
+        isEmpty: true,
+      }));
+    return { ...group, studios: [...group.studios, ...empties].sort(byName) };
   });
 }

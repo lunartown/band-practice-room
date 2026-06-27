@@ -14,6 +14,10 @@ const studioList = [
   { id: 3, name: '그루브 합주실', areaId: 3, areaName: '신촌', imageUrl: 'https://picsum.photos/seed/groove/120', rating: 4.2, reviewCount: 41, reviewKeywords: [{ keyword: '인테리어가 멋져요', count: 12 }] },
   { id: 4, name: '사운딕트', areaId: 1, areaName: '홍대', imageUrl: null, rating: null, reviewCount: null, reviewKeywords: [] },
   { id: 5, name: '웨이브랩', areaId: 2, areaName: '합정', imageUrl: null, rating: 4.9, reviewCount: 7, reviewKeywords: [] },
+  // 아래 둘은 카탈로그엔 있으나 슬롯이 없는(=항상 빈자리 없음) 합주실. 이름순 정렬에서
+  // 빈 행으로 깔려 "있는데 다 찼다 + 알림 걸기"를 눈으로 확인하기 위한 데모 데이터.
+  { id: 6, name: '하모닉스 스튜디오', areaId: 1, areaName: '홍대', imageUrl: null, rating: 4.6, reviewCount: 54, reviewKeywords: [] },
+  { id: 7, name: '호랑이 합주실', areaId: 3, areaName: '신촌', imageUrl: null, rating: 4.1, reviewCount: 31, reviewKeywords: [] },
 ];
 
 function dateStr(offset: number) {

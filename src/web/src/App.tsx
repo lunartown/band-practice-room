@@ -1,15 +1,15 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { getAreas, getSlots } from './api/client';
-import type { Area, Slot } from './api/types';
-import { StudioRow } from './components/StudioRow';
+import { getAreas, getSlots, getStudios } from './api/client';
+import type { Area, Slot, Studio } from './api/types';
+import { StudioRow, EmptyStudioRow } from './components/StudioRow';
 import { FilterSheet, defaultFilters } from './components/FilterSheet';
-import type { FilterState } from './components/FilterSheet';
+import type { FilterState, SortMode } from './components/FilterSheet';
 import { CalendarPicker } from './components/CalendarPicker';
 import { TimeWindowPicker, timeWindowLabel } from './components/TimeWindowPicker';
 import { Popover } from './components/Popover';
 import { OpenScreen } from './components/OpenScreen';
 import { MenuSheet } from './components/MenuSheet';
-import { buildAvailability } from './lib/availability';
+import { buildAvailability, sortByNameWithEmpties } from './lib/availability';
 import { dateLabel } from './lib/date';
 import { loadFilters, saveFilters, markEntered } from './lib/prefs';
 import { useFavorites } from './lib/useFavorites';
@@ -26,6 +26,9 @@ interface PopoverState {
 export function App() {
   const savedPrefs = useMemo(() => loadFilters(), []);
   const [areas, setAreas] = useState<Area[]>([]);
+  // 전체 합주실 카탈로그(빈자리 유무와 무관). 이름순 정렬에서 "빈자리 없는 곳"을
+  // 빈 행으로 채우는 데 쓴다. 작아서 진입 시 한 번만 받아 둔다.
+  const [catalog, setCatalog] = useState<Studio[]>([]);
   const [slots, setSlots] = useState<Slot[]>([]);
   const [responseDates, setResponseDates] = useState<string[]>([]);
   const [filters, setFilters] = useState<FilterState>(savedPrefs?.filters ?? defaultFilters);
@@ -62,14 +65,24 @@ export function App() {
 
   useEffect(() => {
     loadAreas();
+    // 카탈로그는 실패해도 치명적이지 않다(이름순의 빈 행만 못 채울 뿐).
+    getStudios()
+      .then((r) => setCatalog(r.studios))
+      .catch(() => {});
   }, []);
 
+  // 조건이 바뀌면 영속화한다. 정렬·즐겨찾기처럼 클라이언트 전용 변경도 함께 저장된다.
+  useEffect(() => {
+    if (entered) saveFilters(filters);
+  }, [filters, entered]);
+
+  // 서버 질의에 영향을 주는 필드가 바뀔 때만 슬롯을 다시 받는다.
+  // (정렬은 클라이언트에서만 처리하므로 여기에 넣지 않아 불필요한 재요청을 막는다.)
   useEffect(() => {
     if (!entered) return;
     // 이번 실행에서 진입했음을 기록한다. 같은 세션 안에서의 새로고침은
     // 오픈 화면을 다시 띄우지 않지만, 콜드스타트(앱 재실행/새 탭)면 다시 뜬다.
     markEntered();
-    saveFilters(filters);
     setError(null);
     setLoading(true);
     getSlots({
@@ -86,11 +99,16 @@ export function App() {
       })
       .catch(() => setError('예약 가능 시간을 불러오지 못했습니다'))
       .finally(() => setLoading(false));
-  }, [filters, entered]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [entered, filters.dates, filters.areaIds, filters.timeWindows, filters.minDuration, filters.people]);
 
   function enterWithAreas(areaIds: number[]) {
     setFilters((f) => ({ ...f, areaIds }));
     setEntered(true);
+  }
+
+  function setSort(sort: SortMode) {
+    setFilters((f) => ({ ...f, sort }));
   }
 
   const dateGroups = useMemo(
@@ -98,16 +116,39 @@ export function App() {
     [slots, responseDates, filters.minDuration],
   );
 
+  const areaNameById = useMemo(() => new Map(areas.map((a) => [a.id, a.name])), [areas]);
+
+  // 이름순(가나다) 정렬이면 카탈로그의 "빈자리 없는 합주실"도 빈 행으로 함께 깐다.
+  // 카탈로그는 선택 지역으로 거르고, 지역명이 없으면 areas로 채워 빈 행에 표시한다.
+  const sortedGroups = useMemo(() => {
+    if (filters.sort !== 'name') return dateGroups;
+    const inArea = filters.areaIds.length
+      ? catalog.filter((s) => s.primaryAreaId != null && filters.areaIds.includes(s.primaryAreaId))
+      : catalog;
+    const enriched = inArea.map((s) => ({
+      ...s,
+      primaryAreaName:
+        s.primaryAreaName ?? (s.primaryAreaId != null ? areaNameById.get(s.primaryAreaId) ?? null : null),
+    }));
+    return sortByNameWithEmpties(dateGroups, enriched);
+  }, [dateGroups, filters.sort, filters.areaIds, catalog, areaNameById]);
+
   // 즐겨찾기만 보기: 즐겨찾은 합주실만 남긴다(빈 날도 헤더는 유지해 흐름을 보존).
   const visibleGroups = useMemo(() => {
-    if (!favOnly) return dateGroups;
-    return dateGroups.map((g) => ({
+    if (!favOnly) return sortedGroups;
+    return sortedGroups.map((g) => ({
       ...g,
       studios: g.studios.filter((s) => favorites.has(s.studio.id)),
     }));
-  }, [dateGroups, favOnly, favorites]);
+  }, [sortedGroups, favOnly, favorites]);
 
-  const totalStudios = visibleGroups.reduce((sum, g) => sum + g.studios.length, 0);
+  // 빈 행(isEmpty)은 "곳" 카운트에서 제외한다. 곳 수는 실제 예약 가능한 합주실만 센다.
+  const totalAvailable = visibleGroups.reduce(
+    (sum, g) => sum + g.studios.filter((s) => !s.isEmpty).length,
+    0,
+  );
+  // 빈 행을 포함한 전체 렌더 행 수. 이름순에서 빈 행만 있어도 목록은 그려야 한다.
+  const totalRows = visibleGroups.reduce((sum, g) => sum + g.studios.length, 0);
   const hasFavorites = favorites.size > 0;
 
   const areaChipLabel = buildAreaChipLabel(areas, filters.areaIds);
@@ -173,31 +214,61 @@ export function App() {
           </button>
         </div>
 
+        <div className="sort-bar">
+          <div className="sort-seg" role="group" aria-label="정렬">
+            <button
+              type="button"
+              className={filters.sort === 'recommended' ? 'on' : ''}
+              aria-pressed={filters.sort === 'recommended'}
+              onClick={() => setSort('recommended')}
+            >
+              추천순
+            </button>
+            <button
+              type="button"
+              className={filters.sort === 'name' ? 'on' : ''}
+              aria-pressed={filters.sort === 'name'}
+              onClick={() => setSort('name')}
+            >
+              가나다순
+            </button>
+          </div>
+          {filters.sort === 'name' && (
+            <span className="sort-hint">빈 합주실도 함께 표시</span>
+          )}
+        </div>
+
         {error && <div className="error-banner">{error}</div>}
         {loading && <div className="loading-bar" aria-hidden />}
 
-        <div className={`result-list${loading && totalStudios > 0 ? ' is-refreshing' : ''}`}>
-          {loading && totalStudios === 0 ? (
+        <div className={`result-list${loading && totalRows > 0 ? ' is-refreshing' : ''}`}>
+          {loading && totalRows === 0 ? (
             <SkeletonList />
-          ) : favOnly && totalStudios === 0 ? (
+          ) : favOnly && totalRows === 0 ? (
             <FavoritesEmpty hasFavorites={hasFavorites} onShowAll={() => setFavOnly(false)} />
-          ) : totalStudios === 0 ? (
+          ) : totalRows === 0 ? (
             <EmptyState filters={filters} setFilters={setFilters} />
           ) : (
-            visibleGroups.map((group) => (
+            visibleGroups.map((group) => {
+              const availCount = group.studios.filter((s) => !s.isEmpty).length;
+              return (
               <section className="date-section" key={group.date}>
                 <div className="date-heading">
                   <span>{dateLabel(group.date)}</span>
-                  {group.studios.length > 0 ? (
-                    <span className="count-pill">{group.studios.length}곳</span>
+                  {availCount > 0 ? (
+                    <span className="count-pill">{availCount}곳</span>
                   ) : (
                     <span className="count-pill empty">없음</span>
                   )}
                 </div>
                 {group.studios.length > 0 ? (
-                  group.studios.map((studio) => (
-                    <StudioRow key={studio.studio.id} studio={studio} />
-                  ))
+                  group.studios.map((studio) =>
+                    studio.isEmpty ? (
+                      <EmptyStudioRow key={studio.studio.id} studio={studio} />
+                    ) : (
+                      <StudioRow key={studio.studio.id} studio={studio} />
+                    ),
+                  )
                 ) : favOnly ? (
                   <div className="empty-day">
                     <span>이 날은 즐겨찾기한 곳이 비어 있어요</span>
@@ -206,7 +277,8 @@ export function App() {
                   <EmptyDay minDuration={filters.minDuration} setFilters={setFilters} />
                 )}
               </section>
-            ))
+              );
+            })
           )}
         </div>
 
@@ -272,7 +344,7 @@ export function App() {
           <FilterSheet
             areas={areas}
             filters={filters}
-            resultCount={totalStudios}
+            resultCount={totalAvailable}
             onClose={() => setIsFilterOpen(false)}
             onChange={setFilters}
           />
