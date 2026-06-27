@@ -73,6 +73,7 @@ function HeartIcon({ filled }: { filled: boolean }) {
 function StudioAvatar({ studio }: { studio: Pick<Studio, 'imageUrl' | 'name'> }) {
   const { imageUrl, name } = studio;
   const [imgFailed, setImgFailed] = useState(false);
+  const [loadedSrc, setLoadedSrc] = useState<string | null>(null);
   // 리사이즈 URL 부터 시도하고, 실패하면 원본 URL 로 한 번 더 시도(self-healing).
   // 리사이즈 타입이 호스트에서 안 먹혀도 이미지가 사라지지 않게 보장한다.
   const [useOriginal, setUseOriginal] = useState(false);
@@ -81,6 +82,7 @@ function StudioAvatar({ studio }: { studio: Pick<Studio, 'imageUrl' | 'name'> })
   // studio(이미지)가 바뀌면 폴백 상태를 초기화한다(행 재사용 대비).
   useEffect(() => {
     setImgFailed(false);
+    setLoadedSrc(null);
     setUseOriginal(false);
   }, [imageUrl]);
 
@@ -88,15 +90,23 @@ function StudioAvatar({ studio }: { studio: Pick<Studio, 'imageUrl' | 'name'> })
   // 떨어져, 행마다 좌측 정렬이 흔들리지 않게 한다.
   const sourceImgSrc = !useOriginal && resized ? resized : imageUrl ?? null;
   const showSourceImg = Boolean(sourceImgSrc) && !imgFailed;
-  const isFallbackImg = !showSourceImg;
+  const showFallback = !showSourceImg || loadedSrc !== sourceImgSrc;
+
   const handleImgError = () => {
+    setLoadedSrc(null);
     // 1차(리사이즈) 실패 → 원본 재시도, 2차(원본) 실패 → 로컬 폴백.
     if (!useOriginal && resized && resized !== imageUrl) setUseOriginal(true);
     else setImgFailed(true);
   };
 
   return (
-    <div className={`studio-avatar${isFallbackImg ? ' is-fallback' : ''}`} aria-hidden>
+    <div className={`studio-avatar${showFallback ? ' is-fallback' : ''}`} aria-hidden>
+      {showFallback && (
+        <span
+          className="studio-fallback-image"
+          style={{ backgroundImage: `url(${STUDIO_FALLBACK_IMAGE_URL})` }}
+        />
+      )}
       {showSourceImg && sourceImgSrc ? (
         // 합주실 썸네일은 네이버 phinf·스페이스클라우드 등 외부 CDN 원본이다.
         // 홈화면 PWA(standalone) WebKit 은 모바일 웹과 다른 Referer 를 실어
@@ -107,14 +117,11 @@ function StudioAvatar({ studio }: { studio: Pick<Studio, 'imageUrl' | 'name'> })
           alt=""
           loading="lazy"
           referrerPolicy="no-referrer"
+          style={{ opacity: loadedSrc === sourceImgSrc ? 1 : 0 }}
+          onLoad={(event) => setLoadedSrc(event.currentTarget.getAttribute('src'))}
           onError={handleImgError}
         />
-      ) : (
-        <span
-          className="studio-fallback-image"
-          style={{ backgroundImage: `url(${STUDIO_FALLBACK_IMAGE_URL})` }}
-        />
-      )}
+      ) : null}
     </div>
   );
 }
