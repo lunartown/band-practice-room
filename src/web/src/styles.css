@@ -756,6 +756,10 @@ button {
   display: block;
 }
 
+.studio-avatar img.studio-fallback-image {
+  mix-blend-mode: multiply;
+}
+
 .studio-name-area {
   flex: 1 1 auto;
   min-width: 0;

@@ -108,6 +108,7 @@ function StudioAvatar({ studio }: { studio: Pick<Studio, 'imageUrl' | 'name'> })
         // 보내 CDN 핫링크 보호에 막히곤 한다("이미지 다 깨짐"). Referer 를 아예
         // 빼서 두 환경의 요청을 통일하고, 깨짐을 막는다(phinf 는 no-referer 로 받힘).
         <img
+          className={showSourceImg ? undefined : 'studio-fallback-image'}
           src={imgSrc}
           alt=""
           loading="lazy"
