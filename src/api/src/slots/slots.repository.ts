@@ -1,6 +1,14 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { DatabaseService } from '../database/database.service.js';
 
+// 신선도 컷오프(시간). 수집 주기가 약 60분이라 정상 슬롯은 1~2h 이내에 갱신된다.
+// 이보다 오래 갱신 안 된 AVAILABLE 은, 소스 응답에서 사라졌는데 upsert-only 라 남은
+// phantom(또는 수집이 멈춘 스튜디오)이므로 노출에서 제외한다. 환경변수로 조정 가능.
+const SLOT_FRESHNESS_HOURS = Math.max(
+  1,
+  Math.floor(Number(process.env.SLOT_FRESHNESS_HOURS) || 6),
+);
+
 export interface SlotRow {
   date: string;
   start_time: string;
@@ -53,6 +61,7 @@ export class SlotsRepository {
       "sl.status = 'AVAILABLE'",
       'r.is_active = true',
       's.is_active = true',
+      `sl.scraped_at > now() - interval '${SLOT_FRESHNESS_HOURS} hour'`,
     ];
 
     if (filters.areaIds?.length) {
