@@ -253,7 +253,16 @@ export function App() {
     () => new Map(areas.map((area) => [area.id, area.name])),
     [areas],
   );
-  const searchableStudios = useMemo(() => filterStudiosByAreas(studios, filters.areaIds), [filters.areaIds, studios]);
+  // 빈자리 검색의 합주실 선택 목록엔 온라인 예약 가능한 곳만 노출한다.
+  // 전화예약 등 슬롯이 영영 안 잡히는 곳은 추후 별도 카탈로그 검색에서 다룬다.
+  const bookableStudios = useMemo(
+    () => studios.filter((s) => s.hasOnlineBooking !== false),
+    [studios],
+  );
+  const searchableStudios = useMemo(
+    () => filterStudiosByAreas(bookableStudios, filters.areaIds),
+    [filters.areaIds, bookableStudios],
+  );
   const selectedStudios = useMemo(
     () => buildSelectedStudios(filters.studioIds, studios, slots),
     [filters.studioIds, slots, studios],
