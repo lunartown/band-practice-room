@@ -519,6 +519,9 @@ export function App() {
               <button className={`chip${dateActive ? ' active' : ''}${popover?.kind === 'date' ? ' open' : ''}`} aria-pressed={dateActive} onClick={(e) => openPopover('date', e)}><span>{buildDateChipLabel(filters.dates)}</span><ChevronIcon /></button>
               <button className={`chip${areaActive ? ' active' : ''}${popover?.kind === 'area' ? ' open' : ''}`} aria-pressed={areaActive} onClick={(e) => openPopover('area', e)}><span>{areaChipLabel}</span><ChevronIcon /></button>
               <div className="chip-actions">
+                <button className={`filter-button${sheetActive ? ' active' : ''}`} aria-pressed={sheetActive} aria-label="필터" onClick={() => setIsFilterOpen(true)}>
+                  <FilterIcon />
+                </button>
                 <button
                   className={`sort-filter-button${sortOption !== 'popular' ? ' active' : ''}${popover?.kind === 'sort' ? ' open' : ''}`}
                   aria-haspopup="menu"
@@ -528,9 +531,6 @@ export function App() {
                   onClick={(e) => openPopover('sort', e)}
                 >
                   <SortIcon />
-                </button>
-                <button className={`filter-button${sheetActive ? ' active' : ''}`} aria-pressed={sheetActive} aria-label="필터" onClick={() => setIsFilterOpen(true)}>
-                  <FilterIcon />
                 </button>
               </div>
             </div>
