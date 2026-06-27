@@ -1018,12 +1018,17 @@ button {
   flex: 0 0 auto;
   display: grid;
   place-items: center;
-  width: 32px;
-  height: 32px;
+  width: 30px;
+  height: 30px;
   margin-top: -2px;
   border-radius: var(--r-md);
   background: var(--accent-soft);
+  box-shadow: inset 0 0 0 1px var(--accent-border);
   color: var(--accent-strong);
+}
+
+.empty-message-alert:active {
+  background: var(--surface);
 }
 
 .studio-empty-remove {

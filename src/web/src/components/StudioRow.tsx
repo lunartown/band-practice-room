@@ -220,8 +220,8 @@ export function SelectedStudioEmptyRow({
               </>
             ) : (
               <>
-                <strong>현재 조건에 맞는 빈 시간이 없어요</strong>
-                <span>조건을 넓히거나 선택을 해제할 수 있어요</span>
+                <strong>지금은 빈 시간이 없어요</strong>
+                <span>빈 시간이 생기면 알려드릴게요</span>
               </>
             )}
           </div>
@@ -229,7 +229,7 @@ export function SelectedStudioEmptyRow({
             <button
               type="button"
               className="empty-message-alert"
-              aria-label={`${name} 빈 자리 알림`}
+              aria-label={`${name} 빈 자리 알림 설정`}
               onClick={() => onCreateAlert(studio)}
             >
               <BellIcon />
@@ -268,12 +268,14 @@ function BellIcon() {
   return (
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden>
       <path
-        d="M18 16v-4.4c0-3.1-1.9-5.6-5-6.2V4a1 1 0 0 0-2 0v1.4c-3.1.6-5 3.1-5 6.2V16l-1.7 2h15.4L18 16z"
+        d="M18 15.5c-1-1.2-1.5-2.7-1.5-4.7V9.7a4.5 4.5 0 0 0-9 0v1.1c0 2-.5 3.5-1.5 4.7L5 17h14l-1-1.5z"
         stroke="currentColor"
-        strokeWidth="1.9"
+        strokeWidth="1.8"
+        strokeLinecap="round"
         strokeLinejoin="round"
       />
-      <path d="M9.5 20a2.6 2.6 0 0 0 5 0" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" />
+      <path d="M10 20a2.2 2.2 0 0 0 4 0" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+      <path d="M19.2 5.2v3M17.7 6.7h3" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
     </svg>
   );
 }
