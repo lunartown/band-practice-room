@@ -18,31 +18,13 @@ if (Capacitor.isNativePlatform()) {
   root.classList.add('is-native');
   root.classList.add(`is-${platform}`);
 
-  // iOS: contentInset:never + viewport-fit=cover 로 edge-to-edge 유지하고,
-  //      CSS env 값이 비면 StatusBar 높이를 fallback 으로 쓴다.
-  // Android: env(safe-area-inset-top)이 노치 없는/특정 기종(예: Galaxy A16)에서
-  //      0으로 잡혀 WebView가 상태표시줄을 덮었다. overlay를 꺼 네이티브가
-  //      상태표시줄 공간을 직접 확보하게 하면 기기 상관없이 콘텐츠가 그 아래에서
-  //      시작한다. iOS 전용 안전영역 fallback 이 Android 레이아웃에는 관여하지 않게 한다.
-  async function syncNativeSafeAreaTop() {
-    try {
-      const info = await StatusBar.getInfo();
-      const safeAreaTop = info.visible && info.overlays ? Math.max(0, Math.round(info.height)) : 0;
-      root.style.setProperty('--native-safe-area-top', `${safeAreaTop}px`);
-    } catch {
-      root.style.setProperty('--native-safe-area-top', '0px');
-    }
-  }
-
-  if (platform === 'ios') {
-    void syncNativeSafeAreaTop();
-    window.addEventListener('resize', () => void syncNativeSafeAreaTop());
-  }
-
-  if (platform === 'android') {
+  // 네이티브 앱에서는 WebView 가 상태표시줄 아래에서 시작하게 한다.
+  // iOS 의 CSS env(safe-area-inset-top) 값이 0으로 떨어지는 케이스가 있어,
+  // CSS padding 대신 StatusBar 플러그인의 native inset 처리를 사용한다.
+  if (platform === 'ios' || platform === 'android') {
     StatusBar.setOverlaysWebView({ overlay: false }).catch(() => {});
     // 상단바가 흰색(--surface)으로 이어지도록 상태표시줄도 흰 배경 + 어두운 아이콘.
-    // (Style.Light = 밝은 배경용 = 어두운 글자/아이콘.) config 의 teal 기본값을 덮는다.
+    // (Style.Light = 밝은 배경용 = 어두운 글자/아이콘.)
     StatusBar.setBackgroundColor({ color: '#ffffff' }).catch(() => {});
     StatusBar.setStyle({ style: Style.Light }).catch(() => {});
   }
