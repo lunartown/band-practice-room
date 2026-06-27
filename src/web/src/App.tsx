@@ -519,7 +519,6 @@ export function App() {
               <button className={`chip${timeActive ? ' active' : ''}${popover?.kind === 'time' ? ' open' : ''}`} aria-pressed={timeActive} onClick={(e) => openPopover('time', e)}><span>{timeWindowLabel(filters.timeWindows)}</span><ChevronIcon /></button>
               <button className={`chip${dateActive ? ' active' : ''}${popover?.kind === 'date' ? ' open' : ''}`} aria-pressed={dateActive} onClick={(e) => openPopover('date', e)}><span>{buildDateChipLabel(filters.dates)}</span><ChevronIcon /></button>
               <button className={`chip${areaActive ? ' active' : ''}${popover?.kind === 'area' ? ' open' : ''}`} aria-pressed={areaActive} onClick={(e) => openPopover('area', e)}><span>{areaChipLabel}</span><ChevronIcon /></button>
-              <button className={`chip${sortActive ? ' active' : ''}${popover?.kind === 'sort' ? ' open' : ''}`} aria-pressed={sortActive} onClick={(e) => openPopover('sort', e)}><span>{sortOptionLabel(sortOption)}</span><ChevronIcon /></button>
               <button className={`filter-button${sheetActive ? ' active' : ''}`} aria-pressed={sheetActive} aria-label="필터" onClick={() => setIsFilterOpen(true)}>
                 <FilterIcon />
               </button>
@@ -539,6 +538,18 @@ export function App() {
                 ))}
               </div>
             )}
+            <div className="sort-row">
+              <button
+                className={`sort-button${sortActive ? ' active' : ''}${popover?.kind === 'sort' ? ' open' : ''}`}
+                aria-pressed={sortActive}
+                aria-label={`정렬 기준: ${sortOptionLabel(sortOption)}`}
+                onClick={(e) => openPopover('sort', e)}
+              >
+                <SortIcon />
+                <span>{sortOptionLabel(sortOption)}</span>
+                <ChevronIcon />
+              </button>
+            </div>
 
             {error && <div className="error-banner">{error}</div>}
             {loading && <div className="loading-bar" aria-hidden />}
@@ -923,6 +934,14 @@ function FilterIcon() {
   return (
     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" style={{ display: 'block' }}>
       <path d="M3 6h18M6 12h12M10 18h4" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function SortIcon() {
+  return (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" style={{ display: 'block' }} aria-hidden>
+      <path d="M7 6h10M9 12h6M11 18h2" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round" />
     </svg>
   );
 }
