@@ -1,6 +1,6 @@
 name: Scrape availability
 
-# 네이버 예약 가능 시간(slots)을 무료로 주기 수집한다.
+# 네이버·스페이스클라우드 예약 가능 시간(slots)을 무료로 주기 수집한다.
 # - 수동 실행(workflow_dispatch): 시드(합주실 89곳·매핑) + 스크랩 → 최초 1회 데이터 채우기용
 # - 정기 실행(schedule): 스크랩만 → slots 갱신 (시드는 slots 를 TRUNCATE 하므로 제외)
 #
