@@ -704,9 +704,9 @@ function EmptyDay({
             {minDuration - 1}시간으로 보기
           </button>
         )}
-        <button className="empty-day-alert" onClick={onCreateAlert}>
+        <button className="empty-day-alert" aria-label="빈 자리 알림" onClick={onCreateAlert}>
           <BellIcon />
-          <span>빈 자리 알림</span>
+          <span>알림</span>
         </button>
       </div>
     </div>

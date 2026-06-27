@@ -1251,14 +1251,20 @@ button {
   gap: var(--sp-fine);
   background: transparent;
   color: var(--accent-strong);
-  font-size: var(--fs-sm);
+  font-size: var(--fs-xs);
   font-weight: var(--fw-extrabold);
 }
 
 .empty-day button.empty-day-alert {
-  padding: var(--sp-fine) var(--sp-2);
-  border-radius: var(--r-md);
+  min-height: 26px;
+  padding: 0 var(--sp-2);
+  border-radius: var(--r-sm);
   background: var(--accent-soft);
+}
+
+.empty-day-alert svg {
+  width: 14px;
+  height: 14px;
 }
 
 /* ============================================================
