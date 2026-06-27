@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { getAreas, getSlots, getStudios } from './api/client';
 import type { Area, Slot, Studio } from './api/types';
-import { StudioRow } from './components/StudioRow';
+import { SelectedStudioEmptyRow, StudioRow } from './components/StudioRow';
 import { FilterSheet, defaultFilters } from './components/FilterSheet';
 import type { FilterState } from './components/FilterSheet';
 import { CalendarPicker } from './components/CalendarPicker';
@@ -21,6 +21,11 @@ interface PopoverState {
   top: number;
   left: number;
   width: number;
+}
+
+interface SelectedStudioEmptyItem {
+  studio: Studio;
+  areaName: string;
 }
 
 export function App() {
@@ -237,6 +242,23 @@ export function App() {
         .filter((studio): studio is Studio => Boolean(studio)),
     [filters.studioIds, slots, studios],
   );
+  const visibleStudioIds = useMemo(() => {
+    const ids = new Set<number>();
+    for (const group of visibleGroups) {
+      for (const studio of group.studios) ids.add(studio.studio.id);
+    }
+    return ids;
+  }, [visibleGroups]);
+  const selectedStudioEmptyItems = useMemo(
+    () =>
+      selectedStudios
+        .filter((studio) => !visibleStudioIds.has(studio.id))
+        .map((studio) => ({
+          studio,
+          areaName: buildStudioAreaLabel(studio, areaNameById, filters.areaIds),
+        })),
+    [areaNameById, filters.areaIds, selectedStudios, visibleStudioIds],
+  );
   const selectedStudioChips = useMemo(
     () =>
       filters.studioIds.map((id) => {
@@ -435,37 +457,45 @@ export function App() {
             {error && <div className="error-banner">{error}</div>}
             {loading && <div className="loading-bar" aria-hidden />}
 
-            <div className={`result-list${loading && totalStudios > 0 ? ' is-refreshing' : ''}`}>
-              {loading && totalStudios === 0 ? (
+            <div className={`result-list${loading && (totalStudios > 0 || selectedStudioEmptyItems.length > 0) ? ' is-refreshing' : ''}`}>
+              {loading && totalStudios === 0 && selectedStudioEmptyItems.length === 0 ? (
                 <SkeletonList />
               ) : favFilterActive && totalStudios === 0 ? (
                 <FavoritesEmpty hasFavorites={hasFavorites} onShowAll={() => setFavOnly(false)} />
-              ) : totalStudios === 0 ? (
-                <EmptyState filters={filters} selectedStudios={selectedStudios} setFilters={setFilters} />
               ) : (
-                visibleGroups.map((group) => (
-                  <section className="date-section" key={group.date}>
-                    <div className="date-heading">
-                      <span>{dateLabel(group.date)}</span>
-                      {group.studios.length > 0 ? (
-                        <span className="count-pill">{group.studios.length}곳</span>
-                      ) : (
-                        <span className="count-pill empty">없음</span>
-                      )}
-                    </div>
-                    {group.studios.length > 0 ? (
-                      group.studios.map((studio) => (
-                        <StudioRow key={studio.studio.id} studio={studio} />
-                      ))
-                    ) : favFilterActive ? (
-                      <div className="empty-day">
-                        <span>이 날은 즐겨찾기한 곳이 비어 있어요</span>
-                      </div>
-                    ) : (
-                      <EmptyDay minDuration={filters.minDuration} setFilters={setFilters} />
-                    )}
-                  </section>
-                ))
+                <>
+                  {selectedStudioEmptyItems.length > 0 && (
+                    <SelectedStudioEmptySection items={selectedStudioEmptyItems} onRemove={removeStudioSelection} />
+                  )}
+                  {totalStudios === 0 && selectedStudioEmptyItems.length === 0 ? (
+                    <EmptyState filters={filters} selectedStudios={selectedStudios} setFilters={setFilters} />
+                  ) : (
+                    totalStudios > 0 &&
+                    visibleGroups.map((group) => (
+                      <section className="date-section" key={group.date}>
+                        <div className="date-heading">
+                          <span>{dateLabel(group.date)}</span>
+                          {group.studios.length > 0 ? (
+                            <span className="count-pill">{group.studios.length}곳</span>
+                          ) : (
+                            <span className="count-pill empty">없음</span>
+                          )}
+                        </div>
+                        {group.studios.length > 0 ? (
+                          group.studios.map((studio) => (
+                            <StudioRow key={studio.studio.id} studio={studio} />
+                          ))
+                        ) : favFilterActive ? (
+                          <div className="empty-day">
+                            <span>이 날은 즐겨찾기한 곳이 비어 있어요</span>
+                          </div>
+                        ) : (
+                          <EmptyDay minDuration={filters.minDuration} setFilters={setFilters} />
+                        )}
+                      </section>
+                    ))
+                  )}
+                </>
               )}
             </div>
           </>
@@ -592,6 +622,31 @@ function EmptyDay({
         </button>
       )}
     </div>
+  );
+}
+
+function SelectedStudioEmptySection({
+  items,
+  onRemove,
+}: {
+  items: SelectedStudioEmptyItem[];
+  onRemove: (studioId: number) => void;
+}) {
+  return (
+    <section className="selected-studio-empty-section" aria-label="선택한 합주실 상태">
+      <div className="selected-studio-empty-heading">
+        <span>선택한 합주실</span>
+        <span className="count-pill empty">{items.length}곳 빈 시간 없음</span>
+      </div>
+      {items.map((item) => (
+        <SelectedStudioEmptyRow
+          key={item.studio.id}
+          studio={item.studio}
+          areaName={item.areaName}
+          onRemove={onRemove}
+        />
+      ))}
+    </section>
   );
 }
 

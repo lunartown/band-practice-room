@@ -589,6 +589,33 @@ button {
   content: none;
 }
 
+.selected-studio-empty-section {
+  border-top: 1px solid var(--gray-150);
+}
+
+.selected-studio-empty-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--sp-4) var(--gutter);
+  background: var(--surface-section);
+  border-bottom: 1px solid var(--gray-150);
+  font-size: var(--fs-lg);
+  font-weight: var(--fw-semibold);
+}
+
+.selected-studio-empty-heading .count-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: var(--sp-1) var(--sp-2);
+  border-radius: var(--r-md);
+  background: var(--surface-sunken);
+  color: var(--text-3);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-bold);
+  white-space: nowrap;
+}
+
 /* ============================================================
    Studio row (합주실 단위)
    ============================================================ */
@@ -854,6 +881,71 @@ button {
 
 .studio-main:active {
   background: var(--accent-soft);
+}
+
+.studio-main-static {
+  cursor: default;
+}
+
+.studio-main-static:hover,
+.studio-main-static:active {
+  background: transparent;
+}
+
+.studio-row-empty {
+  background: var(--surface);
+}
+
+.studio-unavailable-pill {
+  flex: 0 0 auto;
+  align-self: center;
+  padding: var(--sp-1) var(--sp-2);
+  border-radius: var(--r-md);
+  background: var(--surface-sunken);
+  color: var(--text-3);
+  font-size: var(--fs-2xs);
+  font-weight: var(--fw-bold);
+  white-space: nowrap;
+}
+
+.studio-empty-message {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-2);
+  margin-top: var(--sp-3);
+  padding: var(--sp-3);
+  border-radius: var(--r-md);
+  background: var(--gray-50);
+  color: var(--text-3);
+}
+
+.studio-empty-message svg {
+  flex: 0 0 auto;
+  margin-top: 1px;
+  color: var(--text-faint);
+}
+
+.studio-empty-message strong,
+.studio-empty-message span {
+  display: block;
+}
+
+.studio-empty-message strong {
+  color: var(--text-2);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-bold);
+}
+
+.studio-empty-message span {
+  margin-top: 2px;
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-medium);
+  line-height: 1.45;
+}
+
+.studio-empty-remove {
+  color: var(--accent-strong);
+  font-weight: var(--fw-extrabold);
 }
 
 /* 카드/방행 전체가 탭 대상임을 알리는 셰브론. 틸로 칠해 "여기서 예약으로 간다"를 암시 */

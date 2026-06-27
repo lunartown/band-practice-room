@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import type { Studio } from '../api/types';
 import type { AvailabilityChip, RoomAvailability, StudioAvailability } from '../lib/availability';
 import { toReviewBadges } from '../lib/reviewKeywords';
 import { thumbnailUrl } from '../lib/imageUrl';
@@ -69,6 +70,52 @@ function HeartIcon({ filled }: { filled: boolean }) {
   );
 }
 
+function StudioAvatar({ studio }: { studio: Pick<Studio, 'imageUrl' | 'name'> }) {
+  const { imageUrl, name } = studio;
+  const [imgFailed, setImgFailed] = useState(false);
+  // 리사이즈 URL 부터 시도하고, 실패하면 원본 URL 로 한 번 더 시도(self-healing).
+  // 리사이즈 타입이 호스트에서 안 먹혀도 이미지가 사라지지 않게 보장한다.
+  const [useOriginal, setUseOriginal] = useState(false);
+  const resized = thumbnailUrl(imageUrl);
+
+  // studio(이미지)가 바뀌면 폴백 상태를 초기화한다(행 재사용 대비).
+  useEffect(() => {
+    setImgFailed(false);
+    setUseOriginal(false);
+  }, [imageUrl]);
+
+  // 아바타는 항상 렌더한다. 이미지가 없거나(또는 로드 실패하면) 이니셜 폴백으로
+  // 떨어져, 행마다 좌측 정렬이 흔들리지 않게 한다.
+  const showImg = Boolean(imageUrl) && !imgFailed;
+  const imgSrc = !useOriginal && resized ? resized : imageUrl!;
+  const handleImgError = () => {
+    // 1차(리사이즈) 실패 → 원본 재시도, 2차(원본) 실패 → 이니셜.
+    if (!useOriginal && resized && resized !== imageUrl) setUseOriginal(true);
+    else setImgFailed(true);
+  };
+  const initial = name.trim().charAt(0);
+
+  return (
+    <div className="studio-avatar" aria-hidden>
+      {showImg ? (
+        // 합주실 썸네일은 네이버 phinf·스페이스클라우드 등 외부 CDN 원본이다.
+        // 홈화면 PWA(standalone) WebKit 은 모바일 웹과 다른 Referer 를 실어
+        // 보내 CDN 핫링크 보호에 막히곤 한다("이미지 다 깨짐"). Referer 를 아예
+        // 빼서 두 환경의 요청을 통일하고, 깨짐을 막는다(phinf 는 no-referer 로 받힘).
+        <img
+          src={imgSrc}
+          alt=""
+          loading="lazy"
+          referrerPolicy="no-referrer"
+          onError={handleImgError}
+        />
+      ) : (
+        initial
+      )}
+    </div>
+  );
+}
+
 function ShareIcon() {
   return (
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden>
@@ -106,34 +153,88 @@ function RoomRow({ room }: { room: RoomAvailability }) {
   );
 }
 
+export function SelectedStudioEmptyRow({
+  studio,
+  areaName,
+  onRemove,
+}: {
+  studio: Studio;
+  areaName: string;
+  onRemove: (studioId: number) => void;
+}) {
+  const { id, name, reviewCount, reviewKeywords } = studio;
+  const badges = toReviewBadges(reviewKeywords, reviewCount);
+  const favorites = useFavorites();
+  const isFav = favorites.has(id);
+
+  return (
+    <div className="studio-row studio-row-empty">
+      <div className="studio-main studio-main-static">
+        <div className="studio-head">
+          <StudioAvatar studio={studio} />
+          <div className="studio-name-area">
+            <div className="studio-name">{name}</div>
+            <div className="studio-meta">
+              <span className="studio-area">{areaName}</span>
+              {reviewCount != null && reviewCount > 0 && (
+                <span className="studio-reviews">리뷰 {reviewCount}</span>
+              )}
+            </div>
+          </div>
+          <div className="studio-unavailable-pill">빈 시간 없음</div>
+        </div>
+
+        {badges.length > 0 && (
+          <div className="review-badges">
+            {badges.map((word) => (
+              <span key={word} className="review-badge">
+                {word}
+              </span>
+            ))}
+          </div>
+        )}
+
+        <div className="studio-empty-message">
+          <ClockIcon />
+          <div>
+            <strong>현재 조건에 맞는 빈 시간이 없어요</strong>
+            <span>조건을 넓히거나 선택을 해제할 수 있어요</span>
+          </div>
+        </div>
+      </div>
+
+      <div className="studio-actions">
+        <button type="button" className="room-toggle studio-empty-remove" onClick={() => onRemove(id)}>
+          선택 해제
+        </button>
+        <button
+          type="button"
+          className={`fav-button${isFav ? ' on' : ''}`}
+          aria-pressed={isFav}
+          aria-label={isFav ? `${name} 즐겨찾기 해제` : `${name} 즐겨찾기`}
+          onClick={() => toggleFavorite(id)}
+        >
+          <HeartIcon filled={isFav} />
+        </button>
+        <button
+          type="button"
+          className="share-button"
+          aria-label={`${name} 공유`}
+          onClick={() => shareStudio(name, null)}
+        >
+          <ShareIcon />
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export function StudioRow({ studio }: StudioRowProps) {
-  const { id, name, imageUrl, reviewCount, reviewKeywords } = studio.studio;
+  const { id, name, reviewCount, reviewKeywords } = studio.studio;
   const badges = toReviewBadges(reviewKeywords, reviewCount);
   const favorites = useFavorites();
   const isFav = favorites.has(id);
   const [expanded, setExpanded] = useState(false);
-  const [imgFailed, setImgFailed] = useState(false);
-  // 리사이즈 URL 부터 시도하고, 실패하면 원본 URL 로 한 번 더 시도(self-healing).
-  // 리사이즈 타입이 호스트에서 안 먹혀도 이미지가 사라지지 않게 보장한다.
-  const [useOriginal, setUseOriginal] = useState(false);
-  const resized = thumbnailUrl(imageUrl);
-
-  // studio(이미지)가 바뀌면 폴백 상태를 초기화한다(행 재사용 대비).
-  useEffect(() => {
-    setImgFailed(false);
-    setUseOriginal(false);
-  }, [imageUrl]);
-
-  // 아바타는 항상 렌더한다. 이미지가 없거나(또는 로드 실패하면) 이니셜 폴백으로
-  // 떨어져, 행마다 좌측 정렬이 흔들리지 않게 한다.
-  const showImg = Boolean(imageUrl) && !imgFailed;
-  const imgSrc = !useOriginal && resized ? resized : imageUrl!;
-  const handleImgError = () => {
-    // 1차(리사이즈) 실패 → 원본 재시도, 2차(원본) 실패 → 이니셜.
-    if (!useOriginal && resized && resized !== imageUrl) setUseOriginal(true);
-    else setImgFailed(true);
-  };
-  const initial = name.trim().charAt(0);
 
   return (
     <div className="studio-row">
@@ -147,23 +248,7 @@ export function StudioRow({ studio }: StudioRowProps) {
         aria-label={`${name} 예약`}
       >
         <div className="studio-head">
-          <div className="studio-avatar" aria-hidden>
-            {showImg ? (
-              // 합주실 썸네일은 네이버 phinf·스페이스클라우드 등 외부 CDN 원본이다.
-              // 홈화면 PWA(standalone) WebKit 은 모바일 웹과 다른 Referer 를 실어
-              // 보내 CDN 핫링크 보호에 막히곤 한다("이미지 다 깨짐"). Referer 를 아예
-              // 빼서 두 환경의 요청을 통일하고, 깨짐을 막는다(phinf 는 no-referer 로 받힘).
-              <img
-                src={imgSrc}
-                alt=""
-                loading="lazy"
-                referrerPolicy="no-referrer"
-                onError={handleImgError}
-              />
-            ) : (
-              initial
-            )}
-          </div>
+          <StudioAvatar studio={studio.studio} />
           <div className="studio-name-area">
             <div className="studio-name">{name}</div>
             <div className="studio-meta">
