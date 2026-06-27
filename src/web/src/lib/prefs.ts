@@ -55,6 +55,7 @@ export function loadFilters(): SavedPrefs | null {
       ...defaultFilters,
       ...f,
       areaIds: Array.isArray(f.areaIds) ? f.areaIds : defaultFilters.areaIds,
+      studioIds: readStudioIds(f),
       dates,
       timeWindows: Array.isArray(f.timeWindows) ? f.timeWindows : defaultFilters.timeWindows,
     };
@@ -74,4 +75,12 @@ export function saveFilters(filters: FilterState) {
   } catch {
     // 시크릿 모드 등 저장 불가 환경은 조용히 무시한다.
   }
+}
+
+function readStudioIds(f: Partial<FilterState>): number[] {
+  if (Array.isArray(f.studioIds)) {
+    return f.studioIds.filter((id): id is number => typeof id === 'number');
+  }
+  const legacy = f as Partial<FilterState> & { studioId?: unknown };
+  return typeof legacy.studioId === 'number' ? [legacy.studioId] : defaultFilters.studioIds;
 }

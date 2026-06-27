@@ -13,6 +13,7 @@ export const DURATION_OPTIONS: { label: string; value: 1 | 2 | 3 | 4 }[] = [
 
 export interface FilterState {
   areaIds: number[];
+  studioIds: number[];
   dates: string[];
   timeWindows: TimeWindow[];
   minDuration: 1 | 2 | 3 | 4;
@@ -21,6 +22,7 @@ export interface FilterState {
 
 export const defaultFilters: FilterState = {
   areaIds: [],
+  studioIds: [],
   dates: [],
   timeWindows: [],
   minDuration: 1,
@@ -145,7 +147,12 @@ export function FilterSheet({ areas, filters, resultCount, onClose, onChange }: 
         </div>
 
         <footer>
-          <button className="secondary" onClick={() => onChange(defaultFilters)}>초기화</button>
+          <button
+            className="secondary"
+            onClick={() => onChange({ ...defaultFilters, studioIds: filters.studioIds })}
+          >
+            초기화
+          </button>
           <button className="primary" onClick={onClose}>결과 {resultCount}곳 보기</button>
         </footer>
       </section>

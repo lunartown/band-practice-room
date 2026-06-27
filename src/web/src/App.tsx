@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { getAreas, getSlots } from './api/client';
-import type { Area, Slot } from './api/types';
+import { getAreas, getSlots, getStudios } from './api/client';
+import type { Area, Slot, Studio } from './api/types';
 import { StudioRow } from './components/StudioRow';
 import { FilterSheet, defaultFilters } from './components/FilterSheet';
 import type { FilterState } from './components/FilterSheet';
@@ -26,21 +26,27 @@ interface PopoverState {
 export function App() {
   const savedPrefs = useMemo(() => loadFilters(), []);
   const [areas, setAreas] = useState<Area[]>([]);
+  const [studios, setStudios] = useState<Studio[]>([]);
   const [slots, setSlots] = useState<Slot[]>([]);
   const [responseDates, setResponseDates] = useState<string[]>([]);
+  const [searchSlots, setSearchSlots] = useState<Slot[]>([]);
+  const [searchResponseDates, setSearchResponseDates] = useState<string[]>([]);
   const [filters, setFilters] = useState<FilterState>(savedPrefs?.filters ?? defaultFilters);
   // 최근(TTL 이내) 방문이면 오픈 화면을 건너뛰고 바로 결과로 진입한다.
   // 오랜만의 방문이면 조건은 복원하되 오픈 화면을 다시 보여준다.
   const [entered, setEntered] = useState(savedPrefs?.fresh ?? false);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [isStudioSearchOpen, setIsStudioSearchOpen] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [favOnly, setFavOnly] = useState(false);
+  const [studioSearchQuery, setStudioSearchQuery] = useState('');
   const [popover, setPopover] = useState<PopoverState | null>(null);
   const favorites = useFavorites();
   const [error, setError] = useState<string | null>(null);
   const [areasError, setAreasError] = useState(false);
   const [updatedAt, setUpdatedAt] = useState<Date | null>(null);
   const [loading, setLoading] = useState(true);
+  const [searchLoading, setSearchLoading] = useState(false);
   const phoneRef = useRef<HTMLElement>(null);
 
   function openPopover(kind: PopoverKind, e: React.MouseEvent<HTMLButtonElement>) {
@@ -60,8 +66,15 @@ export function App() {
       .catch(() => setAreasError(true));
   }
 
+  function loadStudios() {
+    getStudios()
+      .then((r) => setStudios(r.studios))
+      .catch(() => setStudios([]));
+  }
+
   useEffect(() => {
     loadAreas();
+    loadStudios();
   }, []);
 
   useEffect(() => {
@@ -75,6 +88,7 @@ export function App() {
     getSlots({
       dates: filters.dates,
       areaIds: filters.areaIds.length ? filters.areaIds : undefined,
+      studioId: filters.studioIds.length === 1 ? filters.studioIds[0] : undefined,
       timeWindows: filters.timeWindows.length ? filters.timeWindows : undefined,
       minDuration: filters.minDuration > 1 ? filters.minDuration : undefined,
       minCapacity: filters.people > 1 ? filters.people : undefined,
@@ -88,36 +102,178 @@ export function App() {
       .finally(() => setLoading(false));
   }, [filters, entered]);
 
+  useEffect(() => {
+    if (!entered || !isStudioSearchOpen) return;
+    let canceled = false;
+    setSearchLoading(true);
+    getSlots({
+      dates: filters.dates,
+      areaIds: filters.areaIds.length ? filters.areaIds : undefined,
+      timeWindows: filters.timeWindows.length ? filters.timeWindows : undefined,
+      minDuration: filters.minDuration > 1 ? filters.minDuration : undefined,
+      minCapacity: filters.people > 1 ? filters.people : undefined,
+    })
+      .then((r) => {
+        if (canceled) return;
+        setSearchSlots(r.slots);
+        setSearchResponseDates(r.dates);
+      })
+      .catch(() => {
+        if (canceled) return;
+        setSearchSlots([]);
+        setSearchResponseDates([]);
+      })
+      .finally(() => {
+        if (!canceled) setSearchLoading(false);
+      });
+
+    return () => {
+      canceled = true;
+    };
+  }, [
+    entered,
+    isStudioSearchOpen,
+    filters.areaIds,
+    filters.dates,
+    filters.minDuration,
+    filters.people,
+    filters.timeWindows,
+  ]);
+
   function enterWithAreas(areaIds: number[]) {
     setFilters((f) => ({ ...f, areaIds }));
     setEntered(true);
+  }
+
+  function openStudioSearch() {
+    setPopover(null);
+    setIsFilterOpen(false);
+    setIsMenuOpen(false);
+    setStudioSearchQuery('');
+    setIsStudioSearchOpen(true);
+  }
+
+  function closeStudioSearch() {
+    setIsStudioSearchOpen(false);
+    setStudioSearchQuery('');
+  }
+
+  function toggleStudioSelection(studioId: number) {
+    setFavOnly(false);
+    setFilters((f) => {
+      const selected = f.studioIds.includes(studioId);
+      return {
+        ...f,
+        studioIds: selected
+          ? f.studioIds.filter((id) => id !== studioId)
+          : [...f.studioIds, studioId],
+      };
+    });
+  }
+
+  function removeStudioSelection(studioId: number) {
+    setFilters((f) => ({
+      ...f,
+      studioIds: f.studioIds.filter((id) => id !== studioId),
+    }));
+  }
+
+  function showAllStudios() {
+    setFavOnly(false);
+    setFilters((f) => (f.studioIds.length > 0 ? { ...f, studioIds: [] } : f));
+    closeStudioSearch();
+  }
+
+  function toggleFavoritesFilter() {
+    if (favOnly) {
+      setFavOnly(false);
+      return;
+    }
+    setFilters((f) => (f.studioIds.length > 0 ? { ...f, studioIds: [] } : f));
+    setFavOnly(true);
   }
 
   const dateGroups = useMemo(
     () => buildAvailability(slots, responseDates, filters.minDuration),
     [slots, responseDates, filters.minDuration],
   );
+  const searchDateGroups = useMemo(
+    () => buildAvailability(searchSlots, searchResponseDates, filters.minDuration),
+    [searchSlots, searchResponseDates, filters.minDuration],
+  );
 
   // 즐겨찾기만 보기: 즐겨찾은 합주실만 남긴다(빈 날도 헤더는 유지해 흐름을 보존).
   const visibleGroups = useMemo(() => {
+    if (filters.studioIds.length > 0) {
+      const selected = new Set(filters.studioIds);
+      return dateGroups.map((g) => ({
+        ...g,
+        studios: g.studios.filter((s) => selected.has(s.studio.id)),
+      }));
+    }
     if (!favOnly) return dateGroups;
     return dateGroups.map((g) => ({
       ...g,
       studios: g.studios.filter((s) => favorites.has(s.studio.id)),
     }));
-  }, [dateGroups, favOnly, favorites]);
+  }, [dateGroups, favOnly, favorites, filters.studioIds]);
 
   const totalStudios = visibleGroups.reduce((sum, g) => sum + g.studios.length, 0);
   const hasFavorites = favorites.size > 0;
 
   const areaChipLabel = buildAreaChipLabel(areas, filters.areaIds);
+  const areaNameById = useMemo(
+    () => new Map(areas.map((area) => [area.id, area.name])),
+    [areas],
+  );
+  const searchableStudios = useMemo(
+    () => studios.filter((studio) => studioMatchesAreas(studio, filters.areaIds)),
+    [filters.areaIds, studios],
+  );
+  const selectedStudios = useMemo(
+    () =>
+      filters.studioIds
+        .map((id) => findStudioById(id, studios, slots))
+        .filter((studio): studio is Studio => Boolean(studio)),
+    [filters.studioIds, slots, studios],
+  );
+  const selectedStudioChips = useMemo(
+    () =>
+      filters.studioIds.map((id) => {
+        const studio = findStudioById(id, studios, slots);
+        return { id, label: studio?.name ?? `합주실 ${id}` };
+      }),
+    [filters.studioIds, slots, studios],
+  );
+  const selectedStudioSet = useMemo(() => new Set(filters.studioIds), [filters.studioIds]);
+  const studioSearchStats = useMemo(() => buildStudioSearchStats(searchDateGroups), [searchDateGroups]);
+  const studioSearchSections = useMemo(
+    () =>
+      buildStudioSearchSections({
+        studios: searchableStudios,
+        areaNameById,
+        areaLabel: filters.areaIds.length > 0 ? areaChipLabel : null,
+        favorites,
+        query: studioSearchQuery,
+      }),
+    [
+      areaChipLabel,
+      areaNameById,
+      favorites,
+      filters.areaIds.length,
+      searchableStudios,
+      studioSearchQuery,
+    ],
+  );
 
   // 기본값에서 바꾼(지정한) 경우만 활성으로 표시한다.
   const timeActive = filters.timeWindows.length > 0;
   const dateActive = filters.dates.length > 0;
   const areaActive = filters.areaIds.length > 0;
+  const studioActive = filters.studioIds.length > 0;
   const sheetActive =
     filters.minDuration !== defaultFilters.minDuration || filters.people !== defaultFilters.people;
+  const favFilterActive = favOnly;
 
   const syncLabel = updatedAt ? formatUpdatedAt(updatedAt) : '–';
 
@@ -134,81 +290,186 @@ export function App() {
   return (
     <main className="app-shell">
       <section className="phone-app" aria-label="예약 가능 시간 검색" ref={phoneRef}>
-        <header className="top-bar">
-          <div className="top-bar-inner">
-            <div className="top-bar-left">
-              <button
-                className="menu-toggle"
-                aria-label="메뉴"
-                aria-haspopup="dialog"
-                onClick={() => setIsMenuOpen(true)}
-              >
-                <MenuIcon />
+        {isStudioSearchOpen ? (
+          <div className="studio-search-screen">
+            <header className="studio-search-top">
+              <button className="search-back" aria-label="합주실 검색 닫기" onClick={closeStudioSearch}>
+                <BackIcon />
               </button>
-              <h1>예약 가능 시간</h1>
-            </div>
-            <div className="top-bar-right">
-              <div className="sync-status">
-                <span className="fresh-dot" />
-                <span className="sync-label">{syncLabel}</span>
-              </div>
-              <button
-                className={`fav-toggle${favOnly ? ' active' : ''}`}
-                aria-pressed={favOnly}
-                aria-label="즐겨찾기만 보기"
-                onClick={() => setFavOnly((v) => !v)}
-              >
-                <HeartChipIcon filled={favOnly} />
-              </button>
-            </div>
-          </div>
-        </header>
-
-        <div className="chip-row">
-          <button className={`chip${timeActive ? ' active' : ''}${popover?.kind === 'time' ? ' open' : ''}`} aria-pressed={timeActive} onClick={(e) => openPopover('time', e)}><span>{timeWindowLabel(filters.timeWindows)}</span><ChevronIcon /></button>
-          <button className={`chip${dateActive ? ' active' : ''}${popover?.kind === 'date' ? ' open' : ''}`} aria-pressed={dateActive} onClick={(e) => openPopover('date', e)}><span>{buildDateChipLabel(filters.dates)}</span><ChevronIcon /></button>
-          <button className={`chip${areaActive ? ' active' : ''}${popover?.kind === 'area' ? ' open' : ''}`} aria-pressed={areaActive} onClick={(e) => openPopover('area', e)}><span>{areaChipLabel}</span><ChevronIcon /></button>
-          <button className={`filter-button${sheetActive ? ' active' : ''}`} aria-pressed={sheetActive} aria-label="필터" onClick={() => setIsFilterOpen(true)}>
-            <FilterIcon />
-          </button>
-        </div>
-
-        {error && <div className="error-banner">{error}</div>}
-        {loading && <div className="loading-bar" aria-hidden />}
-
-        <div className={`result-list${loading && totalStudios > 0 ? ' is-refreshing' : ''}`}>
-          {loading && totalStudios === 0 ? (
-            <SkeletonList />
-          ) : favOnly && totalStudios === 0 ? (
-            <FavoritesEmpty hasFavorites={hasFavorites} onShowAll={() => setFavOnly(false)} />
-          ) : totalStudios === 0 ? (
-            <EmptyState filters={filters} setFilters={setFilters} />
-          ) : (
-            visibleGroups.map((group) => (
-              <section className="date-section" key={group.date}>
-                <div className="date-heading">
-                  <span>{dateLabel(group.date)}</span>
-                  {group.studios.length > 0 ? (
-                    <span className="count-pill">{group.studios.length}곳</span>
-                  ) : (
-                    <span className="count-pill empty">없음</span>
-                  )}
-                </div>
-                {group.studios.length > 0 ? (
-                  group.studios.map((studio) => (
-                    <StudioRow key={studio.studio.id} studio={studio} />
-                  ))
-                ) : favOnly ? (
-                  <div className="empty-day">
-                    <span>이 날은 즐겨찾기한 곳이 비어 있어요</span>
-                  </div>
-                ) : (
-                  <EmptyDay minDuration={filters.minDuration} setFilters={setFilters} />
+              <label className="search-field">
+                <SearchIcon />
+                <input
+                  value={studioSearchQuery}
+                  onChange={(e) => setStudioSearchQuery(e.target.value)}
+                  placeholder="합주실 이름으로 찾기"
+                  autoFocus
+                />
+                {studioSearchQuery && (
+                  <button className="search-clear" aria-label="검색어 지우기" onClick={() => setStudioSearchQuery('')}>
+                    ×
+                  </button>
                 )}
-              </section>
-            ))
-          )}
-        </div>
+              </label>
+              <button className="search-cancel" onClick={closeStudioSearch}>완료</button>
+            </header>
+
+            {searchLoading && <div className="loading-bar" aria-hidden />}
+
+            <div className="studio-search-results">
+              {studioSearchSections.length === 0 ? (
+                <div className="studio-search-empty-state">
+                  <h2>등록된 합주실을 찾지 못했어요</h2>
+                  <p>이름이나 지역을 조금 다르게 입력해보세요</p>
+                </div>
+              ) : (
+                studioSearchSections.map((section) => (
+                  <section className="studio-search-section" key={section.title}>
+                    <h2>{section.title}</h2>
+                    {section.items.map((studio) => (
+                      <button
+                        key={studio.id}
+                        className={`studio-search-row${selectedStudioSet.has(studio.id) ? ' selected' : ''}`}
+                        aria-pressed={selectedStudioSet.has(studio.id)}
+                        onClick={() => toggleStudioSelection(studio.id)}
+                      >
+                        <span className="studio-search-row-main">
+                          <span className="studio-search-row-name">{studio.name}</span>
+                          <span className="studio-search-row-meta">
+                            {buildStudioSearchMeta(
+                              studio,
+                              studioSearchStats.get(studio.id),
+                              searchLoading,
+                              areaNameById,
+                              filters.areaIds,
+                            )}
+                          </span>
+                        </span>
+                        {selectedStudioSet.has(studio.id) && <span className="studio-search-selected">✓</span>}
+                      </button>
+                    ))}
+                  </section>
+                ))
+              )}
+            </div>
+
+            <footer className="studio-search-actions">
+              <button
+                className="studio-search-reset"
+                disabled={filters.studioIds.length === 0 && !favOnly}
+                onClick={showAllStudios}
+              >
+                전체 보기
+              </button>
+              <button
+                className="studio-search-apply"
+                onClick={filters.studioIds.length > 0 ? closeStudioSearch : showAllStudios}
+              >
+                {filters.studioIds.length > 0 ? `${filters.studioIds.length}곳 보기` : '전체 합주실 보기'}
+              </button>
+            </footer>
+          </div>
+        ) : (
+          <>
+            <header className="top-bar">
+              <div className="top-bar-inner">
+                <div className="top-bar-left">
+                  <button
+                    className="menu-toggle"
+                    aria-label="메뉴"
+                    aria-haspopup="dialog"
+                    onClick={() => setIsMenuOpen(true)}
+                  >
+                    <MenuIcon />
+                  </button>
+                  <h1>예약 가능 시간</h1>
+                </div>
+                <div className="top-bar-right">
+                  <div className="sync-status">
+                    <span className="fresh-dot" />
+                    <span className="sync-label">{syncLabel}</span>
+                  </div>
+                  <button
+                    className={`search-toggle${studioActive ? ' active' : ''}`}
+                    aria-pressed={studioActive}
+                    aria-label="합주실 찾기"
+                    onClick={openStudioSearch}
+                  >
+                    <SearchIcon />
+                  </button>
+                  <button
+                    className={`fav-toggle${favFilterActive ? ' active' : ''}`}
+                    aria-pressed={favFilterActive}
+                    aria-label="즐겨찾기만 보기"
+                    onClick={toggleFavoritesFilter}
+                  >
+                    <HeartChipIcon filled={favFilterActive} />
+                  </button>
+                </div>
+              </div>
+            </header>
+
+            <div className={`chip-row${studioActive ? ' has-studio-chip' : ''}`}>
+              <button className={`chip${timeActive ? ' active' : ''}${popover?.kind === 'time' ? ' open' : ''}`} aria-pressed={timeActive} onClick={(e) => openPopover('time', e)}><span>{timeWindowLabel(filters.timeWindows)}</span><ChevronIcon /></button>
+              <button className={`chip${dateActive ? ' active' : ''}${popover?.kind === 'date' ? ' open' : ''}`} aria-pressed={dateActive} onClick={(e) => openPopover('date', e)}><span>{buildDateChipLabel(filters.dates)}</span><ChevronIcon /></button>
+              <button className={`chip${areaActive ? ' active' : ''}${popover?.kind === 'area' ? ' open' : ''}`} aria-pressed={areaActive} onClick={(e) => openPopover('area', e)}><span>{areaChipLabel}</span><ChevronIcon /></button>
+              <button className={`filter-button${sheetActive ? ' active' : ''}`} aria-pressed={sheetActive} aria-label="필터" onClick={() => setIsFilterOpen(true)}>
+                <FilterIcon />
+              </button>
+            </div>
+            {studioActive && (
+              <div className="studio-chip-row">
+                {selectedStudioChips.map((studio) => (
+                  <button
+                    key={studio.id}
+                    className="chip studio-chip active"
+                    aria-label={`${studio.label} 필터 해제`}
+                    onClick={() => removeStudioSelection(studio.id)}
+                  >
+                    <span>{studio.label}</span>
+                    <RemoveChipIcon />
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {error && <div className="error-banner">{error}</div>}
+            {loading && <div className="loading-bar" aria-hidden />}
+
+            <div className={`result-list${loading && totalStudios > 0 ? ' is-refreshing' : ''}`}>
+              {loading && totalStudios === 0 ? (
+                <SkeletonList />
+              ) : favFilterActive && totalStudios === 0 ? (
+                <FavoritesEmpty hasFavorites={hasFavorites} onShowAll={() => setFavOnly(false)} />
+              ) : totalStudios === 0 ? (
+                <EmptyState filters={filters} selectedStudios={selectedStudios} setFilters={setFilters} />
+              ) : (
+                visibleGroups.map((group) => (
+                  <section className="date-section" key={group.date}>
+                    <div className="date-heading">
+                      <span>{dateLabel(group.date)}</span>
+                      {group.studios.length > 0 ? (
+                        <span className="count-pill">{group.studios.length}곳</span>
+                      ) : (
+                        <span className="count-pill empty">없음</span>
+                      )}
+                    </div>
+                    {group.studios.length > 0 ? (
+                      group.studios.map((studio) => (
+                        <StudioRow key={studio.studio.id} studio={studio} />
+                      ))
+                    ) : favFilterActive ? (
+                      <div className="empty-day">
+                        <span>이 날은 즐겨찾기한 곳이 비어 있어요</span>
+                      </div>
+                    ) : (
+                      <EmptyDay minDuration={filters.minDuration} setFilters={setFilters} />
+                    )}
+                  </section>
+                ))
+              )}
+            </div>
+          </>
+        )}
 
         {popover && (
           <Popover
@@ -278,7 +539,7 @@ export function App() {
           />
         )}
 
-        {isMenuOpen && <MenuSheet onClose={() => setIsMenuOpen(false)} />}
+        {!isStudioSearchOpen && isMenuOpen && <MenuSheet onClose={() => setIsMenuOpen(false)} />}
       </section>
     </main>
   );
@@ -334,20 +595,33 @@ function EmptyDay({
   );
 }
 
-function EmptyState({ filters, setFilters }: { filters: FilterState; setFilters: React.Dispatch<React.SetStateAction<FilterState>> }) {
+function EmptyState({
+  filters,
+  selectedStudios,
+  setFilters,
+}: {
+  filters: FilterState;
+  selectedStudios: Studio[];
+  setFilters: React.Dispatch<React.SetStateAction<FilterState>>;
+}) {
   const suggestions: { label: string; apply: () => void }[] = [
+    { label: '합주실 해제', apply: () => setFilters((f) => ({ ...f, studioIds: [] })) },
     { label: '날짜 초기화', apply: () => setFilters((f) => ({ ...f, dates: [] })) },
+    { label: '지역 초기화', apply: () => setFilters((f) => ({ ...f, areaIds: [] })) },
     {
       label: `인원 ${filters.people} → ${Math.max(1, filters.people - 1)}명`,
       apply: () => setFilters((f) => ({ ...f, people: Math.max(1, f.people - 1) })),
     },
     { label: '시간 제한 해제', apply: () => setFilters((f) => ({ ...f, timeWindows: [] })) },
   ].filter((s) => {
+    if (s.label === '합주실 해제' && filters.studioIds.length === 0) return false;
     if (s.label === '날짜 초기화' && filters.dates.length === 0) return false;
+    if (s.label === '지역 초기화' && filters.areaIds.length === 0) return false;
     if (s.label.startsWith('인원') && filters.people <= 1) return false;
     if (s.label === '시간 제한 해제' && filters.timeWindows.length === 0) return false;
     return true;
   });
+  const studioLabel = buildSelectedStudioLabel(selectedStudios, filters.studioIds.length);
 
   return (
     <div className="empty-state">
@@ -357,8 +631,14 @@ function EmptyState({ filters, setFilters }: { filters: FilterState; setFilters:
           <path d="M20 20l-3.8-3.8" stroke="#adb5bd" strokeWidth="2" strokeLinecap="round" />
         </svg>
       </div>
-      <h2>조건에 맞는 빈 시간이 없어요</h2>
-      <p>날짜·인원·시간 조건을 조금만 넓히면<br />예약 가능한 시간이 나올 수 있어요</p>
+      <h2>{studioLabel ? `${studioLabel}에 빈 시간이 없어요` : '조건에 맞는 빈 시간이 없어요'}</h2>
+      <p>
+        {studioLabel ? (
+          <>카탈로그에는 있지만 지금 조건에 맞는<br />예약 가능 시간이 없어요</>
+        ) : (
+          <>날짜·인원·시간 조건을 조금만 넓히면<br />예약 가능한 시간이 나올 수 있어요</>
+        )}
+      </p>
       {suggestions.length > 0 && (
         <div className="empty-actions">
           {suggestions.map((s) => (
@@ -427,10 +707,35 @@ function FilterIcon() {
   );
 }
 
+function BackIcon() {
+  return (
+    <svg width="19" height="19" viewBox="0 0 24 24" fill="none" style={{ display: 'block' }} aria-hidden>
+      <path d="M15 6l-6 6 6 6" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function SearchIcon() {
+  return (
+    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" style={{ display: 'block' }} aria-hidden>
+      <circle cx="11" cy="11" r="7" stroke="currentColor" strokeWidth="2" />
+      <path d="M20 20l-3.8-3.8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+    </svg>
+  );
+}
+
 function ChevronIcon() {
   return (
     <svg className="chip-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden>
       <path d="M7 10l5 5 5-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function RemoveChipIcon() {
+  return (
+    <svg className="chip-remove" width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden>
+      <path d="M7 7l10 10M17 7L7 17" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" />
     </svg>
   );
 }
@@ -447,6 +752,168 @@ function buildAreaChipLabel(areas: Area[], areaIds: number[]) {
   const selected = areas.filter((a) => areaIds.includes(a.id));
   if (selected.length <= 1) return selected[0]?.name ?? '전체 지역';
   return `${selected[0].name} 외 ${selected.length - 1}`;
+}
+
+function findStudioById(studioId: number, studios: Studio[], slots: Slot[]) {
+  return studios.find((studio) => studio.id === studioId) ??
+    slots.find((slot) => slot.studio.id === studioId)?.studio ??
+    null;
+}
+
+function buildSelectedStudioLabel(studios: Studio[], selectedCount: number) {
+  if (selectedCount === 0) return null;
+  if (selectedCount === 1) return studios[0]?.name ?? '지정한 합주실';
+  return studios[0]?.name ? `${studios[0].name} 외 ${selectedCount - 1}곳` : `${selectedCount}곳`;
+}
+
+function studioMatchesAreas(studio: Studio, areaIds: number[]) {
+  if (areaIds.length === 0) return true;
+  const studioAreaIds = getStudioAreaIds(studio);
+  return areaIds.some((areaId) => studioAreaIds.includes(areaId));
+}
+
+function getStudioAreaIds(studio: Studio) {
+  if (studio.areaIds?.length) return studio.areaIds;
+  return studio.primaryAreaId == null ? [] : [studio.primaryAreaId];
+}
+
+function buildStudioAreaNames(studio: Studio, areaNameById: ReadonlyMap<number, string>) {
+  const names: string[] = [];
+  const seen = new Set<string>();
+  const add = (name: string | null | undefined) => {
+    const trimmed = name?.trim();
+    if (!trimmed || seen.has(trimmed)) return;
+    names.push(trimmed);
+    seen.add(trimmed);
+  };
+
+  add(studio.primaryAreaName);
+  if (studio.primaryAreaId != null) add(areaNameById.get(studio.primaryAreaId));
+  getStudioAreaIds(studio).forEach((areaId) => add(areaNameById.get(areaId)));
+
+  return names;
+}
+
+function buildStudioAreaLabel(
+  studio: Studio,
+  areaNameById: ReadonlyMap<number, string>,
+  preferredAreaIds: number[],
+) {
+  const studioAreaIds = getStudioAreaIds(studio);
+  const studioAreaSet = new Set(studioAreaIds);
+  const preferredNames = preferredAreaIds
+    .filter((areaId) => studioAreaSet.has(areaId))
+    .map((areaId) => areaNameById.get(areaId))
+    .filter((name): name is string => Boolean(name));
+
+  if (preferredNames.length > 0) return compactAreaNames(preferredNames);
+
+  const names = buildStudioAreaNames(studio, areaNameById);
+  if (names.length > 0) return compactAreaNames(names);
+
+  return studioAreaIds.length > 0 || studio.primaryAreaId != null ? '지역 확인 중' : '지역 미확인';
+}
+
+function compactAreaNames(names: string[]) {
+  const uniqueNames = [...new Set(names)];
+  if (uniqueNames.length === 0) return '지역 미확인';
+  if (uniqueNames.length <= 1) return uniqueNames[0];
+  return `${uniqueNames[0]} 외 ${uniqueNames.length - 1}`;
+}
+
+interface StudioSearchStats {
+  slotCount: number;
+  dayCount: number;
+}
+
+interface StudioSearchSection {
+  title: string;
+  items: Studio[];
+}
+
+function buildStudioSearchStats(groups: ReturnType<typeof buildAvailability>): Map<number, StudioSearchStats> {
+  const stats = new Map<number, StudioSearchStats>();
+  for (const group of groups) {
+    const seenInDate = new Set<number>();
+    for (const item of group.studios) {
+      const studioId = item.studio.id;
+      const current = stats.get(studioId) ?? { slotCount: 0, dayCount: 0 };
+      current.slotCount += item.chips.length;
+      if (!seenInDate.has(studioId)) {
+        current.dayCount += 1;
+        seenInDate.add(studioId);
+      }
+      stats.set(studioId, current);
+    }
+  }
+  return stats;
+}
+
+function buildStudioSearchSections({
+  studios,
+  areaNameById,
+  areaLabel,
+  favorites,
+  query,
+}: {
+  studios: Studio[];
+  areaNameById: ReadonlyMap<number, string>;
+  areaLabel: string | null;
+  favorites: ReadonlySet<number>;
+  query: string;
+}): StudioSearchSection[] {
+  const normalizedQuery = query.trim().toLowerCase();
+  const matches = studios
+    .filter((studio) => {
+      if (!normalizedQuery) return true;
+      return studioSearchText(studio, areaNameById).includes(normalizedQuery);
+    })
+    .sort((a, b) => a.name.localeCompare(b.name, 'ko'));
+
+  if (normalizedQuery) {
+    return matches.length ? [{ title: '검색 결과', items: matches }] : [];
+  }
+
+  const sections: StudioSearchSection[] = [];
+  const favoriteItems = matches.filter((studio) => favorites.has(studio.id));
+  if (favoriteItems.length > 0) {
+    sections.push({ title: '즐겨찾기', items: favoriteItems });
+  }
+
+  const otherItems = matches.filter((studio) => !favorites.has(studio.id));
+  if (otherItems.length > 0) {
+    sections.push({
+      title: areaLabel ? `${areaLabel} 합주실` : '전체 합주실',
+      items: otherItems,
+    });
+  }
+
+  return sections;
+}
+
+function studioSearchText(studio: Studio, areaNameById: ReadonlyMap<number, string>) {
+  return [
+    studio.name,
+    ...buildStudioAreaNames(studio, areaNameById),
+    studio.address,
+  ]
+    .filter(Boolean)
+    .join(' ')
+    .toLowerCase();
+}
+
+function buildStudioSearchMeta(
+  studio: Studio,
+  stats: StudioSearchStats | undefined,
+  loading: boolean,
+  areaNameById: ReadonlyMap<number, string>,
+  preferredAreaIds: number[],
+) {
+  const area = buildStudioAreaLabel(studio, areaNameById, preferredAreaIds);
+  if (loading) return `${area} · 확인 중`;
+  if (!stats || stats.slotCount === 0) return `${area} · 현재 조건 빈 시간 없음`;
+  const dayLabel = stats.dayCount > 1 ? `${stats.dayCount}일` : '1일';
+  return `${area} · 현재 조건 ${dayLabel} ${stats.slotCount}개 구간 가능`;
 }
 
 function formatUpdatedAt(date: Date) {
