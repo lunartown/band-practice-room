@@ -229,11 +229,11 @@ export function SelectedStudioEmptyRow({
             <button
               type="button"
               className="inline-alert-button"
-              aria-label={`${name} 빈 자리 알림 설정`}
+              aria-label={`${name} 빈 자리 알림 받기`}
               onClick={() => onCreateAlert(studio)}
             >
               <BellIcon />
-              <span>빈 자리 알림</span>
+              <span>알림 받기</span>
             </button>
           )}
         </div>
