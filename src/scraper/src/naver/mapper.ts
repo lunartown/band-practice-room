@@ -25,6 +25,16 @@ function formatMinutes(total: number): string {
   return `${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`;
 }
 
+// 종료 시각은 자정(24:00)까지 허용한다. 시작은 항상 00:00~23:59 이지만,
+// 23시 슬롯의 끝은 24:00 이 되어야 한다. mod 래핑하면 "00:00" 이 되어
+// slots.end_time > start_time CHECK 를 위반해 배치 전체가 실패한다.
+// Postgres TIME 은 '24:00:00' 을 허용하므로 자정 도달 시 "24:00" 으로 고정.
+// (스페이스클라우드 매퍼와 동일한 규약)
+function formatEndMinutes(total: number): string {
+  if (total >= 1440) return '24:00';
+  return formatMinutes(total);
+}
+
 function pickPrice(prices: NaverHourlyUnit['prices']): number | null {
   // 영업 시간대는 0이 아닌 실제 가격을 가진다(0/isDefault 는 영업외 placeholder).
   const real = prices?.find((p) => p.price > 0);
@@ -53,7 +63,7 @@ export function toAvailabilitySlots(
       roomName,
       date,
       startTime: formatMinutes(minutes),
-      endTime: formatMinutes(minutes + (unit.duration ?? 60)),
+      endTime: formatEndMinutes(minutes + (unit.duration ?? 60)),
       status,
       price: pickPrice(unit.prices),
     });
