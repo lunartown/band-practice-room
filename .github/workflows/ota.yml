@@ -7,6 +7,8 @@ name: OTA deploy (Capgo)
 # 채널 매핑 (브랜치 = 채널)
 #   - push(main) → production 채널: 실유저용. 확정된 변경만 main 에 올린다.
 #   - push(dev)  → dev 채널: 테스트 기기 전용.
+#   - Release 워크플로 성공 → production 채널: GitHub Actions 토큰 push 는
+#     push 워크플로를 재트리거하지 않으므로 릴리스 완료 이벤트도 받는다.
 #   - workflow_dispatch: channel 을 직접 지정(비우면 브랜치로 자동 판별).
 #
 # ⚠️ dev 채널에 올려도, 그 채널에 배정된 기기만 받는다. 테스트 기기를 Capgo
@@ -32,6 +34,9 @@ on:
     paths:
       - 'src/web/**'
       - '.github/workflows/ota.yml'
+  workflow_run:
+    workflows: ['Release (dev→main fast-forward)']
+    types: [completed]
 
 concurrency:
   group: ota
@@ -39,6 +44,7 @@ concurrency:
 
 jobs:
   ota:
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     env:
@@ -72,12 +78,17 @@ jobs:
       - name: Upload bundle to Capgo
         working-directory: src/web
         run: |
-          # 채널 결정: dispatch 로 직접 준 값이 최우선, 없으면 브랜치로 판별.
+          # 채널 결정: dispatch 로 직접 준 값이 최우선, 없으면 이벤트/브랜치로 판별.
           CHANNEL="${{ github.event.inputs.channel }}"
           if [ -z "$CHANNEL" ]; then
-            case "${{ github.ref_name }}" in
-              main) CHANNEL="production" ;;
-              *)    CHANNEL="dev" ;;
+            case "${{ github.event_name }}" in
+              workflow_run) CHANNEL="production" ;;
+              *)
+                case "${{ github.ref_name }}" in
+                  main) CHANNEL="production" ;;
+                  *)    CHANNEL="dev" ;;
+                esac
+                ;;
             esac
           fi
           BASE="1.0"
