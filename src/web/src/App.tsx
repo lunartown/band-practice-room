@@ -12,6 +12,7 @@ import { MenuSheet } from './components/MenuSheet';
 import { buildAvailability } from './lib/availability';
 import { dateLabel } from './lib/date';
 import { loadFilters, saveFilters, markEntered } from './lib/prefs';
+import { loadRecentStudioIds, recordRecentStudioSelection, recordRecentStudioSelections } from './lib/recentStudios';
 import { useFavorites } from './lib/useFavorites';
 
 type PopoverKind = 'time' | 'date' | 'area';
@@ -45,6 +46,7 @@ export function App() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [favOnly, setFavOnly] = useState(false);
   const [studioSearchQuery, setStudioSearchQuery] = useState('');
+  const [recentStudioIds, setRecentStudioIds] = useState<number[]>(() => loadRecentStudioIds());
   const [popover, setPopover] = useState<PopoverState | null>(null);
   const favorites = useFavorites();
   const [error, setError] = useState<string | null>(null);
@@ -145,6 +147,14 @@ export function App() {
     filters.timeWindows,
   ]);
 
+  useEffect(() => {
+    if (!entered || filters.studioIds.length === 0) return;
+    const hasUnrecordedSelection = filters.studioIds.some((studioId) => !recentStudioIds.includes(studioId));
+    if (hasUnrecordedSelection) {
+      setRecentStudioIds(recordRecentStudioSelections(filters.studioIds));
+    }
+  }, [entered, filters.studioIds, recentStudioIds]);
+
   function enterWithAreas(areaIds: number[]) {
     setFilters((f) => ({ ...f, areaIds }));
     setEntered(true);
@@ -165,6 +175,9 @@ export function App() {
 
   function toggleStudioSelection(studioId: number) {
     setFavOnly(false);
+    if (!filters.studioIds.includes(studioId)) {
+      setRecentStudioIds(recordRecentStudioSelection(studioId));
+    }
     setFilters((f) => {
       const selected = f.studioIds.includes(studioId);
       return {
@@ -277,12 +290,14 @@ export function App() {
         areaLabel: filters.areaIds.length > 0 ? areaChipLabel : null,
         favorites,
         query: studioSearchQuery,
+        recentStudioIds,
       }),
     [
       areaChipLabel,
       areaNameById,
       favorites,
       filters.areaIds.length,
+      recentStudioIds,
       searchableStudios,
       studioSearchQuery,
     ],
@@ -910,12 +925,14 @@ function buildStudioSearchSections({
   areaLabel,
   favorites,
   query,
+  recentStudioIds,
 }: {
   studios: Studio[];
   areaNameById: ReadonlyMap<number, string>;
   areaLabel: string | null;
   favorites: ReadonlySet<number>;
   query: string;
+  recentStudioIds: number[];
 }): StudioSearchSection[] {
   const normalizedQuery = query.trim().toLowerCase();
   const matches = studios
@@ -930,12 +947,21 @@ function buildStudioSearchSections({
   }
 
   const sections: StudioSearchSection[] = [];
-  const favoriteItems = matches.filter((studio) => favorites.has(studio.id));
+  const matchById = new Map(matches.map((studio) => [studio.id, studio]));
+  const recentItems = recentStudioIds
+    .map((studioId) => matchById.get(studioId))
+    .filter((studio): studio is Studio => Boolean(studio));
+  const recentSet = new Set(recentItems.map((studio) => studio.id));
+  if (recentItems.length > 0) {
+    sections.push({ title: '최근 선택', items: recentItems });
+  }
+
+  const favoriteItems = matches.filter((studio) => favorites.has(studio.id) && !recentSet.has(studio.id));
   if (favoriteItems.length > 0) {
     sections.push({ title: '즐겨찾기', items: favoriteItems });
   }
 
-  const otherItems = matches.filter((studio) => !favorites.has(studio.id));
+  const otherItems = matches.filter((studio) => !favorites.has(studio.id) && !recentSet.has(studio.id));
   if (otherItems.length > 0) {
     sections.push({
       title: areaLabel ? `${areaLabel} 합주실` : '전체 합주실',
