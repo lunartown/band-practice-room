@@ -167,16 +167,12 @@ export function SelectedStudioEmptyRow({
   studio,
   areaName,
   onRemove,
-  canCreateAlert,
   onCreateAlert,
-  onNeedDate,
 }: {
   studio: Studio;
   areaName: string;
   onRemove: (studioId: number) => void;
-  canCreateAlert: boolean;
   onCreateAlert: (studio: Studio) => void;
-  onNeedDate: () => void;
 }) {
   const { id, name, reviewCount, reviewKeywords } = studio;
   const badges = toReviewBadges(reviewKeywords, reviewCount);
@@ -236,10 +232,10 @@ export function SelectedStudioEmptyRow({
         <button
           type="button"
           className="studio-empty-alert"
-          onClick={() => (canCreateAlert ? onCreateAlert(studio) : onNeedDate())}
+          onClick={() => onCreateAlert(studio)}
         >
           <BellIcon />
-          <span>{canCreateAlert ? '빈 자리 알림' : '날짜 선택 후 알림'}</span>
+          <span>빈 자리 알림</span>
         </button>
         <button type="button" className="room-toggle studio-empty-remove" onClick={() => onRemove(id)}>
           선택 해제

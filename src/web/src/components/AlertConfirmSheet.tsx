@@ -7,9 +7,11 @@ export type AlertDraft =
   | {
       scope: 'studios';
       studios: Pick<Studio, 'id' | 'name'>[];
+      dates: string[];
     }
   | {
       scope: 'search';
+      dates: string[];
     };
 
 interface AlertConfirmSheetProps {
@@ -25,7 +27,7 @@ export function AlertConfirmSheet({ draft, filters, areas, onClose, onConfirm }:
   const headline = buildHeadline(draft);
   const rows = [
     { label: '대상', value: targetLabel },
-    { label: '날짜', value: buildDatesLabel(filters.dates) },
+    { label: '날짜', value: buildDatesLabel(draft.dates) },
     { label: '시간', value: filters.timeWindows.length > 0 ? timeWindowLabel(filters.timeWindows) : '모든 시간' },
     { label: '연속', value: `${filters.minDuration}시간 이상` },
     { label: '인원', value: `${filters.people}명 이상` },

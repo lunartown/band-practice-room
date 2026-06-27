@@ -27,7 +27,6 @@ import {
   buildVisibleGroups,
   filterStudiosByAreas,
 } from './lib/studioSearch';
-import type { SelectedStudioEmptyItem } from './lib/studioSearch';
 import { useFavorites } from './lib/useFavorites';
 
 type PopoverKind = 'time' | 'date' | 'area';
@@ -235,28 +234,22 @@ export function App() {
   }
 
   function openAlertDraft(draft: AlertDraft) {
-    if (filters.dates.length === 0) {
-      setPopover(null);
-      setIsMenuOpen(false);
-      setIsFilterOpen(true);
-      return;
-    }
     setPopover(null);
     setIsFilterOpen(false);
     setIsMenuOpen(false);
     setAlertDraft(draft);
   }
 
-  function openStudioAlert(studio: Studio) {
-    openAlertDraft({ scope: 'studios', studios: [studio] });
+  function openStudioAlert(studio: Studio, date: string) {
+    openAlertDraft({ scope: 'studios', studios: [studio], dates: [date] });
   }
 
-  function openCurrentConditionAlert() {
+  function openCurrentConditionAlert(date: string) {
     if (filters.studioIds.length > 0 && selectedStudios.length > 0) {
-      openAlertDraft({ scope: 'studios', studios: selectedStudios });
+      openAlertDraft({ scope: 'studios', studios: selectedStudios, dates: [date] });
       return;
     }
-    openAlertDraft({ scope: 'search' });
+    openAlertDraft({ scope: 'search', dates: [date] });
   }
 
   const dateGroups = useMemo(
@@ -294,16 +287,6 @@ export function App() {
   const selectedStudios = useMemo(
     () => buildSelectedStudios(filters.studioIds, studios, slots),
     [filters.studioIds, slots, studios],
-  );
-  const selectedStudioEmptyItems = useMemo(
-    () =>
-      buildSelectedStudioEmptyItems({
-        selectedStudios,
-        visibleGroups,
-        areaNameById,
-        preferredAreaIds: filters.areaIds,
-      }),
-    [areaNameById, filters.areaIds, selectedStudios, visibleGroups],
   );
   const selectedStudioChips = useMemo(
     () => buildSelectedStudioChips(filters.studioIds, studios, slots),
@@ -503,34 +486,32 @@ export function App() {
             {error && <div className="error-banner">{error}</div>}
             {loading && <div className="loading-bar" aria-hidden />}
 
-            <div className={`result-list${loading && (totalStudios > 0 || selectedStudioEmptyItems.length > 0) ? ' is-refreshing' : ''}`}>
-              {loading && totalStudios === 0 && selectedStudioEmptyItems.length === 0 ? (
+            <div className={`result-list${loading && (totalStudios > 0 || visibleGroups.length > 0) ? ' is-refreshing' : ''}`}>
+              {loading && totalStudios === 0 && visibleGroups.length === 0 ? (
                 <SkeletonList />
               ) : favFilterActive && totalStudios === 0 ? (
                 <FavoritesEmpty hasFavorites={hasFavorites} onShowAll={() => setFavOnly(false)} />
               ) : (
                 <>
-                  {selectedStudioEmptyItems.length > 0 && (
-                    <SelectedStudioEmptySection
-                      items={selectedStudioEmptyItems}
-                      canCreateAlert={filters.dates.length > 0}
-                      onCreateAlert={openStudioAlert}
-                      onNeedDate={() => setIsFilterOpen(true)}
-                      onRemove={removeStudioSelection}
-                    />
-                  )}
-                  {totalStudios === 0 && selectedStudioEmptyItems.length === 0 ? (
+                  {visibleGroups.length === 0 ? (
                     <EmptyState
                       filters={filters}
                       selectedStudios={selectedStudios}
                       setFilters={setFilters}
-                      onCreateAlert={openCurrentConditionAlert}
                     />
                   ) : (
-                    totalStudios > 0 &&
                     visibleGroups.map((group) => {
                       const isCollapsed = collapsedDates.has(group.date);
                       const bodyId = `date-section-${group.date}`;
+                      const selectedEmptyItems = studioActive
+                        ? buildSelectedStudioEmptyItems({
+                            selectedStudios,
+                            visibleGroups: [group],
+                            areaNameById,
+                            preferredAreaIds: filters.areaIds,
+                          })
+                        : [];
+                      const hasBodyRows = group.studios.length > 0 || selectedEmptyItems.length > 0;
 
                       return (
                         <section className="date-section" key={group.date}>
@@ -552,17 +533,29 @@ export function App() {
                             </span>
                           </button>
                           <div id={bodyId} className="date-section-body" hidden={isCollapsed}>
-                            {group.studios.length > 0 ? (
-                              group.studios.map((studio) => (
-                                <StudioRow key={studio.studio.id} studio={studio} />
-                              ))
-                            ) : favFilterActive ? (
+                            {group.studios.map((studio) => (
+                              <StudioRow key={studio.studio.id} studio={studio} />
+                            ))}
+                            {selectedEmptyItems.map((item) => (
+                              <SelectedStudioEmptyRow
+                                key={item.studio.id}
+                                studio={item.studio}
+                                areaName={item.areaName}
+                                onCreateAlert={(studio) => openStudioAlert(studio, group.date)}
+                                onRemove={removeStudioSelection}
+                              />
+                            ))}
+                            {!hasBodyRows && favFilterActive ? (
                               <div className="empty-day">
                                 <span>이 날은 즐겨찾기한 곳이 비어 있어요</span>
                               </div>
-                            ) : (
-                              <EmptyDay minDuration={filters.minDuration} setFilters={setFilters} />
-                            )}
+                            ) : !hasBodyRows ? (
+                              <EmptyDay
+                                minDuration={filters.minDuration}
+                                setFilters={setFilters}
+                                onCreateAlert={() => openCurrentConditionAlert(group.date)}
+                              />
+                            ) : null}
                           </div>
                         </section>
                       );
@@ -691,53 +684,27 @@ function SkeletonList() {
 function EmptyDay({
   minDuration,
   setFilters,
+  onCreateAlert,
 }: {
   minDuration: number;
   setFilters: React.Dispatch<React.SetStateAction<FilterState>>;
+  onCreateAlert: () => void;
 }) {
   return (
     <div className="empty-day">
       <span>이 날은 연속 {minDuration}시간이 안 돼요</span>
-      {minDuration > 1 && (
-        <button onClick={() => setFilters((f) => ({ ...f, minDuration: (minDuration - 1) as FilterState['minDuration'] }))}>
-          {minDuration - 1}시간으로 보기
+      <div className="empty-day-actions">
+        {minDuration > 1 && (
+          <button onClick={() => setFilters((f) => ({ ...f, minDuration: (minDuration - 1) as FilterState['minDuration'] }))}>
+            {minDuration - 1}시간으로 보기
+          </button>
+        )}
+        <button className="empty-day-alert" onClick={onCreateAlert}>
+          <BellIcon />
+          <span>이 날짜 알림</span>
         </button>
-      )}
-    </div>
-  );
-}
-
-function SelectedStudioEmptySection({
-  items,
-  canCreateAlert,
-  onCreateAlert,
-  onNeedDate,
-  onRemove,
-}: {
-  items: SelectedStudioEmptyItem[];
-  canCreateAlert: boolean;
-  onCreateAlert: (studio: Studio) => void;
-  onNeedDate: () => void;
-  onRemove: (studioId: number) => void;
-}) {
-  return (
-    <section className="selected-studio-empty-section" aria-label="선택한 합주실 상태">
-      <div className="selected-studio-empty-heading">
-        <span>선택한 합주실</span>
-        <span className="count-pill empty">{items.length}곳 빈 시간 없음</span>
       </div>
-      {items.map((item) => (
-        <SelectedStudioEmptyRow
-          key={item.studio.id}
-          studio={item.studio}
-          areaName={item.areaName}
-          canCreateAlert={canCreateAlert}
-          onCreateAlert={onCreateAlert}
-          onNeedDate={onNeedDate}
-          onRemove={onRemove}
-        />
-      ))}
-    </section>
+    </div>
   );
 }
 
@@ -745,12 +712,10 @@ function EmptyState({
   filters,
   selectedStudios,
   setFilters,
-  onCreateAlert,
 }: {
   filters: FilterState;
   selectedStudios: Studio[];
   setFilters: React.Dispatch<React.SetStateAction<FilterState>>;
-  onCreateAlert: () => void;
 }) {
   const suggestions: { label: string; apply: () => void }[] = [
     { label: '합주실 해제', apply: () => setFilters((f) => ({ ...f, studioIds: [] })) },
@@ -794,12 +759,6 @@ function EmptyState({
           ))}
         </div>
       )}
-      <div className="empty-alert-actions">
-        <button type="button" className="empty-alert-button" onClick={onCreateAlert}>
-          <BellIcon />
-          <span>{filters.dates.length > 0 ? '이 조건으로 알림 받기' : '날짜 선택하고 알림 받기'}</span>
-        </button>
-      </div>
     </div>
   );
 }

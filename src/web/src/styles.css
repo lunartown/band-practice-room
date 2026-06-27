@@ -1233,12 +1233,27 @@ button {
   font-weight: var(--fw-medium);
 }
 
-.empty-day button {
+.empty-day-actions {
   flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.empty-day button {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-fine);
   background: transparent;
   color: var(--accent-strong);
   font-size: var(--fs-sm);
   font-weight: var(--fw-extrabold);
+}
+
+.empty-day button.empty-day-alert {
+  padding: var(--sp-fine) var(--sp-2);
+  border-radius: var(--r-md);
+  background: var(--accent-soft);
 }
 
 /* ============================================================
@@ -1297,34 +1312,6 @@ button {
   color: var(--text-2);
   font-size: var(--fs-xs);
   font-weight: var(--fw-bold);
-}
-
-.empty-alert-actions {
-  width: 100%;
-  max-width: 280px;
-  margin-top: var(--sp-3);
-}
-
-.empty-alert-button {
-  width: 100%;
-  min-height: var(--tap);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--sp-2);
-  border-radius: var(--r-lg);
-  padding: 0 var(--sp-4);
-  background: var(--accent);
-  color: var(--white);
-  font-size: var(--fs-sm);
-  font-weight: var(--fw-extrabold);
-}
-
-.empty-alert-button span {
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 /* 미선택 칩에서 그레이 fill을 걷어내고 가벼운 1px 보더만. 선택 시에만 teal fill */
