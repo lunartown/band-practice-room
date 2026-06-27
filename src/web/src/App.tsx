@@ -329,7 +329,7 @@ export function App() {
                   </button>
                 )}
               </label>
-              <button className="search-cancel" onClick={() => closeStudioSearch()}>완료</button>
+              <button className="search-cancel" onClick={() => closeStudioSearch()}>닫기</button>
             </header>
 
             {searchLoading && <div className="loading-bar" aria-hidden />}
