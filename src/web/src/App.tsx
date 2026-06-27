@@ -378,6 +378,7 @@ export function App() {
           <AlertsScreen
             alerts={alerts}
             areas={areas}
+            studios={bookableStudios}
             onBack={() => setIsAlertsOpen(false)}
             onUpdate={updateSavedAlert}
             onDelete={deleteSavedAlert}

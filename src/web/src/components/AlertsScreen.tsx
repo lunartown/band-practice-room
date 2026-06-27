@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import type { Area, TimeWindow } from '../api/types';
-import type { SavedAlert } from '../lib/alerts';
+import type { Area, Studio, TimeWindow } from '../api/types';
+import type { AlertStudio, SavedAlert } from '../lib/alerts';
 import { dateLabel } from '../lib/date';
 import { CalendarPicker } from './CalendarPicker';
 import { DURATION_OPTIONS } from './FilterSheet';
@@ -9,16 +9,17 @@ import { TimeWindowPicker, timeWindowLabel } from './TimeWindowPicker';
 interface AlertsScreenProps {
   alerts: SavedAlert[];
   areas: Area[];
+  studios: Studio[];
   onBack: () => void;
   onUpdate: (alert: SavedAlert) => void;
   onDelete: (alertId: string) => void;
 }
 
-export function AlertsScreen({ alerts, areas, onBack, onUpdate, onDelete }: AlertsScreenProps) {
+export function AlertsScreen({ alerts, areas, studios, onBack, onUpdate, onDelete }: AlertsScreenProps) {
   const [editing, setEditing] = useState<SavedAlert | null>(null);
 
   function requestDelete(alert: SavedAlert) {
-    const ok = window.confirm(`${buildTargetLabel(alert, areas)} 알림을 삭제할까요?`);
+    const ok = window.confirm('이 알림을 삭제할까요?');
     if (ok) onDelete(alert.id);
   }
 
@@ -49,13 +50,13 @@ export function AlertsScreen({ alerts, areas, onBack, onUpdate, onDelete }: Aler
                   <BellIcon />
                 </span>
                 <div className="alert-card-title">
-                  <strong>{buildTargetLabel(alert, areas)}</strong>
+                  <strong>{buildStudioNamesLabel(alert.studios)}</strong>
                   <span>{buildDatesLabel(alert.dates)}</span>
                 </div>
               </div>
 
               <div className="alert-card-chips">
-                {buildConditionChips(alert).map((chip) => (
+                {buildConditionChips(alert, areas).map((chip) => (
                   <span key={chip}>{chip}</span>
                 ))}
               </div>
@@ -74,6 +75,7 @@ export function AlertsScreen({ alerts, areas, onBack, onUpdate, onDelete }: Aler
           key={editing.id}
           alert={editing}
           areas={areas}
+          studios={studios}
           onClose={() => setEditing(null)}
           onSave={(alert) => {
             onUpdate(alert);
@@ -88,27 +90,42 @@ export function AlertsScreen({ alerts, areas, onBack, onUpdate, onDelete }: Aler
 interface AlertEditSheetProps {
   alert: SavedAlert;
   areas: Area[];
+  studios: Studio[];
   onClose: () => void;
   onSave: (alert: SavedAlert) => void;
 }
 
-function AlertEditSheet({ alert, areas, onClose, onSave }: AlertEditSheetProps) {
+function AlertEditSheet({ alert, areas, studios, onClose, onSave }: AlertEditSheetProps) {
+  const [selectedStudios, setSelectedStudios] = useState<AlertStudio[]>(alert.studios);
+  const [studioQuery, setStudioQuery] = useState('');
   const [areaIds, setAreaIds] = useState(alert.areaIds);
   const [dates, setDates] = useState(alert.dates);
   const [timeWindows, setTimeWindows] = useState<TimeWindow[]>(alert.timeWindows);
   const [minDuration, setMinDuration] = useState(alert.minDuration);
   const [people, setPeople] = useState(alert.people);
   const canSave = dates.length > 0;
+  const studioOptions = buildStudioOptions(studios, areaIds, studioQuery);
+  const selectedStudioIds = new Set(selectedStudios.map((studio) => studio.id));
 
   function toggleArea(id: number) {
     setAreaIds((current) => (current.includes(id) ? current.filter((areaId) => areaId !== id) : [...current, id]));
   }
 
+  function toggleStudio(studio: Pick<Studio, 'id' | 'name'>) {
+    setSelectedStudios((current) => {
+      if (current.some((item) => item.id === studio.id)) return current.filter((item) => item.id !== studio.id);
+      return [...current, { id: studio.id, name: studio.name }];
+    });
+  }
+
   function save() {
     if (!canSave) return;
+    const nextStudios = selectedStudios.map(({ id, name }) => ({ id, name }));
     onSave({
       ...alert,
-      areaIds: alert.scope === 'search' ? areaIds : alert.areaIds,
+      scope: nextStudios.length > 0 ? 'studios' : 'search',
+      studios: nextStudios,
+      areaIds,
       dates,
       timeWindows,
       minDuration,
@@ -129,30 +146,75 @@ function AlertEditSheet({ alert, areas, onClose, onSave }: AlertEditSheetProps) 
         </div>
 
         <div className="sheet-body">
-          <div className="alert-edit-target">
-            <span>대상</span>
-            <strong>{buildTargetLabel(alert, areas)}</strong>
-          </div>
+          <div className="filter-group">
+            <h3>합주실</h3>
+            <div className="alert-studio-picker">
+              <div className="alert-studio-selected">
+                {selectedStudios.length === 0 ? (
+                  <span className="alert-studio-empty-chip">전체 합주실</span>
+                ) : (
+                  selectedStudios.map((studio) => (
+                    <button key={studio.id} type="button" onClick={() => toggleStudio(studio)} aria-label={`${studio.name} 제거`}>
+                      <span>{studio.name}</span>
+                      <RemoveIcon />
+                    </button>
+                  ))
+                )}
+              </div>
 
-          {alert.scope === 'search' && (
-            <div className="filter-group">
-              <h3>지역</h3>
-              <div className="filter-chips">
-                <button className={areaIds.length === 0 ? 'selected' : ''} onClick={() => setAreaIds([])}>
-                  전체 지역
-                </button>
-                {areas.map((area) => (
-                  <button
-                    key={area.id}
-                    className={areaIds.includes(area.id) ? 'selected' : ''}
-                    onClick={() => toggleArea(area.id)}
-                  >
-                    {area.name}
-                  </button>
-                ))}
+              <label className="alert-studio-search">
+                <SearchIcon />
+                <input
+                  value={studioQuery}
+                  onChange={(event) => setStudioQuery(event.target.value)}
+                  placeholder="합주실 이름으로 추가"
+                />
+              </label>
+
+              <div className="alert-studio-options">
+                {studioOptions.length === 0 ? (
+                  <div className="alert-studio-no-options">조건에 맞는 합주실이 없어요</div>
+                ) : (
+                  studioOptions.map((studio) => {
+                    const selected = selectedStudioIds.has(studio.id);
+                    return (
+                      <button
+                        key={studio.id}
+                        type="button"
+                        className={selected ? 'selected' : ''}
+                        aria-pressed={selected}
+                        onClick={() => toggleStudio(studio)}
+                      >
+                        <span>
+                          <strong>{studio.name}</strong>
+                          <small>{studio.primaryAreaName ?? '지역 미지정'}</small>
+                        </span>
+                        {selected && <span className="alert-studio-check">✓</span>}
+                      </button>
+                    );
+                  })
+                )}
               </div>
             </div>
-          )}
+          </div>
+
+          <div className="filter-group">
+            <h3>지역</h3>
+            <div className="filter-chips">
+              <button className={areaIds.length === 0 ? 'selected' : ''} onClick={() => setAreaIds([])}>
+                전체 지역
+              </button>
+              {areas.map((area) => (
+                <button
+                  key={area.id}
+                  className={areaIds.includes(area.id) ? 'selected' : ''}
+                  onClick={() => toggleArea(area.id)}
+                >
+                  {area.name}
+                </button>
+              ))}
+            </div>
+          </div>
 
           <div className="filter-group">
             <h3>날짜</h3>
@@ -196,19 +258,32 @@ function AlertEditSheet({ alert, areas, onClose, onSave }: AlertEditSheetProps) 
   );
 }
 
-function buildTargetLabel(alert: SavedAlert, areas: Area[]) {
-  if (alert.scope === 'studios') return buildStudioNamesLabel(alert.studios);
-  return buildAreaNamesLabel(alert.areaIds, areas);
+function buildStudioOptions(studios: Studio[], areaIds: number[], query: string) {
+  const normalizedQuery = query.trim().toLowerCase();
+  return studios
+    .filter((studio) => studioMatchesAreas(studio, areaIds))
+    .filter((studio) => {
+      if (!normalizedQuery) return true;
+      return `${studio.name} ${studio.primaryAreaName ?? ''}`.toLowerCase().includes(normalizedQuery);
+    })
+    .sort((a, b) => a.name.localeCompare(b.name, 'ko'))
+    .slice(0, 8);
+}
+
+function studioMatchesAreas(studio: Studio, areaIds: number[]) {
+  if (areaIds.length === 0) return true;
+  const studioAreaIds = studio.areaIds?.length ? studio.areaIds : studio.primaryAreaId == null ? [] : [studio.primaryAreaId];
+  return areaIds.some((areaId) => studioAreaIds.includes(areaId));
 }
 
 function buildStudioNamesLabel(studios: SavedAlert['studios']) {
-  if (studios.length === 0) return '선택한 합주실';
+  if (studios.length === 0) return '전체 합주실';
   if (studios.length <= 2) return studios.map((studio) => studio.name).join(', ');
   return `${studios.slice(0, 2).map((studio) => studio.name).join(', ')} 외 ${studios.length - 2}곳`;
 }
 
 function buildAreaNamesLabel(areaIds: number[], areas: Area[]) {
-  if (areaIds.length === 0) return '모든 지역';
+  if (areaIds.length === 0) return '전체 지역';
   const nameById = new Map(areas.map((area) => [area.id, area.name]));
   const names = areaIds.map((id) => nameById.get(id)).filter((name): name is string => Boolean(name));
   if (names.length === 0) return `${areaIds.length}개 지역`;
@@ -224,8 +299,9 @@ function buildDatesLabel(dates: string[]) {
   return `${labels.slice(0, 2).join(', ')} 외 ${labels.length - 2}일`;
 }
 
-function buildConditionChips(alert: SavedAlert) {
+function buildConditionChips(alert: SavedAlert, areas: Area[]) {
   return [
+    buildAreaNamesLabel(alert.areaIds, areas),
     alert.timeWindows.length > 0 ? timeWindowLabel(alert.timeWindows) : '모든 시간',
     `${alert.minDuration}시간 이상`,
     `${alert.people}명 이상`,
@@ -252,6 +328,23 @@ function BellIcon() {
       />
       <path d="M10 20a2.2 2.2 0 0 0 4 0" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
       <path d="M19.2 5.2v3M17.7 6.7h3" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function SearchIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden>
+      <circle cx="11" cy="11" r="7" stroke="currentColor" strokeWidth="2" />
+      <path d="M20 20l-3.8-3.8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function RemoveIcon() {
+  return (
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" aria-hidden>
+      <path d="M7 7l10 10M17 7L7 17" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" />
     </svg>
   );
 }

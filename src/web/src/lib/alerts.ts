@@ -64,11 +64,12 @@ export function saveAlerts(alerts: SavedAlert[]): SavedAlert[] {
 
 export function createAlertFromDraft(draft: AlertDraft, filters: AlertConditionInput): SavedAlert {
   const now = new Date().toISOString();
+  const studios = draft.scope === 'studios' ? draft.studios.map(({ id, name }) => ({ id, name })) : [];
   return {
     id: createId(),
-    scope: draft.scope,
-    studios: draft.scope === 'studios' ? draft.studios.map(({ id, name }) => ({ id, name })) : [],
-    areaIds: draft.scope === 'search' ? uniqueNumbers(filters.areaIds) : [],
+    scope: studios.length > 0 ? 'studios' : 'search',
+    studios,
+    areaIds: uniqueNumbers(filters.areaIds),
     dates: uniqueStrings(draft.dates).sort(),
     timeWindows: normalizeTimeWindows(filters.timeWindows),
     minDuration: normalizeDuration(filters.minDuration),
@@ -93,7 +94,7 @@ export function upsertAlert(alerts: SavedAlert[], alert: SavedAlert): SavedAlert
 }
 
 export function updateAlert(alerts: SavedAlert[], alert: SavedAlert): SavedAlert[] {
-  const updated = { ...alert, updatedAt: new Date().toISOString() };
+  const updated = withDerivedScope({ ...alert, updatedAt: new Date().toISOString() });
   return saveAlerts(alerts.map((item) => (item.id === alert.id ? normalizeAlert(updated) ?? updated : item)));
 }
 
@@ -104,21 +105,21 @@ export function deleteAlert(alerts: SavedAlert[], id: string): SavedAlert[] {
 function normalizeAlert(value: unknown): SavedAlert | null {
   if (!value || typeof value !== 'object') return null;
   const record = value as Record<string, unknown>;
-  const scope = record.scope === 'studios' || record.scope === 'search' ? record.scope : null;
-  if (!scope || typeof record.id !== 'string') return null;
+  if (typeof record.id !== 'string') return null;
+  const studios = normalizeStudios(record.studios);
 
-  return {
+  return withDerivedScope({
     id: record.id,
-    scope,
-    studios: scope === 'studios' ? normalizeStudios(record.studios) : [],
-    areaIds: scope === 'search' ? uniqueNumbers(Array.isArray(record.areaIds) ? record.areaIds : []) : [],
+    scope: studios.length > 0 ? 'studios' : 'search',
+    studios,
+    areaIds: uniqueNumbers(Array.isArray(record.areaIds) ? record.areaIds : []),
     dates: uniqueStrings(Array.isArray(record.dates) ? record.dates : []).sort(),
     timeWindows: normalizeTimeWindows(Array.isArray(record.timeWindows) ? record.timeWindows : []),
     minDuration: normalizeDuration(record.minDuration),
     people: normalizePeople(record.people),
     createdAt: typeof record.createdAt === 'string' ? record.createdAt : new Date().toISOString(),
     updatedAt: typeof record.updatedAt === 'string' ? record.updatedAt : new Date().toISOString(),
-  };
+  });
 }
 
 function normalizeStudios(value: unknown): AlertStudio[] {
@@ -167,7 +168,6 @@ function sortAlerts(alerts: SavedAlert[]): SavedAlert[] {
 
 function alertKey(alert: SavedAlert): string {
   return JSON.stringify({
-    scope: alert.scope,
     studios: alert.studios.map((studio) => studio.id).sort((a, b) => a - b),
     areaIds: [...alert.areaIds].sort((a, b) => a - b),
     dates: [...alert.dates].sort(),
@@ -175,6 +175,13 @@ function alertKey(alert: SavedAlert): string {
     minDuration: alert.minDuration,
     people: alert.people,
   });
+}
+
+function withDerivedScope(alert: SavedAlert): SavedAlert {
+  return {
+    ...alert,
+    scope: alert.studios.length > 0 ? 'studios' : 'search',
+  };
 }
 
 function createId(): string {
