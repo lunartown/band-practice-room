@@ -54,3 +54,5 @@
 | 기록 | [배움](docs/배움/README.md) | 진행 |
 
 <!-- vercel-ignore-test(non-web): 이 PR은 프리뷰가 안 떠야 정상 -->
+
+비-프런트 대표 변경 (이 PR은 프리뷰 안 떠야 정상).
