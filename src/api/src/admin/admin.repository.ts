@@ -203,7 +203,12 @@ export class AdminRepository {
         s.is_active,
         s.image_url_manual,
         s.image_url_scraped,
-        s.image_status,
+        CASE
+          WHEN COALESCE(s.image_url_manual, s.image_url_scraped) IS NULL
+            AND s.image_status = 'OK'
+            THEN 'MISSING'
+          ELSE s.image_status
+        END AS image_status,
         s.image_note,
         s.image_reviewed_at,
         s.image_updated_at
