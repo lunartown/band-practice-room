@@ -12,7 +12,7 @@ import { MenuSheet } from './components/MenuSheet';
 import { buildAvailability } from './lib/availability';
 import { dateLabel } from './lib/date';
 import { loadFilters, saveFilters, markEntered } from './lib/prefs';
-import { loadRecentStudioIds, recordRecentStudioSelection, recordRecentStudioSelections } from './lib/recentStudios';
+import { loadRecentStudioIds, recordRecentStudioSelections } from './lib/recentStudios';
 import { useFavorites } from './lib/useFavorites';
 
 type PopoverKind = 'time' | 'date' | 'area';
@@ -148,12 +148,12 @@ export function App() {
   ]);
 
   useEffect(() => {
-    if (!entered || filters.studioIds.length === 0) return;
+    if (!entered || isStudioSearchOpen || filters.studioIds.length === 0) return;
     const hasUnrecordedSelection = filters.studioIds.some((studioId) => !recentStudioIds.includes(studioId));
     if (hasUnrecordedSelection) {
       setRecentStudioIds(recordRecentStudioSelections(filters.studioIds));
     }
-  }, [entered, filters.studioIds, recentStudioIds]);
+  }, [entered, filters.studioIds, isStudioSearchOpen, recentStudioIds]);
 
   function enterWithAreas(areaIds: number[]) {
     setFilters((f) => ({ ...f, areaIds }));
@@ -165,19 +165,20 @@ export function App() {
     setIsFilterOpen(false);
     setIsMenuOpen(false);
     setStudioSearchQuery('');
+    setRecentStudioIds(loadRecentStudioIds());
     setIsStudioSearchOpen(true);
   }
 
   function closeStudioSearch() {
+    if (filters.studioIds.length > 0) {
+      setRecentStudioIds(recordRecentStudioSelections(filters.studioIds));
+    }
     setIsStudioSearchOpen(false);
     setStudioSearchQuery('');
   }
 
   function toggleStudioSelection(studioId: number) {
     setFavOnly(false);
-    if (!filters.studioIds.includes(studioId)) {
-      setRecentStudioIds(recordRecentStudioSelection(studioId));
-    }
     setFilters((f) => {
       const selected = f.studioIds.includes(studioId);
       return {
@@ -951,17 +952,16 @@ function buildStudioSearchSections({
   const recentItems = recentStudioIds
     .map((studioId) => matchById.get(studioId))
     .filter((studio): studio is Studio => Boolean(studio));
-  const recentSet = new Set(recentItems.map((studio) => studio.id));
   if (recentItems.length > 0) {
     sections.push({ title: '최근 선택', items: recentItems });
   }
 
-  const favoriteItems = matches.filter((studio) => favorites.has(studio.id) && !recentSet.has(studio.id));
+  const favoriteItems = matches.filter((studio) => favorites.has(studio.id));
   if (favoriteItems.length > 0) {
     sections.push({ title: '즐겨찾기', items: favoriteItems });
   }
 
-  const otherItems = matches.filter((studio) => !favorites.has(studio.id) && !recentSet.has(studio.id));
+  const otherItems = matches.filter((studio) => !favorites.has(studio.id));
   if (otherItems.length > 0) {
     sections.push({
       title: areaLabel ? `${areaLabel} 합주실` : '전체 합주실',

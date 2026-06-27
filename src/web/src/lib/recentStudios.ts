@@ -13,10 +13,6 @@ export function loadRecentStudioIds(): number[] {
   }
 }
 
-export function recordRecentStudioSelection(studioId: number): number[] {
-  return recordRecentStudioSelections([studioId]);
-}
-
 export function recordRecentStudioSelections(studioIds: number[]): number[] {
   const current = loadRecentStudioIds();
   let next = current;
