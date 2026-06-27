@@ -264,7 +264,7 @@ export function SelectedStudioEmptyRow({
 
 function BellIcon() {
   return (
-    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden>
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden>
       <path
         d="M18 16v-4.4c0-3.1-1.9-5.6-5-6.2V4a1 1 0 0 0-2 0v1.4c-3.1.6-5 3.1-5 6.2V16l-1.7 2h15.4L18 16z"
         stroke="currentColor"
