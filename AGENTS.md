@@ -9,6 +9,7 @@
   (`feat(web):`, `fix(ios):` 형태 금지)
 - 허용 prefix: `PLAN` `DESIGN` `SPEC` `FEAT` `FIX` `REFACTOR` `STYLE` `TEST` `CHORE` `DOCS`
 - 커밋 메시지는 한국어, "무엇을 왜" 한 줄 요약.
-- `main` 직접 푸시 지양, 기능 브랜치 + PR.
+- 통합 브랜치는 `dev`. 기능은 `dev`에서 브랜치를 따서 `dev`로 PR. `main`(프로덕션)·`dev` 직접 푸시 지양.
+- 브랜치명은 의미 있게(무엇을 하는지 드러나게) 짓는다.
 
 자세한 내용·코드 규칙은 [CLAUDE.md](CLAUDE.md)와 [docs/04_개발/02_코딩_컨벤션.md](docs/04_개발/02_코딩_컨벤션.md) 참고.
