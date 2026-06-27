@@ -719,141 +719,40 @@ button {
   max-height: 90%;
 }
 
-.alert-studio-picker {
-  display: flex;
-  flex-direction: column;
-  gap: var(--sp-2);
+.alert-edit-search-sheet {
+  height: 86%;
 }
 
-.alert-studio-selected {
+.alert-edit-search-top {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-5) var(--gutter) var(--sp-3);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.alert-studio-picker {
+  min-width: 0;
+}
+
+.alert-studio-chip-row {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--sp-1);
-}
-
-.alert-studio-selected button,
-.alert-studio-empty-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--sp-1);
-  max-width: 100%;
-  min-height: 30px;
-  padding: 0 var(--sp-2);
-  border-radius: var(--r-sm);
-  background: var(--accent-soft);
-  color: var(--accent-strong);
-  font-size: var(--fs-xs);
-  font-weight: var(--fw-extrabold);
-}
-
-.alert-studio-selected button span {
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.alert-studio-empty-chip {
-  background: var(--surface-sunken);
-  color: var(--text-2);
-}
-
-.alert-studio-search {
-  display: flex;
-  align-items: center;
-  height: 38px;
-  padding: 0 var(--sp-3);
-  border-radius: var(--r-md);
-  background: var(--surface-sunken);
-  color: var(--text-3);
-}
-
-.alert-studio-search input {
-  flex: 1 1 auto;
-  min-width: 0;
-  height: 100%;
-  padding: 0 0 0 var(--sp-2);
-  border: 0;
-  outline: 0;
-  background: transparent;
-  color: var(--text-1);
-  font: inherit;
-  font-size: 16px;
-  font-weight: var(--fw-semibold);
-}
-
-.alert-studio-search input::placeholder {
-  color: var(--text-3);
-  font-weight: var(--fw-medium);
-}
-
-.alert-studio-options {
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--r-md);
-}
-
-.alert-studio-options button {
-  display: flex;
-  align-items: center;
   gap: var(--sp-2);
-  min-height: 48px;
-  padding: var(--sp-2) var(--sp-3);
-  border-bottom: 1px solid var(--border-subtle);
-  background: transparent;
-  color: var(--text-1);
-  text-align: left;
 }
 
-.alert-studio-options button:last-child {
-  border-bottom: 0;
+.alert-studio-empty-chip {
+  flex: 0 1 auto;
 }
 
-.alert-studio-options button:active,
-.alert-studio-options button.selected {
+.alert-studio-open-search {
+  color: var(--accent-strong);
   background: var(--accent-soft);
 }
 
-.alert-studio-options button > span:first-child {
-  flex: 1 1 auto;
-  min-width: 0;
-}
-
-.alert-studio-options strong,
-.alert-studio-options small {
-  display: block;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.alert-studio-options strong {
-  color: var(--text-1);
-  font-size: var(--fs-sm);
-  font-weight: var(--fw-bold);
-}
-
-.alert-studio-options small {
-  margin-top: 1px;
-  color: var(--text-3);
-  font-size: var(--fs-xs);
-  font-weight: var(--fw-medium);
-}
-
-.alert-studio-check {
+.alert-studio-open-search svg {
   flex: 0 0 auto;
-  color: var(--accent-strong);
-  font-size: var(--fs-sm);
-  font-weight: var(--fw-extrabold);
-}
-
-.alert-studio-no-options {
-  padding: var(--sp-3);
-  color: var(--text-3);
-  font-size: var(--fs-sm);
-  font-weight: var(--fw-medium);
 }
 
 /* ============================================================

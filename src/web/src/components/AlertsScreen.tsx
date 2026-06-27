@@ -97,6 +97,7 @@ interface AlertEditSheetProps {
 
 function AlertEditSheet({ alert, areas, studios, onClose, onSave }: AlertEditSheetProps) {
   const [selectedStudios, setSelectedStudios] = useState<AlertStudio[]>(alert.studios);
+  const [isStudioSearchOpen, setIsStudioSearchOpen] = useState(false);
   const [studioQuery, setStudioQuery] = useState('');
   const [areaIds, setAreaIds] = useState(alert.areaIds);
   const [dates, setDates] = useState(alert.dates);
@@ -133,6 +134,74 @@ function AlertEditSheet({ alert, areas, studios, onClose, onSave }: AlertEditShe
     });
   }
 
+  if (isStudioSearchOpen) {
+    return (
+      <div className="sheet-layer">
+        <button className="sheet-dim" aria-label="합주실 선택 닫기" onClick={() => setIsStudioSearchOpen(false)} />
+        <section className="filter-sheet alert-edit-sheet alert-edit-search-sheet" role="dialog" aria-modal="true" aria-label="합주실 선택">
+          <div className="alert-edit-search-top">
+            <button className="search-back" aria-label="알림 수정으로 돌아가기" onClick={() => setIsStudioSearchOpen(false)}>
+              <BackIcon />
+            </button>
+            <label className="search-field">
+              <SearchIcon />
+              <input
+                value={studioQuery}
+                onChange={(event) => setStudioQuery(event.target.value)}
+                placeholder="합주실 이름으로 찾기"
+                autoFocus
+              />
+              {studioQuery && (
+                <button className="search-clear" aria-label="검색어 지우기" onClick={() => setStudioQuery('')}>
+                  ×
+                </button>
+              )}
+            </label>
+            <button className="search-cancel" onClick={() => setIsStudioSearchOpen(false)}>닫기</button>
+          </div>
+
+          <div className="studio-search-results">
+            {studioOptions.length === 0 ? (
+              <div className="studio-search-empty-state">
+                <h2>등록된 합주실을 찾지 못했어요</h2>
+                <p>이름이나 지역을 조금 다르게 입력해보세요</p>
+              </div>
+            ) : (
+              <section className="studio-search-section">
+                <h2>{studioQuery.trim() ? '검색 결과' : '합주실'}</h2>
+                {studioOptions.map((studio) => {
+                  const selected = selectedStudioIds.has(studio.id);
+                  return (
+                    <button
+                      key={studio.id}
+                      type="button"
+                      className={`studio-search-row${selected ? ' selected' : ''}`}
+                      aria-pressed={selected}
+                      onClick={() => toggleStudio(studio)}
+                    >
+                      <span className="studio-search-row-main">
+                        <span className="studio-search-row-name">{studio.name}</span>
+                        <span className="studio-search-row-meta">{studio.primaryAreaName ?? '지역 미지정'}</span>
+                      </span>
+                      {selected && <span className="studio-search-selected">✓</span>}
+                    </button>
+                  );
+                })}
+              </section>
+            )}
+          </div>
+
+          <footer>
+            <button type="button" className="secondary" onClick={() => setSelectedStudios([])}>전체 합주실</button>
+            <button type="button" className="primary" onClick={() => setIsStudioSearchOpen(false)}>
+              {selectedStudios.length > 0 ? `${selectedStudios.length}곳 선택` : '완료'}
+            </button>
+          </footer>
+        </section>
+      </div>
+    );
+  }
+
   return (
     <div className="sheet-layer">
       <button className="sheet-dim" aria-label="알림 수정 닫기" onClick={onClose} />
@@ -149,51 +218,34 @@ function AlertEditSheet({ alert, areas, studios, onClose, onSave }: AlertEditShe
           <div className="filter-group">
             <h3>합주실</h3>
             <div className="alert-studio-picker">
-              <div className="alert-studio-selected">
+              <div className="alert-studio-chip-row">
                 {selectedStudios.length === 0 ? (
-                  <span className="alert-studio-empty-chip">전체 합주실</span>
+                  <span className="chip strong alert-studio-empty-chip">전체 합주실</span>
                 ) : (
                   selectedStudios.map((studio) => (
-                    <button key={studio.id} type="button" onClick={() => toggleStudio(studio)} aria-label={`${studio.name} 제거`}>
+                    <button
+                      key={studio.id}
+                      type="button"
+                      className="chip studio-chip active"
+                      onClick={() => toggleStudio(studio)}
+                      aria-label={`${studio.name} 제거`}
+                    >
                       <span>{studio.name}</span>
                       <RemoveIcon />
                     </button>
                   ))
                 )}
-              </div>
-
-              <label className="alert-studio-search">
-                <SearchIcon />
-                <input
-                  value={studioQuery}
-                  onChange={(event) => setStudioQuery(event.target.value)}
-                  placeholder="합주실 이름으로 추가"
-                />
-              </label>
-
-              <div className="alert-studio-options">
-                {studioOptions.length === 0 ? (
-                  <div className="alert-studio-no-options">조건에 맞는 합주실이 없어요</div>
-                ) : (
-                  studioOptions.map((studio) => {
-                    const selected = selectedStudioIds.has(studio.id);
-                    return (
-                      <button
-                        key={studio.id}
-                        type="button"
-                        className={selected ? 'selected' : ''}
-                        aria-pressed={selected}
-                        onClick={() => toggleStudio(studio)}
-                      >
-                        <span>
-                          <strong>{studio.name}</strong>
-                          <small>{studio.primaryAreaName ?? '지역 미지정'}</small>
-                        </span>
-                        {selected && <span className="alert-studio-check">✓</span>}
-                      </button>
-                    );
-                  })
-                )}
+                <button
+                  type="button"
+                  className="chip alert-studio-open-search"
+                  onClick={() => {
+                    setStudioQuery('');
+                    setIsStudioSearchOpen(true);
+                  }}
+                >
+                  <SearchIcon />
+                  <span>{selectedStudios.length > 0 ? '합주실 추가' : '합주실 찾기'}</span>
+                </button>
               </div>
             </div>
           </div>
