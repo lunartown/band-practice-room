@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Capacitor } from '@capacitor/core';
 import { App as CapApp } from '@capacitor/app';
+import { CapacitorUpdater } from '@capgo/capacitor-updater';
 import { shareApp } from '../lib/share';
 
 const DISMISS_THRESHOLD = 70; // 이 거리 이상 왼쪽으로 끌면 닫는다
@@ -26,12 +27,16 @@ interface MenuSheetProps {
 
 export function MenuSheet({ onClose }: MenuSheetProps) {
   const [version, setVersion] = useState<string | null>(null);
+  const [otaVersion, setOtaVersion] = useState<string | null>(null);
 
   // 버전은 네이티브에서만 의미가 있다(웹은 상시 최신). 실패해도 조용히 숨긴다.
   useEffect(() => {
     if (!Capacitor.isNativePlatform()) return;
     CapApp.getInfo()
       .then((info) => setVersion(info.version))
+      .catch(() => {});
+    CapacitorUpdater.current()
+      .then(({ bundle }) => setOtaVersion(bundle.id === 'builtin' ? 'builtin' : bundle.version || bundle.id))
       .catch(() => {});
   }, []);
 
@@ -128,11 +133,18 @@ export function MenuSheet({ onClose }: MenuSheetProps) {
         </div>
 
         <footer className="menu-footer">
-          <span>{version ? `v${version}` : 'hapjusil.com'}</span>
+          <span>{buildVersionLabel(version, otaVersion)}</span>
         </footer>
       </section>
     </div>
   );
+}
+
+function buildVersionLabel(version: string | null, otaVersion: string | null) {
+  if (!version && !otaVersion) return 'hapjusil.com';
+  if (!version) return `OTA ${otaVersion}`;
+  if (!otaVersion) return `v${version}`;
+  return `v${version} · OTA ${otaVersion}`;
 }
 
 function BandIcon() {
