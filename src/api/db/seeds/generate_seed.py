@@ -69,21 +69,18 @@ data = json.load(open(os.path.join(_REPO_ROOT, "_local", "studio-catalog.json"))
 
 lines = []
 lines.append("-- Auto-generated seed from _local/studio-catalog.json")
-lines.append("-- 기존 스튜디오/룸 데이터를 완전히 교체\n")
+lines.append("-- idempotent UPSERT: TRUNCATE 하지 않는다.")
+lines.append("--   · studios 의 enrich(image_url_scraped/rating/review_count/review_keywords)와")
+lines.append("--     slots/scrape_jobs/scrape_runs 는 건드리지 않아 보존된다.")
+lines.append("--   · is_active 는 INSERT 시에만 true, 충돌(UPDATE) 시 갱신하지 않아 수동 비활성화가 유지된다.\n")
 
-# ── 기존 데이터 초기화 (의존성 역순) ─────────────────────────────────────────
-lines.append("-- 기존 데이터 초기화")
-lines.append("TRUNCATE TABLE slots, room_sources, rooms, studio_sources, studio_areas, studios, scrape_jobs, scrape_runs RESTART IDENTITY CASCADE;")
-lines.append("TRUNCATE TABLE areas RESTART IDENTITY CASCADE;")
-lines.append("-- sources는 유지 (naver source id=1)")
-lines.append("")
-
-# ── areas ──────────────────────────────────────────────────────────────────
+# ── areas (upsert by id) ─────────────────────────────────────────────────────
 lines.append("-- Areas")
 for region, (slug, name, area_id) in REGION_MAP.items():
     lines.append(
         f"INSERT INTO areas (id, slug, name, \"order\", is_active) "
-        f"VALUES ({area_id}, {esc(slug)}, {esc(name)}, {area_id}, true);"
+        f"VALUES ({area_id}, {esc(slug)}, {esc(name)}, {area_id}, true) "
+        f"ON CONFLICT (id) DO UPDATE SET slug=EXCLUDED.slug, name=EXCLUDED.name, \"order\"=EXCLUDED.\"order\", is_active=EXCLUDED.is_active;"
     )
 lines.append("")
 
@@ -104,16 +101,20 @@ for studio in data["studios"]:
 
     lines.append(
         f"INSERT INTO studios (slug, name, description, primary_area_id, address, is_active) "
-        f"VALUES ({esc(slug)}, {esc(name)}, {esc(description)}, {area_id}, {esc(address)}, true);"
+        f"VALUES ({esc(slug)}, {esc(name)}, {esc(description)}, {area_id}, {esc(address)}, true) "
+        f"ON CONFLICT (slug) DO UPDATE SET name=EXCLUDED.name, description=EXCLUDED.description, "
+        f"primary_area_id=EXCLUDED.primary_area_id, address=EXCLUDED.address;"
     )
     lines.append(
         f"INSERT INTO studio_areas (studio_id, area_id) "
-        f"SELECT id, {area_id} FROM studios WHERE slug={esc(slug)};"
+        f"SELECT id, {area_id} FROM studios WHERE slug={esc(slug)} "
+        f"ON CONFLICT (studio_id, area_id) DO NOTHING;"
     )
     if naver_url and biz_id:
         lines.append(
             f"INSERT INTO studio_sources (studio_id, source_id, external_key, url) "
-            f"SELECT id, 1, {esc(biz_id)}, {esc(naver_url)} FROM studios WHERE slug={esc(slug)};"
+            f"SELECT id, 1, {esc(biz_id)}, {esc(naver_url)} FROM studios WHERE slug={esc(slug)} "
+            f"ON CONFLICT (studio_id, source_id) DO UPDATE SET external_key=EXCLUDED.external_key, url=EXCLUDED.url;"
         )
 
     for room in studio.get("roomDetails", []):
@@ -132,14 +133,17 @@ for studio in data["studios"]:
             f"{'NULL' if not hourly else hourly}, '{price_source}', "
             f"{'NULL' if capacity_min is None else capacity_min}, "
             f"{'NULL' if capacity_max is None else capacity_max}, true "
-            f"FROM studios WHERE slug={esc(slug)};"
+            f"FROM studios WHERE slug={esc(slug)} "
+            f"ON CONFLICT (studio_id, name) DO UPDATE SET price_per_hour=EXCLUDED.price_per_hour, "
+            f"price_source=EXCLUDED.price_source, capacity_min=EXCLUDED.capacity_min, capacity_max=EXCLUDED.capacity_max;"
         )
         if naver_biz_item_id:
             lines.append(
                 f"INSERT INTO room_sources (room_id, source_id, external_key) "
                 f"SELECT r.id, 1, {esc(str(naver_biz_item_id))} "
                 f"FROM rooms r JOIN studios s ON r.studio_id=s.id "
-                f"WHERE s.slug={esc(slug)} AND r.name={esc(room_name)};"
+                f"WHERE s.slug={esc(slug)} AND r.name={esc(room_name)} "
+                f"ON CONFLICT (room_id, source_id) DO UPDATE SET external_key=EXCLUDED.external_key;"
             )
 
     lines.append("")
