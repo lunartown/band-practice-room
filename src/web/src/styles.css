@@ -207,6 +207,10 @@ button {
   padding: var(--sp-1) var(--gutter) var(--sp-3);
 }
 
+.chip-row.has-studio-chip {
+  padding-bottom: var(--sp-2);
+}
+
 .chip,
 .filter-button {
   display: inline-flex;
@@ -251,6 +255,31 @@ button {
   color: var(--accent-strong);
 }
 
+.studio-chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  padding: 0 var(--gutter) var(--sp-3);
+}
+
+.studio-chip {
+  flex: 0 1 auto;
+  max-width: none;
+  min-width: 0;
+  padding-right: var(--sp-2);
+}
+
+.studio-chip > span {
+  flex: 1 1 auto;
+  min-width: 0;
+  max-width: 240px;
+}
+
+.chip-remove {
+  flex: 0 0 auto;
+  opacity: 0.72;
+}
+
 /* 사용자가 지정한(기본값과 다른) 필터: 액티브 표시.
    신호는 fill + 텍스트색 두 가지로만 — 보더는 쓰지 않는다 */
 .chip.active,
@@ -288,6 +317,229 @@ button {
   height: 6px;
   border-radius: 50%;
   background: var(--white);
+}
+
+/* ============================================================
+   Studio search mode
+   ============================================================ */
+.studio-search-screen {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--surface);
+}
+
+.studio-search-top {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-5) var(--gutter) var(--sp-3);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.search-back,
+.search-cancel,
+.search-clear {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  color: var(--text-2);
+}
+
+.search-back {
+  width: 34px;
+  height: 38px;
+  border-radius: var(--r-md);
+}
+
+.search-back:active,
+.search-cancel:active {
+  background: var(--surface-sunken);
+}
+
+.search-field {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  height: 38px;
+  padding: 0 var(--sp-3);
+  border-radius: var(--r-md);
+  background: var(--surface-sunken);
+  color: var(--text-3);
+}
+
+.search-field input {
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 100%;
+  padding: 0 var(--sp-2);
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--text-1);
+  font: inherit;
+  /* iOS Safari/WebView는 16px 미만 input focus 시 viewport를 확대한다. */
+  font-size: 16px;
+  font-weight: var(--fw-semibold);
+}
+
+.search-field input::placeholder {
+  color: var(--text-3);
+  font-weight: var(--fw-medium);
+}
+
+.search-clear {
+  width: 26px;
+  height: 26px;
+  border-radius: var(--r-sm);
+  color: var(--text-3);
+  font-size: var(--fs-md);
+  font-weight: var(--fw-bold);
+}
+
+.search-clear:active {
+  background: var(--gray-150);
+}
+
+.search-cancel {
+  min-width: 34px;
+  height: 38px;
+  border-radius: var(--r-md);
+  padding: 0 var(--sp-1);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-bold);
+}
+
+.studio-search-results {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+  background: var(--surface);
+}
+
+.studio-search-section {
+  padding: var(--sp-4) 0 0;
+}
+
+.studio-search-section h2 {
+  margin: 0;
+  padding: 0 var(--gutter) var(--sp-2);
+  color: var(--text-3);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-extrabold);
+}
+
+.studio-search-row {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  width: 100%;
+  min-height: 64px;
+  padding: var(--sp-3) var(--gutter);
+  border-bottom: 1px solid var(--border-subtle);
+  background: transparent;
+  color: var(--text-1);
+  text-align: left;
+}
+
+.studio-search-row:active,
+.studio-search-row.selected {
+  background: var(--accent-soft);
+}
+
+.studio-search-row-main {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-px);
+}
+
+.studio-search-row-name,
+.studio-search-row-meta {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.studio-search-row-name {
+  font-size: var(--fs-lg);
+  font-weight: var(--fw-bold);
+}
+
+.studio-search-row-meta {
+  color: var(--text-3);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-medium);
+}
+
+.studio-search-selected {
+  flex: 0 0 auto;
+  color: var(--accent-strong);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-extrabold);
+}
+
+.studio-search-actions {
+  flex: 0 0 auto;
+  display: flex;
+  gap: var(--sp-2);
+  padding: var(--sp-3) var(--gutter) var(--sp-5);
+  border-top: 1px solid var(--border-subtle);
+  background: var(--surface);
+}
+
+.studio-search-reset,
+.studio-search-apply {
+  min-height: var(--tap);
+  border-radius: var(--r-lg);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-bold);
+}
+
+.studio-search-reset {
+  flex: 0 0 76px;
+  background: var(--surface-sunken);
+  color: var(--text-2);
+}
+
+.studio-search-reset:disabled {
+  color: var(--text-faint);
+  opacity: 0.5;
+}
+
+.studio-search-apply {
+  flex: 1 1 auto;
+  background: var(--accent);
+  color: var(--white);
+}
+
+.studio-search-empty-state {
+  display: flex;
+  min-height: 100%;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--sp-8);
+  text-align: center;
+}
+
+.studio-search-empty-state h2 {
+  margin: 0;
+  font-size: var(--fs-xl);
+  font-weight: var(--fw-extrabold);
+}
+
+.studio-search-empty-state p {
+  margin: var(--sp-2) 0 0;
+  color: var(--text-3);
+  font-size: var(--fs-sm);
+  line-height: 1.55;
 }
 
 /* ============================================================
@@ -404,7 +656,8 @@ button {
 
 /* 즐겨찾기만 보기 토글: 헤더에 두어 칩 줄 혼잡(칩 글자 잘림)을 피한다.
    배경 없는 고스트 하트, 켜지면 액센트(틸)로 채운다. */
-.fav-toggle {
+.fav-toggle,
+.search-toggle {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -416,7 +669,8 @@ button {
   color: var(--text-faint);
 }
 
-.fav-toggle.active {
+.fav-toggle.active,
+.search-toggle.active {
   color: var(--accent);
   background: var(--accent-soft);
 }
