@@ -229,16 +229,16 @@ export function SelectedStudioEmptyRow({
       </div>
 
       <div className="studio-actions">
+        <button type="button" className="room-toggle studio-empty-remove" onClick={() => onRemove(id)}>
+          선택 해제
+        </button>
         <button
           type="button"
-          className="studio-empty-alert"
+          className="alert-button"
+          aria-label={`${name} 빈 자리 알림`}
           onClick={() => onCreateAlert(studio)}
         >
           <BellIcon />
-          <span>빈 자리 알림</span>
-        </button>
-        <button type="button" className="room-toggle studio-empty-remove" onClick={() => onRemove(id)}>
-          선택 해제
         </button>
         <button
           type="button"

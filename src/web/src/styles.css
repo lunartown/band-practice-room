@@ -680,6 +680,7 @@ button {
 
 /* 즐겨찾기/공유: 배경 없는 고스트 아이콘. "비는 시간"처럼 플랫하게 두어
    주 액션(예약 셰브론)과 무게로 구분한다. */
+.alert-button,
 .fav-button,
 .share-button {
   flex: 0 0 auto;
@@ -690,6 +691,10 @@ button {
   border-radius: var(--r-sm);
   color: var(--text-faint);
   background: transparent;
+}
+
+.alert-button:active {
+  color: var(--accent-strong);
 }
 
 .fav-button {
@@ -1013,33 +1018,6 @@ button {
   flex: 0 0 auto;
   color: var(--accent-strong);
   font-weight: var(--fw-extrabold);
-}
-
-.studio-empty-alert {
-  flex: 1 1 auto;
-  min-width: 0;
-  min-height: 30px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: flex-start;
-  gap: var(--sp-fine);
-  padding: 0 var(--sp-2);
-  border-radius: var(--r-md);
-  background: var(--accent-soft);
-  color: var(--accent-strong);
-  font-size: var(--fs-xs);
-  font-weight: var(--fw-extrabold);
-}
-
-.studio-empty-alert span {
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.studio-empty-alert svg {
-  flex: 0 0 auto;
 }
 
 /* 카드/방행 전체가 탭 대상임을 알리는 셰브론. 틸로 칠해 "여기서 예약으로 간다"를 암시 */
