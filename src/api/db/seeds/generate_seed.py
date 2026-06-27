@@ -98,10 +98,13 @@ for studio in data["studios"]:
     description = studio.get("description") or None
     naver_url = studio.get("naverUrl")
     biz_id = naver_biz_id(naver_url)
+    # isActive 기본 true. 카탈로그에서 false 면 비활성으로 시드. 단 충돌(UPDATE) 시엔
+    # is_active 를 갱신하지 않아(아래) 운영 중 수동 비활성화도 보존된다.
+    is_active = "false" if studio.get("isActive") is False else "true"
 
     lines.append(
         f"INSERT INTO studios (slug, name, description, primary_area_id, address, is_active) "
-        f"VALUES ({esc(slug)}, {esc(name)}, {esc(description)}, {area_id}, {esc(address)}, true) "
+        f"VALUES ({esc(slug)}, {esc(name)}, {esc(description)}, {area_id}, {esc(address)}, {is_active}) "
         f"ON CONFLICT (slug) DO UPDATE SET name=EXCLUDED.name, description=EXCLUDED.description, "
         f"primary_area_id=EXCLUDED.primary_area_id, address=EXCLUDED.address;"
     )
