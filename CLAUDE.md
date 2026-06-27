@@ -10,6 +10,12 @@
 - `src/api` — Nest/Nest 풍 백엔드, ORM 없이 SQL 직접 작성 (Render + Neon Postgres)
 - `src/web` — Vite + React 프런트엔드 (Vercel), Capacitor로 iOS·Android 패키징
 
+## 로컬 확인 URL 안내
+
+- 개발 서버 URL을 사용자에게 안내할 때는 가능하면 `localhost` 대신 같은 네트워크의 휴대폰에서 접근 가능한 IP 주소를 우선 제공한다. 이 프로젝트는 모바일 확인 작업이 잦다.
+- 예: `http://192.168.x.x:5173/`
+- IP 확인이 어렵거나 로컬 전용 작업이면 `localhost`를 보조로 안내한다.
+
 ## 커밋 규칙
 
 **핵심: prefix는 대문자 + 콜론, 괄호(scope) 붙이지 않는다. front/back 구분도 하지 않는다.**
