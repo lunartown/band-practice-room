@@ -1,18 +1,8 @@
 import type { Area, Studio } from '../api/types';
 import { dateLabel } from '../lib/date';
+import type { AlertDraft } from '../lib/alerts';
 import type { FilterState } from './FilterSheet';
 import { timeWindowLabel } from './TimeWindowPicker';
-
-export type AlertDraft =
-  | {
-      scope: 'studios';
-      studios: Pick<Studio, 'id' | 'name'>[];
-      dates: string[];
-    }
-  | {
-      scope: 'search';
-      dates: string[];
-    };
 
 interface AlertConfirmSheetProps {
   draft: AlertDraft;
@@ -66,7 +56,7 @@ export function AlertConfirmSheet({ draft, filters, areas, onClose, onConfirm }:
 
         <footer>
           <button type="button" className="secondary" onClick={onClose}>취소</button>
-          <button type="button" className="primary" onClick={onConfirm}>확인</button>
+          <button type="button" className="primary" onClick={onConfirm}>등록</button>
         </footer>
       </section>
     </div>

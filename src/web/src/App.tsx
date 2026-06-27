@@ -10,7 +10,15 @@ import { Popover } from './components/Popover';
 import { OpenScreen } from './components/OpenScreen';
 import { MenuSheet } from './components/MenuSheet';
 import { AlertConfirmSheet } from './components/AlertConfirmSheet';
-import type { AlertDraft } from './components/AlertConfirmSheet';
+import { AlertsScreen } from './components/AlertsScreen';
+import {
+  createAlertFromDraft,
+  deleteAlert,
+  loadAlerts,
+  updateAlert,
+  upsertAlert,
+} from './lib/alerts';
+import type { AlertDraft, SavedAlert } from './lib/alerts';
 import { buildAvailability } from './lib/availability';
 import { dateLabel } from './lib/date';
 import { loadFilters, saveFilters, markEntered } from './lib/prefs';
@@ -52,8 +60,10 @@ export function App() {
   const [entered, setEntered] = useState(savedPrefs?.fresh ?? false);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [isStudioSearchOpen, setIsStudioSearchOpen] = useState(false);
+  const [isAlertsOpen, setIsAlertsOpen] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [alertDraft, setAlertDraft] = useState<AlertDraft | null>(null);
+  const [alerts, setAlerts] = useState<SavedAlert[]>(() => loadAlerts());
   const [favOnly, setFavOnly] = useState(false);
   const [collapsedDates, setCollapsedDates] = useState<Set<string>>(() => new Set());
   const [studioSearchQuery, setStudioSearchQuery] = useState('');
@@ -178,9 +188,34 @@ export function App() {
     setPopover(null);
     setIsFilterOpen(false);
     setIsMenuOpen(false);
+    setIsAlertsOpen(false);
     setStudioSearchQuery('');
     setRecentStudioIds(loadRecentStudioIds());
     setIsStudioSearchOpen(true);
+  }
+
+  function openAlertsScreen() {
+    setPopover(null);
+    setIsFilterOpen(false);
+    setIsMenuOpen(false);
+    setIsStudioSearchOpen(false);
+    setAlertDraft(null);
+    setIsAlertsOpen(true);
+  }
+
+  function confirmAlertDraft() {
+    if (!alertDraft) return;
+    const alert = createAlertFromDraft(alertDraft, filters);
+    setAlerts((current) => upsertAlert(current, alert));
+    setAlertDraft(null);
+  }
+
+  function updateSavedAlert(alert: SavedAlert) {
+    setAlerts((current) => updateAlert(current, alert));
+  }
+
+  function deleteSavedAlert(alertId: string) {
+    setAlerts((current) => deleteAlert(current, alertId));
   }
 
   function closeStudioSearch({ rememberSelection = true }: { rememberSelection?: boolean } = {}) {
@@ -339,7 +374,15 @@ export function App() {
   return (
     <main className="app-shell">
       <section className="phone-app" aria-label="예약 가능 시간 검색" ref={phoneRef}>
-        {isStudioSearchOpen ? (
+        {isAlertsOpen ? (
+          <AlertsScreen
+            alerts={alerts}
+            areas={areas}
+            onBack={() => setIsAlertsOpen(false)}
+            onUpdate={updateSavedAlert}
+            onDelete={deleteSavedAlert}
+          />
+        ) : isStudioSearchOpen ? (
           <div className="studio-search-screen">
             <header className="studio-search-top">
               <button className="search-back" aria-label="합주실 검색 닫기" onClick={() => closeStudioSearch()}>
@@ -638,14 +681,20 @@ export function App() {
           />
         )}
 
-        {!isStudioSearchOpen && isMenuOpen && <MenuSheet onClose={() => setIsMenuOpen(false)} />}
+        {!isStudioSearchOpen && !isAlertsOpen && isMenuOpen && (
+          <MenuSheet
+            alertCount={alerts.length}
+            onClose={() => setIsMenuOpen(false)}
+            onOpenAlerts={openAlertsScreen}
+          />
+        )}
         {alertDraft && (
           <AlertConfirmSheet
             draft={alertDraft}
             filters={filters}
             areas={areas}
             onClose={() => setAlertDraft(null)}
-            onConfirm={() => setAlertDraft(null)}
+            onConfirm={confirmAlertDraft}
           />
         )}
       </section>
