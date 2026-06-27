@@ -17,6 +17,7 @@
 - IP 확인이 어렵거나 로컬 전용 작업이면 `localhost`를 보조로 안내한다.
 - 폰에서 로컬 웹을 볼 때 브라우저의 `localhost`는 Mac이 아니라 폰 자신이다. 실제 데이터를 볼 때는 프론트 `VITE_API_BASE_URL`을 상대경로(`/api/v1`)로 두고, Vite proxy가 Render 실 API로 넘기게 한다(CORS 회피).
 - 로컬 API를 의도적으로 확인해야 할 때만 `VITE_DEV_API_PROXY_TARGET=http://127.0.0.1:3000`으로 Vite proxy 타깃을 덮어쓴다. `localhost`는 Node에서 IPv6 `::1`로 해석될 수 있으므로 로컬 API 타깃에는 `127.0.0.1`을 쓴다.
+- **프런트 변경 검증은 로컬에서 한다.** Vercel 무료 플랜 rate limit 때문에 프리뷰는 `dev` 브랜치에서만 띄운다(프로덕션은 `main`). 기능 브랜치는 Vercel 프리뷰를 기다리지 말고 `cd src/web && VITE_USE_MOCK_API=false VITE_API_BASE_URL=/api/v1 npm run dev`로 띄워 라이브 백엔드 프록시로 확인한 뒤 `dev`로 PR한다. 설정 근거는 [docs/04_개발/03_배포_전략.md](docs/04_개발/03_배포_전략.md) "프리뷰 배포 필터" 참고.
 
 ## 커밋 규칙
 

@@ -14,6 +14,7 @@
 - 브랜치명은 의미 있게(무엇을 하는지 드러나게) 짓되, 뒤에 짧은 숫자·해시 suffix를 붙여 중복을 피한다(`fix-vercel-backend-load-ll89qg` 등).
 - 개발 서버 URL을 안내할 때는 가능하면 `localhost` 대신 같은 네트워크의 휴대폰에서 접근 가능한 IP 주소를 우선 제공한다.
 - 폰에서 로컬 웹을 확인할 때 실제 API는 프론트 상대경로(`/api/v1`) + Vite proxy로 Render 실 API에 붙인다. 로컬 API 확인 시에만 `VITE_DEV_API_PROXY_TARGET=http://127.0.0.1:3000`으로 덮어쓴다.
+- **프런트 변경 검증은 로컬에서.** Vercel 무료 플랜 rate limit 때문에 프리뷰는 `dev` 브랜치만 띄운다(프로덕션은 `main`). 기능 브랜치는 Vercel에 올리지 말고 `cd src/web && VITE_USE_MOCK_API=false VITE_API_BASE_URL=/api/v1 npm run dev`로 로컬에서 라이브 백엔드 프록시로 확인한 뒤 `dev`로 PR한다. (자세히: [docs/04_개발/03_배포_전략.md](docs/04_개발/03_배포_전략.md))
 - 로컬에서 새 작업을 시작할 때는 현재 체크아웃을 직접 건드리지 말고 별도 `git worktree`를 만들어 그 안에서 브랜치를 딴다. 이미 작업 전용 worktree/브랜치 안이면 그대로 이어간다.
 
 자세한 내용·코드 규칙은 [CLAUDE.md](CLAUDE.md)와 [docs/04_개발/02_코딩_컨벤션.md](docs/04_개발/02_코딩_컨벤션.md) 참고.
