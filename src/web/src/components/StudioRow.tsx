@@ -176,6 +176,8 @@ export function SelectedStudioEmptyRow({
   const badges = toReviewBadges(reviewKeywords, reviewCount);
   const favorites = useFavorites();
   const isFav = favorites.has(id);
+  // 온라인 예약 소스가 없는 합주실: "빈 시간 없음"이 아니라 "전화예약"으로 안내.
+  const phoneOnly = studio.hasOnlineBooking === false;
 
   return (
     <div className="studio-row studio-row-empty">
@@ -191,7 +193,9 @@ export function SelectedStudioEmptyRow({
               )}
             </div>
           </div>
-          <div className="studio-unavailable-pill">빈 시간 없음</div>
+          <div className={`studio-unavailable-pill${phoneOnly ? ' studio-phone-pill' : ''}`}>
+            {phoneOnly ? '📞 전화예약' : '빈 시간 없음'}
+          </div>
         </div>
 
         {badges.length > 0 && (
@@ -207,8 +211,17 @@ export function SelectedStudioEmptyRow({
         <div className="studio-empty-message">
           <ClockIcon />
           <div>
-            <strong>현재 조건에 맞는 빈 시간이 없어요</strong>
-            <span>조건을 넓히거나 선택을 해제할 수 있어요</span>
+            {phoneOnly ? (
+              <>
+                <strong>온라인 예약을 지원하지 않는 합주실이에요</strong>
+                <span>전화로 예약 가능 여부를 확인해 주세요</span>
+              </>
+            ) : (
+              <>
+                <strong>현재 조건에 맞는 빈 시간이 없어요</strong>
+                <span>조건을 넓히거나 선택을 해제할 수 있어요</span>
+              </>
+            )}
           </div>
         </div>
       </div>

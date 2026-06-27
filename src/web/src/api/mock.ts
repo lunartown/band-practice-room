@@ -127,6 +127,7 @@ export async function getMockStudios(areaIds?: number[]): Promise<StudiosRespons
     imageUrl: s.imageUrl,
     rating: s.rating,
     reviewCount: s.reviewCount,
+    hasOnlineBooking: s.id !== 5, // 5번은 전화예약 데모
   }));
   return {
     studios: areaIds?.length ? all.filter((s) => areaIds.includes(s.primaryAreaId)) : all,
