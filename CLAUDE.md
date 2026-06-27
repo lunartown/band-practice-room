@@ -57,6 +57,8 @@ CHORE: iOS 수출 규정 면제 키 추가
 - **`dev`는 항상 `main`보다 앞서(또는 같게) 유지한다.** `main`에 핫픽스가 들어가면 곧바로 `main`을 `dev`에 리베이스로 따라잡혀, `dev`가 `main`보다 뒤처지지 않게 한다.
 - **선형(일자) 히스토리를 유지한다.** 머지할 때는 rebase를 우선하고, 애매하면 squash를 사용한다. 머지 커밋은 금지한다.
 - 브랜치명은 의미 있게 짓되 **뒤에 짧은 숫자·해시 suffix를 붙여 중복을 피한다.** 무엇을 하는지 드러나는 이름 + 구분자(`fix-vercel-backend-load-ll89qg`, `feat-favorite-share-2` 등)를 쓰고, 의미 없는 해시·번호만으로 짓지는 않는다.
+- 로컬에서 새 작업을 시작할 때는 현재 체크아웃을 직접 건드리지 말고 **별도 `git worktree`를 만들어 그 안에서 브랜치를 딴다.** 예: `git worktree add ../band-practice-room-<branch> -b <branch> dev`. 이미 작업 전용 worktree/브랜치 안에 있다면 그대로 이어가되, 다른 사람이 쓰는 worktree의 파일을 섞어서 수정하지 않는다.
+- PR 머지 후 더 이상 쓰지 않는 로컬 worktree는 `git worktree remove <path>`로 정리하고, 필요하면 `git worktree prune`을 실행한다.
 
 ## 코드 규칙 (요약)
 
