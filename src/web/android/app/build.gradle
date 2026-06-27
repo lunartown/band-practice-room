@@ -7,8 +7,10 @@ android {
         applicationId "com.hapjusil.app"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 1
-        versionName "1.0"
+        // CI 빌드는 ANDROID_VERSION_CODE/NAME 으로 덮어쓴다(없으면 로컬 기본값).
+        // 업데이트마다 versionCode 는 단조 증가해야 한다(Play 요구).
+        versionCode (System.getenv("ANDROID_VERSION_CODE") ?: "1").toInteger()
+        versionName System.getenv("ANDROID_VERSION_NAME") ?: "1.0"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
@@ -16,10 +18,28 @@ android {
             ignoreAssetsPattern = '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
         }
     }
+    // CI 서명: ANDROID_KEYSTORE_PATH 가 있을 때만 release 서명 설정을 구성한다.
+    // 로컬에서는 환경변수가 없으므로 이 블록이 비고, Android Studio의
+    // Generate Signed Bundle GUI 로 서명한다(저장소에 키 비밀번호를 넣지 않는다).
+    signingConfigs {
+        release {
+            def ksPath = System.getenv("ANDROID_KEYSTORE_PATH")
+            if (ksPath) {
+                storeFile file(ksPath)
+                storePassword System.getenv("ANDROID_KEYSTORE_PASSWORD")
+                keyAlias System.getenv("ANDROID_KEY_ALIAS")
+                keyPassword System.getenv("ANDROID_KEY_PASSWORD")
+            }
+        }
+    }
     buildTypes {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            // 키스토어 환경변수가 주어진 경우(=CI)에만 자동 서명을 붙인다.
+            if (System.getenv("ANDROID_KEYSTORE_PATH")) {
+                signingConfig signingConfigs.release
+            }
         }
     }
 }
