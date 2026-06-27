@@ -93,7 +93,7 @@ INSERT INTO studio_areas (studio_id, area_id) SELECT id, 1 FROM studios WHERE sl
 INSERT INTO rooms (studio_id, name, price_per_hour, price_source, capacity_min, capacity_max, is_active) SELECT id, 'NIGHTMARE', 15000, 'SCRAPED', NULL, NULL, true FROM studios WHERE slug='studio-합정/홍대-불리스튜디오';
 INSERT INTO rooms (studio_id, name, price_per_hour, price_source, capacity_min, capacity_max, is_active) SELECT id, 'HELL', 18000, 'SCRAPED', NULL, NULL, true FROM studios WHERE slug='studio-합정/홍대-불리스튜디오';
 
-INSERT INTO studios (slug, name, description, primary_area_id, address, is_active) VALUES ('studio-합정/홍대-브라운', '브라운', '브라운사운드는 음악 선진국의 리허설 스튜디오에 채택하는 사양으로 설계되었으며, 기존 합주실에는 없는 중요한 특성을 가지고 있습니다.', 1, '서울 마포구 어울마당로5길 17 지하1층', true);
+INSERT INTO studios (slug, name, description, primary_area_id, address, is_active) VALUES ('studio-합정/홍대-브라운', '브라운', '브라운사운드는 음악 선진국의 리허설 스튜디오에 채택하는 사양으로 설계되었으며, 기존 합주실에는 없는 중요한 특성을 가지고 있습니다.', 1, '서울 마포구 어울마당로5길 17 지하1층', false);
 INSERT INTO studio_areas (studio_id, area_id) SELECT id, 1 FROM studios WHERE slug='studio-합정/홍대-브라운';
 INSERT INTO studio_sources (studio_id, source_id, external_key, url) SELECT id, 1, '1574159', 'https://m.booking.naver.com/booking/13/bizes/1574159' FROM studios WHERE slug='studio-합정/홍대-브라운';
 INSERT INTO rooms (studio_id, name, price_per_hour, price_source, capacity_min, capacity_max, is_active) SELECT id, '그린룸', 15000, 'SCRAPED', NULL, NULL, true FROM studios WHERE slug='studio-합정/홍대-브라운';
@@ -328,7 +328,7 @@ INSERT INTO rooms (studio_id, name, price_per_hour, price_source, capacity_min, 
 INSERT INTO rooms (studio_id, name, price_per_hour, price_source, capacity_min, capacity_max, is_active) SELECT id, '사당2호점 4번방', 22000, 'SCRAPED', 9, 9, true FROM studios WHERE slug='studio-사당/이수-드림-사당2호점';
 INSERT INTO rooms (studio_id, name, price_per_hour, price_source, capacity_min, capacity_max, is_active) SELECT id, '사당2호점 1번방', 28000, 'SCRAPED', 14, 14, true FROM studios WHERE slug='studio-사당/이수-드림-사당2호점';
 
-INSERT INTO studios (slug, name, description, primary_area_id, address, is_active) VALUES ('studio-sadang_isu-드림-사당점', '드림 사당점', '룸 구성 | - 사당점 V · 25,000원/시간 | - 사당점 S · 23,000원/시간 | - 사당점 Q · 21,000원/시간 | - 사당점 C · 17,000원/시간 | - 사당점 D · 12,000원/시간', 3, '사당/이수 지역', true);
+INSERT INTO studios (slug, name, description, primary_area_id, address, is_active) VALUES ('studio-sadang_isu-드림-사당점', '드림 사당점', '룸 구성 | - 사당점 V · 25,000원/시간 | - 사당점 S · 23,000원/시간 | - 사당점 Q · 21,000원/시간 | - 사당점 C · 17,000원/시간 | - 사당점 D · 12,000원/시간', 3, '사당/이수 지역', false);
 INSERT INTO studio_areas (studio_id, area_id) SELECT id, 3 FROM studios WHERE slug='studio-sadang_isu-드림-사당점';
 INSERT INTO rooms (studio_id, name, price_per_hour, price_source, capacity_min, capacity_max, is_active) SELECT id, '사당점 C', NULL, 'UNKNOWN', 8, 8, true FROM studios WHERE slug='studio-sadang_isu-드림-사당점';
 INSERT INTO rooms (studio_id, name, price_per_hour, price_source, capacity_min, capacity_max, is_active) SELECT id, '사당점 D', NULL, 'UNKNOWN', 5, 5, true FROM studios WHERE slug='studio-sadang_isu-드림-사당점';
@@ -341,14 +341,18 @@ INSERT INTO studio_areas (studio_id, area_id) SELECT id, 3 FROM studios WHERE sl
 INSERT INTO studio_sources (studio_id, source_id, external_key, url) SELECT id, 1, '522011', 'https://m.booking.naver.com/booking/10/bizes/522011' FROM studios WHERE slug='studio-사당/이수-비쥬1호점';
 INSERT INTO rooms (studio_id, name, price_per_hour, price_source, capacity_min, capacity_max, is_active) SELECT id, '화이트룸', 17000, 'SCRAPED', NULL, NULL, true FROM studios WHERE slug='studio-사당/이수-비쥬1호점';
 INSERT INTO rooms (studio_id, name, price_per_hour, price_source, capacity_min, capacity_max, is_active) SELECT id, '블랙룸', 22000, 'SCRAPED', NULL, NULL, true FROM studios WHERE slug='studio-사당/이수-비쥬1호점';
+INSERT INTO room_sources (room_id, source_id, external_key) SELECT r.id, 1, '3968896' FROM rooms r JOIN studios s ON r.studio_id=s.id WHERE s.slug='studio-사당/이수-비쥬1호점' AND r.name='화이트룸';
+INSERT INTO room_sources (room_id, source_id, external_key) SELECT r.id, 1, '3968885' FROM rooms r JOIN studios s ON r.studio_id=s.id WHERE s.slug='studio-사당/이수-비쥬1호점' AND r.name='블랙룸';
 
 INSERT INTO studios (slug, name, description, primary_area_id, address, is_active) VALUES ('studio-사당/이수-비쥬2호점', '비쥬2호점', '비쥬2호점 합주실 정보', 3, '서울특별시 서초구 동작대로 52, 지하1층', true);
 INSERT INTO studio_areas (studio_id, area_id) SELECT id, 3 FROM studios WHERE slug='studio-사당/이수-비쥬2호점';
 INSERT INTO studio_sources (studio_id, source_id, external_key, url) SELECT id, 1, '706924', 'https://m.booking.naver.com/booking/10/bizes/706924' FROM studios WHERE slug='studio-사당/이수-비쥬2호점';
 INSERT INTO rooms (studio_id, name, price_per_hour, price_source, capacity_min, capacity_max, is_active) SELECT id, 'B룸', 23000, 'SCRAPED', NULL, NULL, true FROM studios WHERE slug='studio-사당/이수-비쥬2호점';
 INSERT INTO rooms (studio_id, name, price_per_hour, price_source, capacity_min, capacity_max, is_active) SELECT id, 'A룸', 23000, 'SCRAPED', NULL, NULL, true FROM studios WHERE slug='studio-사당/이수-비쥬2호점';
+INSERT INTO room_sources (room_id, source_id, external_key) SELECT r.id, 1, '4450073' FROM rooms r JOIN studios s ON r.studio_id=s.id WHERE s.slug='studio-사당/이수-비쥬2호점' AND r.name='B룸';
+INSERT INTO room_sources (room_id, source_id, external_key) SELECT r.id, 1, '4450044' FROM rooms r JOIN studios s ON r.studio_id=s.id WHERE s.slug='studio-사당/이수-비쥬2호점' AND r.name='A룸';
 
-INSERT INTO studios (slug, name, description, primary_area_id, address, is_active) VALUES ('studio-사당/이수-비쥬3호점', '비쥬3호점', '비쥬3호점 합주실 정보', 3, '서울특별시 서초구 동작대로 48, 지하1층', true);
+INSERT INTO studios (slug, name, description, primary_area_id, address, is_active) VALUES ('studio-사당/이수-비쥬3호점', '비쥬3호점', '비쥬3호점 합주실 정보', 3, '서울특별시 서초구 동작대로 48, 지하1층', false);
 INSERT INTO studio_areas (studio_id, area_id) SELECT id, 3 FROM studios WHERE slug='studio-사당/이수-비쥬3호점';
 INSERT INTO studio_sources (studio_id, source_id, external_key, url) SELECT id, 1, '917236', 'https://m.booking.naver.com/booking/10/bizes/917236' FROM studios WHERE slug='studio-사당/이수-비쥬3호점';
 INSERT INTO rooms (studio_id, name, price_per_hour, price_source, capacity_min, capacity_max, is_active) SELECT id, 'M룸', 25000, 'SCRAPED', NULL, NULL, true FROM studios WHERE slug='studio-사당/이수-비쥬3호점';
@@ -394,6 +398,7 @@ INSERT INTO studios (slug, name, description, primary_area_id, address, is_activ
 INSERT INTO studio_areas (studio_id, area_id) SELECT id, 3 FROM studios WHERE slug='studio-사당/이수-톤';
 INSERT INTO studio_sources (studio_id, source_id, external_key, url) SELECT id, 1, '1374245', 'https://m.booking.naver.com/booking/10/bizes/1374245/items/6614091?area=bmp&lang=ko&map-search=1&service-target=map-pc&theme=place' FROM studios WHERE slug='studio-사당/이수-톤';
 INSERT INTO rooms (studio_id, name, price_per_hour, price_source, capacity_min, capacity_max, is_active) SELECT id, 'A룸', 24000, 'SCRAPED', NULL, NULL, true FROM studios WHERE slug='studio-사당/이수-톤';
+INSERT INTO room_sources (room_id, source_id, external_key) SELECT r.id, 1, '6614091' FROM rooms r JOIN studios s ON r.studio_id=s.id WHERE s.slug='studio-사당/이수-톤' AND r.name='A룸';
 
 INSERT INTO studios (slug, name, description, primary_area_id, address, is_active) VALUES ('studio-신도림/영등포구청-겟밴드-아지트', '겟밴드 아지트', '겟밴드 아지트 합주실 정보', 4, '신도림/영등포구청 지역', true);
 INSERT INTO studio_areas (studio_id, area_id) SELECT id, 4 FROM studios WHERE slug='studio-신도림/영등포구청-겟밴드-아지트';
@@ -404,6 +409,7 @@ INSERT INTO studios (slug, name, description, primary_area_id, address, is_activ
 INSERT INTO studio_areas (studio_id, area_id) SELECT id, 4 FROM studios WHERE slug='studio-신도림/영등포구청-뮤지트';
 INSERT INTO studio_sources (studio_id, source_id, external_key, url) SELECT id, 1, '1504370', 'https://m.booking.naver.com/booking/10/bizes/1504370/items/7128673?area=bmp&lang=ko&map-search=1&service-target=map-pc&theme=place' FROM studios WHERE slug='studio-신도림/영등포구청-뮤지트';
 INSERT INTO rooms (studio_id, name, price_per_hour, price_source, capacity_min, capacity_max, is_active) SELECT id, '합주실', 25000, 'SCRAPED', 8, 8, true FROM studios WHERE slug='studio-신도림/영등포구청-뮤지트';
+INSERT INTO room_sources (room_id, source_id, external_key) SELECT r.id, 1, '7128673' FROM rooms r JOIN studios s ON r.studio_id=s.id WHERE s.slug='studio-신도림/영등포구청-뮤지트' AND r.name='합주실';
 
 INSERT INTO studios (slug, name, description, primary_area_id, address, is_active) VALUES ('studio-신도림/영등포구청-일상', '일상', '일상 합주실 정보', 4, '서울특별시 구로구 공원로6나길 6, 지하1층', true);
 INSERT INTO studio_areas (studio_id, area_id) SELECT id, 4 FROM studios WHERE slug='studio-신도림/영등포구청-일상';
@@ -417,13 +423,13 @@ INSERT INTO room_sources (room_id, source_id, external_key) SELECT r.id, 1, '699
 INSERT INTO rooms (studio_id, name, price_per_hour, price_source, capacity_min, capacity_max, is_active) SELECT id, 'A룸', 19000, 'SCRAPED', 6, 6, true FROM studios WHERE slug='studio-신도림/영등포구청-일상';
 INSERT INTO room_sources (room_id, source_id, external_key) SELECT r.id, 1, '6702060' FROM rooms r JOIN studios s ON r.studio_id=s.id WHERE s.slug='studio-신도림/영등포구청-일상' AND r.name='A룸';
 
-INSERT INTO studios (slug, name, description, primary_area_id, address, is_active) VALUES ('studio-mangwon-3YL리허설', '3YL리허설', NULL, 5, '서울특별시 마포구 월드컵로25길 52, 지1층', true);
+INSERT INTO studios (slug, name, description, primary_area_id, address, is_active) VALUES ('studio-mangwon-3YL리허설', '3YL리허설', NULL, 5, '서울특별시 마포구 월드컵로25길 52, 지1층', false);
 INSERT INTO studio_areas (studio_id, area_id) SELECT id, 5 FROM studios WHERE slug='studio-mangwon-3YL리허설';
 INSERT INTO studio_sources (studio_id, source_id, external_key, url) SELECT id, 1, '759837', 'https://m.booking.naver.com/booking/10/bizes/759837/items/4601781?area=bmp&lang=ko&map-search=1&service-target=map-pc&theme=place' FROM studios WHERE slug='studio-mangwon-3YL리허설';
 INSERT INTO rooms (studio_id, name, price_per_hour, price_source, capacity_min, capacity_max, is_active) SELECT id, 'ROOM 1', NULL, 'UNKNOWN', NULL, NULL, true FROM studios WHERE slug='studio-mangwon-3YL리허설';
 INSERT INTO rooms (studio_id, name, price_per_hour, price_source, capacity_min, capacity_max, is_active) SELECT id, 'ROOM 2', NULL, 'UNKNOWN', NULL, NULL, true FROM studios WHERE slug='studio-mangwon-3YL리허설';
 
-INSERT INTO studios (slug, name, description, primary_area_id, address, is_active) VALUES ('studio-mangwon-알엠스튜디오', '알엠스튜디오', NULL, 5, '서울특별시 마포구 방울내로11길 26, 지1층', true);
+INSERT INTO studios (slug, name, description, primary_area_id, address, is_active) VALUES ('studio-mangwon-알엠스튜디오', '알엠스튜디오', NULL, 5, '서울특별시 마포구 방울내로11길 26, 지1층', false);
 INSERT INTO studio_areas (studio_id, area_id) SELECT id, 5 FROM studios WHERE slug='studio-mangwon-알엠스튜디오';
 INSERT INTO studio_sources (studio_id, source_id, external_key, url) SELECT id, 1, '1500479', 'https://m.booking.naver.com/booking/10/bizes/1500479/items/7071364?area=bmp&lang=ko&map-search=1&service-target=map-pc&theme=place' FROM studios WHERE slug='studio-mangwon-알엠스튜디오';
 INSERT INTO rooms (studio_id, name, price_per_hour, price_source, capacity_min, capacity_max, is_active) SELECT id, 'A룸', NULL, 'UNKNOWN', NULL, NULL, true FROM studios WHERE slug='studio-mangwon-알엠스튜디오';
@@ -480,6 +486,7 @@ INSERT INTO studios (slug, name, description, primary_area_id, address, is_activ
 INSERT INTO studio_areas (studio_id, area_id) SELECT id, 7 FROM studios WHERE slug='studio-서울대입구-브이엔앰스토리';
 INSERT INTO studio_sources (studio_id, source_id, external_key, url) SELECT id, 1, '879630', 'https://m.booking.naver.com/booking/10/bizes/879630/items/5179359?area=bmp&lang=ko&map-search=1&service-target=map-pc&theme=place' FROM studios WHERE slug='studio-서울대입구-브이엔앰스토리';
 INSERT INTO rooms (studio_id, name, price_per_hour, price_source, capacity_min, capacity_max, is_active) SELECT id, 'Garage Music Studio 1', 25000, 'SCRAPED', NULL, NULL, true FROM studios WHERE slug='studio-서울대입구-브이엔앰스토리';
+INSERT INTO room_sources (room_id, source_id, external_key) SELECT r.id, 1, '7621114' FROM rooms r JOIN studios s ON r.studio_id=s.id WHERE s.slug='studio-서울대입구-브이엔앰스토리' AND r.name='Garage Music Studio 1';
 
 INSERT INTO studios (slug, name, description, primary_area_id, address, is_active) VALUES ('studio-방배-그루브-방배점', '그루브 방배점', '그루브 방배점 합주실 정보', 8, '방배 지역', true);
 INSERT INTO studio_areas (studio_id, area_id) SELECT id, 8 FROM studios WHERE slug='studio-방배-그루브-방배점';
@@ -666,7 +673,7 @@ INSERT INTO studios (slug, name, description, primary_area_id, address, is_activ
 INSERT INTO studio_areas (studio_id, area_id) SELECT id, 12 FROM studios WHERE slug='studio-기타-서울-그루브합주실';
 INSERT INTO rooms (studio_id, name, price_per_hour, price_source, capacity_min, capacity_max, is_active) SELECT id, 'B룸', 30000, 'SCRAPED', 15, 15, true FROM studios WHERE slug='studio-기타-서울-그루브합주실';
 
-INSERT INTO studios (slug, name, description, primary_area_id, address, is_active) VALUES ('studio-기타-서울-나인아트', '나인아트', '나인아트 합주실 정보', 12, '기타 서울 지역', true);
+INSERT INTO studios (slug, name, description, primary_area_id, address, is_active) VALUES ('studio-기타-서울-나인아트', '나인아트', '나인아트 합주실 정보', 12, '기타 서울 지역', false);
 INSERT INTO studio_areas (studio_id, area_id) SELECT id, 12 FROM studios WHERE slug='studio-기타-서울-나인아트';
 
 INSERT INTO studios (slug, name, description, primary_area_id, address, is_active) VALUES ('studio-기타-서울-리엠뮤직-건대', '리엠뮤직 건대', '리엠뮤직 건대 합주실 정보', 12, '기타 서울 지역', true);
@@ -682,20 +689,20 @@ INSERT INTO studios (slug, name, description, primary_area_id, address, is_activ
 INSERT INTO studio_areas (studio_id, area_id) SELECT id, 12 FROM studios WHERE slug='studio-기타-서울-리엠뮤직-숙대입구';
 INSERT INTO rooms (studio_id, name, price_per_hour, price_source, capacity_min, capacity_max, is_active) SELECT id, '리엠뮤직합주실', 22000, 'SCRAPED', 40, 40, true FROM studios WHERE slug='studio-기타-서울-리엠뮤직-숙대입구';
 
-INSERT INTO studios (slug, name, description, primary_area_id, address, is_active) VALUES ('studio-기타-서울-몰디브', '몰디브', '몰디브 합주실 정보', 12, '기타 서울 지역', true);
+INSERT INTO studios (slug, name, description, primary_area_id, address, is_active) VALUES ('studio-기타-서울-몰디브', '몰디브', '몰디브 합주실 정보', 12, '기타 서울 지역', false);
 INSERT INTO studio_areas (studio_id, area_id) SELECT id, 12 FROM studios WHERE slug='studio-기타-서울-몰디브';
 
-INSERT INTO studios (slug, name, description, primary_area_id, address, is_active) VALUES ('studio-기타-서울-백스테이지', '백스테이지', '백스테이지 합주실 정보', 12, '기타 서울 지역', true);
+INSERT INTO studios (slug, name, description, primary_area_id, address, is_active) VALUES ('studio-기타-서울-백스테이지', '백스테이지', '백스테이지 합주실 정보', 12, '기타 서울 지역', false);
 INSERT INTO studio_areas (studio_id, area_id) SELECT id, 12 FROM studios WHERE slug='studio-기타-서울-백스테이지';
 
-INSERT INTO studios (slug, name, description, primary_area_id, address, is_active) VALUES ('studio-기타-서울-브이앤엠', '브이앤엠', '브이앤엠 합주실 정보', 12, '기타 서울 지역', true);
+INSERT INTO studios (slug, name, description, primary_area_id, address, is_active) VALUES ('studio-기타-서울-브이앤엠', '브이앤엠', '브이앤엠 합주실 정보', 12, '기타 서울 지역', false);
 INSERT INTO studio_areas (studio_id, area_id) SELECT id, 12 FROM studios WHERE slug='studio-기타-서울-브이앤엠';
 
 INSERT INTO studios (slug, name, description, primary_area_id, address, is_active) VALUES ('studio-기타-서울-소리모아', '소리모아', '소리모아 합주실 정보', 12, '기타 서울 지역', true);
 INSERT INTO studio_areas (studio_id, area_id) SELECT id, 12 FROM studios WHERE slug='studio-기타-서울-소리모아';
 INSERT INTO rooms (studio_id, name, price_per_hour, price_source, capacity_min, capacity_max, is_active) SELECT id, '합주실', 15000, 'SCRAPED', 5, 5, true FROM studios WHERE slug='studio-기타-서울-소리모아';
 
-INSERT INTO studios (slug, name, description, primary_area_id, address, is_active) VALUES ('studio-기타-서울-스튜디오넘버원', '스튜디오넘버원', '스튜디오넘버원 합주실 정보', 12, '기타 서울 지역', true);
+INSERT INTO studios (slug, name, description, primary_area_id, address, is_active) VALUES ('studio-기타-서울-스튜디오넘버원', '스튜디오넘버원', '스튜디오넘버원 합주실 정보', 12, '기타 서울 지역', false);
 INSERT INTO studio_areas (studio_id, area_id) SELECT id, 12 FROM studios WHERE slug='studio-기타-서울-스튜디오넘버원';
 
 INSERT INTO studios (slug, name, description, primary_area_id, address, is_active) VALUES ('studio-기타-서울-죠니의-리빙룸', '죠니의 리빙룸', '죠니의 리빙룸 합주실 정보', 12, '서울특별시 광진구 광나루로36길 71, B1층', true);
