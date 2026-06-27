@@ -92,6 +92,7 @@ function StudioAvatar({ studio }: { studio: Pick<Studio, 'imageUrl' | 'name'> })
   const showSourceImg = Boolean(sourceImgSrc) && !imgFailed;
   const imgSrc = showSourceImg && sourceImgSrc ? sourceImgSrc : STUDIO_FALLBACK_IMAGE_URL;
   const showImg = showSourceImg || !fallbackFailed;
+  const isFallbackImg = !showSourceImg && !fallbackFailed;
   const handleImgError = () => {
     // 1차(리사이즈) 실패 → 원본 재시도, 2차(원본) 실패 → 로컬 폴백.
     if (!useOriginal && resized && resized !== imageUrl) setUseOriginal(true);
@@ -101,14 +102,14 @@ function StudioAvatar({ studio }: { studio: Pick<Studio, 'imageUrl' | 'name'> })
   const initial = name.trim().charAt(0);
 
   return (
-    <div className="studio-avatar" aria-hidden>
+    <div className={`studio-avatar${isFallbackImg ? ' is-fallback' : ''}`} aria-hidden>
       {showImg ? (
         // 합주실 썸네일은 네이버 phinf·스페이스클라우드 등 외부 CDN 원본이다.
         // 홈화면 PWA(standalone) WebKit 은 모바일 웹과 다른 Referer 를 실어
         // 보내 CDN 핫링크 보호에 막히곤 한다("이미지 다 깨짐"). Referer 를 아예
         // 빼서 두 환경의 요청을 통일하고, 깨짐을 막는다(phinf 는 no-referer 로 받힘).
         <img
-          className={showSourceImg ? undefined : 'studio-fallback-image'}
+          className={isFallbackImg ? 'studio-fallback-image' : undefined}
           src={imgSrc}
           alt=""
           loading="lazy"

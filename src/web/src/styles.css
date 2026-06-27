@@ -756,6 +756,10 @@ button {
   display: block;
 }
 
+.studio-avatar.is-fallback {
+  background: var(--surface-sunken);
+}
+
 .studio-avatar img.studio-fallback-image {
   mix-blend-mode: multiply;
 }
