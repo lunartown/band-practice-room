@@ -32,3 +32,23 @@ WHERE slug = 'studio-합정/홍대-st-music';
 -- 직접 커밋한 이미지를 쓰는 예 (src/web/public/studios/brother-gangdong.jpg):
 -- UPDATE studios SET image_url_manual = '/studios/brother-gangdong.jpg'
 -- WHERE slug = 'studio-강동/송파-브라더-강동';
+
+-- === BEGIN managed thumbnails (set-thumbnail) ===
+-- 이 블록은 `npm run thumbnail` 가 자동 관리한다. 직접 편집하지 말 것.
+UPDATE studios SET image_url_manual = '/studios/ground.webp' WHERE slug = 'studio-신촌-그라운드-신촌';
+UPDATE studios SET image_url_manual = '/studios/ground.webp' WHERE slug = 'studio-신촌-신촌-그라운드';
+UPDATE studios SET image_url_manual = '/studios/ground.webp' WHERE slug = 'studio-합정/홍대-그라운드-본점';
+UPDATE studios SET image_url_manual = '/studios/ground.webp' WHERE slug = 'studio-합정/홍대-그라운드-합정1호점';
+UPDATE studios SET image_url_manual = '/studios/ground.webp' WHERE slug = 'studio-합정/홍대-그라운드합주실-홍대1호점';
+UPDATE studios SET image_url_manual = '/studios/soundcity.webp' WHERE slug = 'studio-사당/이수-사운드시티합주실-방배점';
+UPDATE studios SET image_url_manual = '/studios/abbey-road.webp' WHERE slug = 'studio-합정/홍대-에비로드';
+UPDATE studios SET image_url_manual = '/studios/orange.webp' WHERE slug = 'studio-합정/홍대-오렌지';
+UPDATE studios SET image_url_manual = '/studios/wavelab.webp' WHERE slug = 'studio-합정/홍대-웨이브랩';
+UPDATE studios SET image_url_manual = '/studios/wavelab.webp' WHERE slug = 'studio-합정/홍대-웨이브랩2호점';
+UPDATE studios SET image_url_manual = '/studios/imak.webp' WHERE slug = 'studio-합정/홍대-이막';
+UPDATE studios SET image_url_manual = '/studios/soundcity.webp' WHERE slug = 'studio-합정/홍대-사운드시티';
+UPDATE studios SET image_url_manual = '/studios/soundcity.webp' WHERE slug = 'studio-합정/홍대-사운드시티-홍대점';
+UPDATE studios SET image_url_manual = '/studios/jam.webp' WHERE slug = 'studio-합정/홍대-잼-합주실';
+UPDATE studios SET image_url_manual = '/studios/tiger.webp' WHERE slug = 'studio-합정/홍대-호랑이';
+UPDATE studios SET image_url_manual = '/studios/hail-music.webp' WHERE slug = 'studio-합정/홍대-헤일-뮤직-스튜디오';
+-- === END managed thumbnails ===
