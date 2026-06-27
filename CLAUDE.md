@@ -15,8 +15,8 @@
 - 개발 서버 URL을 사용자에게 안내할 때는 가능하면 `localhost` 대신 같은 네트워크의 휴대폰에서 접근 가능한 IP 주소를 우선 제공한다. 이 프로젝트는 모바일 확인 작업이 잦다.
 - 예: `http://192.168.x.x:5173/`
 - IP 확인이 어렵거나 로컬 전용 작업이면 `localhost`를 보조로 안내한다.
-- 폰에서 로컬 웹을 볼 때 브라우저의 `localhost`는 Mac이 아니라 폰 자신이다. 개발 중 실제 API를 붙일 때는 프론트 `VITE_API_BASE_URL`을 상대경로(`/api/v1`)로 두고, Vite proxy가 Mac의 로컬 API로 넘기게 한다.
-- Vite proxy의 로컬 API 타깃은 `localhost` 대신 `127.0.0.1`을 쓴다. Node가 `localhost`를 IPv6 `::1`로 해석하면 IPv4로만 떠 있는 API에 연결하지 못할 수 있다.
+- 폰에서 로컬 웹을 볼 때 브라우저의 `localhost`는 Mac이 아니라 폰 자신이다. 실제 데이터를 볼 때는 프론트 `VITE_API_BASE_URL`을 상대경로(`/api/v1`)로 두고, Vite proxy가 Render 실 API로 넘기게 한다(CORS 회피).
+- 로컬 API를 의도적으로 확인해야 할 때만 `VITE_DEV_API_PROXY_TARGET=http://127.0.0.1:3000`으로 Vite proxy 타깃을 덮어쓴다. `localhost`는 Node에서 IPv6 `::1`로 해석될 수 있으므로 로컬 API 타깃에는 `127.0.0.1`을 쓴다.
 
 ## 커밋 규칙
 

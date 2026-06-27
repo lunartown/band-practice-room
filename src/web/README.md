@@ -9,7 +9,12 @@ npm install
 npm run dev
 ```
 
-`dev` 스크립트는 `vite --host 0.0.0.0`으로 실행된다. 로컬에서 `localhost`가 다른 IPv6 프로세스로 붙는 경우 `http://127.0.0.1:5173/` 로 접속한다.
+`dev` 스크립트는 `vite --host 0.0.0.0`으로 실행된다. 휴대폰에서 확인할 때는 같은 네트워크의 Mac IP로 접속한다.
+
+```bash
+ipconfig getifaddr en0
+# 예: http://192.168.x.x:5173/
+```
 
 ## API 전환
 
@@ -17,6 +22,16 @@ npm run dev
 
 ```bash
 VITE_USE_MOCK_API=false VITE_API_BASE_URL=/api/v1 npm run dev
+```
+
+개발 서버에서 `/api`는 기본적으로 Render 실 API(`https://hapjusil-api.onrender.com`)로 프록시된다. 휴대폰 브라우저가 직접 Render API를 호출하면 CORS에 막힐 수 있으므로, 로컬 웹에서는 상대경로(`/api/v1`)를 유지한다.
+
+로컬 API를 의도적으로 확인할 때만 proxy 타깃을 덮어쓴다.
+
+```bash
+VITE_USE_MOCK_API=false VITE_API_BASE_URL=/api/v1 \
+VITE_DEV_API_PROXY_TARGET=http://127.0.0.1:3000 \
+npm run dev
 ```
 
 실제 백엔드 응답에는 `scrapedAt`이 포함되지만, 이는 **내부 운영용 값일 뿐 화면에 노출하지 않는다**. 데이터 신선도/마지막 확인 시각/stale 상태는 사용자에게 표시하지 않는다(의사결정 로그 2026-06-21). 신선함은 제품이 주기 수집으로 보장하고, 사용자는 당연히 신선하다고 믿고 쓴다.
