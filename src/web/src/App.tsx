@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { getAreas, getSlots, getStudios } from './api/client';
-import type { Area, Slot, Studio } from './api/types';
+import type { Area, Slot, SlotsQuery, Studio } from './api/types';
 import { SelectedStudioEmptyRow, StudioRow } from './components/StudioRow';
 import { FilterSheet, defaultFilters } from './components/FilterSheet';
 import type { FilterState } from './components/FilterSheet';
@@ -13,6 +13,19 @@ import { buildAvailability } from './lib/availability';
 import { dateLabel } from './lib/date';
 import { loadFilters, saveFilters, markEntered } from './lib/prefs';
 import { loadRecentStudioIds, recordRecentStudioSelections } from './lib/recentStudios';
+import {
+  buildAreaChipLabel,
+  buildSelectedStudioChips,
+  buildSelectedStudioEmptyItems,
+  buildSelectedStudioLabel,
+  buildSelectedStudios,
+  buildStudioSearchMeta,
+  buildStudioSearchSections,
+  buildStudioSearchStats,
+  buildVisibleGroups,
+  filterStudiosByAreas,
+} from './lib/studioSearch';
+import type { SelectedStudioEmptyItem } from './lib/studioSearch';
 import { useFavorites } from './lib/useFavorites';
 
 type PopoverKind = 'time' | 'date' | 'area';
@@ -22,11 +35,6 @@ interface PopoverState {
   top: number;
   left: number;
   width: number;
-}
-
-interface SelectedStudioEmptyItem {
-  studio: Studio;
-  areaName: string;
 }
 
 export function App() {
@@ -55,6 +63,12 @@ export function App() {
   const [loading, setLoading] = useState(true);
   const [searchLoading, setSearchLoading] = useState(false);
   const phoneRef = useRef<HTMLElement>(null);
+
+  const rememberRecentStudioSelections = useCallback((studioIds: number[]) => {
+    if (studioIds.length > 0) {
+      setRecentStudioIds(recordRecentStudioSelections(studioIds));
+    }
+  }, []);
 
   function openPopover(kind: PopoverKind, e: React.MouseEvent<HTMLButtonElement>) {
     const phone = phoneRef.current;
@@ -86,40 +100,37 @@ export function App() {
 
   useEffect(() => {
     if (!entered) return;
+    let canceled = false;
     // 이번 실행에서 진입했음을 기록한다. 같은 세션 안에서의 새로고침은
     // 오픈 화면을 다시 띄우지 않지만, 콜드스타트(앱 재실행/새 탭)면 다시 뜬다.
     markEntered();
     saveFilters(filters);
     setError(null);
     setLoading(true);
-    getSlots({
-      dates: filters.dates,
-      areaIds: filters.areaIds.length ? filters.areaIds : undefined,
-      studioId: filters.studioIds.length === 1 ? filters.studioIds[0] : undefined,
-      timeWindows: filters.timeWindows.length ? filters.timeWindows : undefined,
-      minDuration: filters.minDuration > 1 ? filters.minDuration : undefined,
-      minCapacity: filters.people > 1 ? filters.people : undefined,
-    })
+    getSlots(buildSlotsQuery(filters, { includeSelectedStudio: true }))
       .then((r) => {
+        if (canceled) return;
         setSlots(r.slots);
         setResponseDates(r.dates);
         setUpdatedAt(new Date());
       })
-      .catch(() => setError('예약 가능 시간을 불러오지 못했습니다'))
-      .finally(() => setLoading(false));
+      .catch(() => {
+        if (!canceled) setError('예약 가능 시간을 불러오지 못했습니다');
+      })
+      .finally(() => {
+        if (!canceled) setLoading(false);
+      });
+
+    return () => {
+      canceled = true;
+    };
   }, [filters, entered]);
 
   useEffect(() => {
     if (!entered || !isStudioSearchOpen) return;
     let canceled = false;
     setSearchLoading(true);
-    getSlots({
-      dates: filters.dates,
-      areaIds: filters.areaIds.length ? filters.areaIds : undefined,
-      timeWindows: filters.timeWindows.length ? filters.timeWindows : undefined,
-      minDuration: filters.minDuration > 1 ? filters.minDuration : undefined,
-      minCapacity: filters.people > 1 ? filters.people : undefined,
-    })
+    getSlots(buildSlotsQuery(filters, { includeSelectedStudio: false }))
       .then((r) => {
         if (canceled) return;
         setSearchSlots(r.slots);
@@ -151,9 +162,9 @@ export function App() {
     if (!entered || isStudioSearchOpen || filters.studioIds.length === 0) return;
     const hasUnrecordedSelection = filters.studioIds.some((studioId) => !recentStudioIds.includes(studioId));
     if (hasUnrecordedSelection) {
-      setRecentStudioIds(recordRecentStudioSelections(filters.studioIds));
+      rememberRecentStudioSelections(filters.studioIds);
     }
-  }, [entered, filters.studioIds, isStudioSearchOpen, recentStudioIds]);
+  }, [entered, filters.studioIds, isStudioSearchOpen, recentStudioIds, rememberRecentStudioSelections]);
 
   function enterWithAreas(areaIds: number[]) {
     setFilters((f) => ({ ...f, areaIds }));
@@ -169,10 +180,8 @@ export function App() {
     setIsStudioSearchOpen(true);
   }
 
-  function closeStudioSearch() {
-    if (filters.studioIds.length > 0) {
-      setRecentStudioIds(recordRecentStudioSelections(filters.studioIds));
-    }
+  function closeStudioSearch({ rememberSelection = true }: { rememberSelection?: boolean } = {}) {
+    if (rememberSelection) rememberRecentStudioSelections(filters.studioIds);
     setIsStudioSearchOpen(false);
     setStudioSearchQuery('');
   }
@@ -200,7 +209,7 @@ export function App() {
   function showAllStudios() {
     setFavOnly(false);
     setFilters((f) => (f.studioIds.length > 0 ? { ...f, studioIds: [] } : f));
-    closeStudioSearch();
+    closeStudioSearch({ rememberSelection: false });
   }
 
   function toggleFavoritesFilter() {
@@ -221,21 +230,10 @@ export function App() {
     [searchSlots, searchResponseDates, filters.minDuration],
   );
 
-  // 즐겨찾기만 보기: 즐겨찾은 합주실만 남긴다(빈 날도 헤더는 유지해 흐름을 보존).
-  const visibleGroups = useMemo(() => {
-    if (filters.studioIds.length > 0) {
-      const selected = new Set(filters.studioIds);
-      return dateGroups.map((g) => ({
-        ...g,
-        studios: g.studios.filter((s) => selected.has(s.studio.id)),
-      }));
-    }
-    if (!favOnly) return dateGroups;
-    return dateGroups.map((g) => ({
-      ...g,
-      studios: g.studios.filter((s) => favorites.has(s.studio.id)),
-    }));
-  }, [dateGroups, favOnly, favorites, filters.studioIds]);
+  const visibleGroups = useMemo(
+    () => buildVisibleGroups(dateGroups, filters.studioIds, favOnly, favorites),
+    [dateGroups, favOnly, favorites, filters.studioIds],
+  );
 
   const totalStudios = visibleGroups.reduce((sum, g) => sum + g.studios.length, 0);
   const hasFavorites = favorites.size > 0;
@@ -245,40 +243,23 @@ export function App() {
     () => new Map(areas.map((area) => [area.id, area.name])),
     [areas],
   );
-  const searchableStudios = useMemo(
-    () => studios.filter((studio) => studioMatchesAreas(studio, filters.areaIds)),
-    [filters.areaIds, studios],
-  );
+  const searchableStudios = useMemo(() => filterStudiosByAreas(studios, filters.areaIds), [filters.areaIds, studios]);
   const selectedStudios = useMemo(
-    () =>
-      filters.studioIds
-        .map((id) => findStudioById(id, studios, slots))
-        .filter((studio): studio is Studio => Boolean(studio)),
+    () => buildSelectedStudios(filters.studioIds, studios, slots),
     [filters.studioIds, slots, studios],
   );
-  const visibleStudioIds = useMemo(() => {
-    const ids = new Set<number>();
-    for (const group of visibleGroups) {
-      for (const studio of group.studios) ids.add(studio.studio.id);
-    }
-    return ids;
-  }, [visibleGroups]);
   const selectedStudioEmptyItems = useMemo(
     () =>
-      selectedStudios
-        .filter((studio) => !visibleStudioIds.has(studio.id))
-        .map((studio) => ({
-          studio,
-          areaName: buildStudioAreaLabel(studio, areaNameById, filters.areaIds),
-        })),
-    [areaNameById, filters.areaIds, selectedStudios, visibleStudioIds],
+      buildSelectedStudioEmptyItems({
+        selectedStudios,
+        visibleGroups,
+        areaNameById,
+        preferredAreaIds: filters.areaIds,
+      }),
+    [areaNameById, filters.areaIds, selectedStudios, visibleGroups],
   );
   const selectedStudioChips = useMemo(
-    () =>
-      filters.studioIds.map((id) => {
-        const studio = findStudioById(id, studios, slots);
-        return { id, label: studio?.name ?? `합주실 ${id}` };
-      }),
+    () => buildSelectedStudioChips(filters.studioIds, studios, slots),
     [filters.studioIds, slots, studios],
   );
   const selectedStudioSet = useMemo(() => new Set(filters.studioIds), [filters.studioIds]);
@@ -331,7 +312,7 @@ export function App() {
         {isStudioSearchOpen ? (
           <div className="studio-search-screen">
             <header className="studio-search-top">
-              <button className="search-back" aria-label="합주실 검색 닫기" onClick={closeStudioSearch}>
+              <button className="search-back" aria-label="합주실 검색 닫기" onClick={() => closeStudioSearch()}>
                 <BackIcon />
               </button>
               <label className="search-field">
@@ -348,7 +329,7 @@ export function App() {
                   </button>
                 )}
               </label>
-              <button className="search-cancel" onClick={closeStudioSearch}>완료</button>
+              <button className="search-cancel" onClick={() => closeStudioSearch()}>완료</button>
             </header>
 
             {searchLoading && <div className="loading-bar" aria-hidden />}
@@ -400,7 +381,7 @@ export function App() {
               </button>
               <button
                 className="studio-search-apply"
-                onClick={filters.studioIds.length > 0 ? closeStudioSearch : showAllStudios}
+                onClick={filters.studioIds.length > 0 ? () => closeStudioSearch() : showAllStudios}
               >
                 {filters.studioIds.length > 0 ? `${filters.studioIds.length}곳 보기` : '전체 합주실 보기'}
               </button>
@@ -816,186 +797,18 @@ function buildDateChipLabel(dates: string[]) {
   return `${dates.length}일 선택`;
 }
 
-// 선택한 지역을 모두 이어 붙이면 칩이 길어져 옆의 필터 버튼을 밀어낸다.
-// 1곳은 이름 그대로, 2곳부터는 "첫 지역 외 N" 으로 묶어 칩 길이를 고정한다.
-function buildAreaChipLabel(areas: Area[], areaIds: number[]) {
-  if (areaIds.length === 0) return '전체 지역';
-  const selected = areas.filter((a) => areaIds.includes(a.id));
-  if (selected.length <= 1) return selected[0]?.name ?? '전체 지역';
-  return `${selected[0].name} 외 ${selected.length - 1}`;
-}
-
-function findStudioById(studioId: number, studios: Studio[], slots: Slot[]) {
-  return studios.find((studio) => studio.id === studioId) ??
-    slots.find((slot) => slot.studio.id === studioId)?.studio ??
-    null;
-}
-
-function buildSelectedStudioLabel(studios: Studio[], selectedCount: number) {
-  if (selectedCount === 0) return null;
-  if (selectedCount === 1) return studios[0]?.name ?? '지정한 합주실';
-  return studios[0]?.name ? `${studios[0].name} 외 ${selectedCount - 1}곳` : `${selectedCount}곳`;
-}
-
-function studioMatchesAreas(studio: Studio, areaIds: number[]) {
-  if (areaIds.length === 0) return true;
-  const studioAreaIds = getStudioAreaIds(studio);
-  return areaIds.some((areaId) => studioAreaIds.includes(areaId));
-}
-
-function getStudioAreaIds(studio: Studio) {
-  if (studio.areaIds?.length) return studio.areaIds;
-  return studio.primaryAreaId == null ? [] : [studio.primaryAreaId];
-}
-
-function buildStudioAreaNames(studio: Studio, areaNameById: ReadonlyMap<number, string>) {
-  const names: string[] = [];
-  const seen = new Set<string>();
-  const add = (name: string | null | undefined) => {
-    const trimmed = name?.trim();
-    if (!trimmed || seen.has(trimmed)) return;
-    names.push(trimmed);
-    seen.add(trimmed);
+function buildSlotsQuery(
+  filters: FilterState,
+  { includeSelectedStudio }: { includeSelectedStudio: boolean },
+): SlotsQuery {
+  return {
+    dates: filters.dates,
+    areaIds: filters.areaIds.length ? filters.areaIds : undefined,
+    studioId: includeSelectedStudio && filters.studioIds.length === 1 ? filters.studioIds[0] : undefined,
+    timeWindows: filters.timeWindows.length ? filters.timeWindows : undefined,
+    minDuration: filters.minDuration > 1 ? filters.minDuration : undefined,
+    minCapacity: filters.people > 1 ? filters.people : undefined,
   };
-
-  add(studio.primaryAreaName);
-  if (studio.primaryAreaId != null) add(areaNameById.get(studio.primaryAreaId));
-  getStudioAreaIds(studio).forEach((areaId) => add(areaNameById.get(areaId)));
-
-  return names;
-}
-
-function buildStudioAreaLabel(
-  studio: Studio,
-  areaNameById: ReadonlyMap<number, string>,
-  preferredAreaIds: number[],
-) {
-  const studioAreaIds = getStudioAreaIds(studio);
-  const studioAreaSet = new Set(studioAreaIds);
-  const preferredNames = preferredAreaIds
-    .filter((areaId) => studioAreaSet.has(areaId))
-    .map((areaId) => areaNameById.get(areaId))
-    .filter((name): name is string => Boolean(name));
-
-  if (preferredNames.length > 0) return compactAreaNames(preferredNames);
-
-  const names = buildStudioAreaNames(studio, areaNameById);
-  if (names.length > 0) return compactAreaNames(names);
-
-  return studioAreaIds.length > 0 || studio.primaryAreaId != null ? '지역 확인 중' : '지역 미확인';
-}
-
-function compactAreaNames(names: string[]) {
-  const uniqueNames = [...new Set(names)];
-  if (uniqueNames.length === 0) return '지역 미확인';
-  if (uniqueNames.length <= 1) return uniqueNames[0];
-  return `${uniqueNames[0]} 외 ${uniqueNames.length - 1}`;
-}
-
-interface StudioSearchStats {
-  slotCount: number;
-  dayCount: number;
-}
-
-interface StudioSearchSection {
-  title: string;
-  items: Studio[];
-}
-
-function buildStudioSearchStats(groups: ReturnType<typeof buildAvailability>): Map<number, StudioSearchStats> {
-  const stats = new Map<number, StudioSearchStats>();
-  for (const group of groups) {
-    const seenInDate = new Set<number>();
-    for (const item of group.studios) {
-      const studioId = item.studio.id;
-      const current = stats.get(studioId) ?? { slotCount: 0, dayCount: 0 };
-      current.slotCount += item.chips.length;
-      if (!seenInDate.has(studioId)) {
-        current.dayCount += 1;
-        seenInDate.add(studioId);
-      }
-      stats.set(studioId, current);
-    }
-  }
-  return stats;
-}
-
-function buildStudioSearchSections({
-  studios,
-  areaNameById,
-  areaLabel,
-  favorites,
-  query,
-  recentStudioIds,
-}: {
-  studios: Studio[];
-  areaNameById: ReadonlyMap<number, string>;
-  areaLabel: string | null;
-  favorites: ReadonlySet<number>;
-  query: string;
-  recentStudioIds: number[];
-}): StudioSearchSection[] {
-  const normalizedQuery = query.trim().toLowerCase();
-  const matches = studios
-    .filter((studio) => {
-      if (!normalizedQuery) return true;
-      return studioSearchText(studio, areaNameById).includes(normalizedQuery);
-    })
-    .sort((a, b) => a.name.localeCompare(b.name, 'ko'));
-
-  if (normalizedQuery) {
-    return matches.length ? [{ title: '검색 결과', items: matches }] : [];
-  }
-
-  const sections: StudioSearchSection[] = [];
-  const matchById = new Map(matches.map((studio) => [studio.id, studio]));
-  const recentItems = recentStudioIds
-    .map((studioId) => matchById.get(studioId))
-    .filter((studio): studio is Studio => Boolean(studio));
-  const recentSet = new Set(recentItems.map((studio) => studio.id));
-  if (recentItems.length > 0) {
-    sections.push({ title: '최근 선택', items: recentItems });
-  }
-
-  const favoriteItems = matches.filter((studio) => favorites.has(studio.id) && !recentSet.has(studio.id));
-  if (favoriteItems.length > 0) {
-    sections.push({ title: '즐겨찾기', items: favoriteItems });
-  }
-
-  const otherItems = matches.filter((studio) => !favorites.has(studio.id) && !recentSet.has(studio.id));
-  if (otherItems.length > 0) {
-    sections.push({
-      title: areaLabel ? `${areaLabel} 합주실` : '전체 합주실',
-      items: otherItems,
-    });
-  }
-
-  return sections;
-}
-
-function studioSearchText(studio: Studio, areaNameById: ReadonlyMap<number, string>) {
-  return [
-    studio.name,
-    ...buildStudioAreaNames(studio, areaNameById),
-    studio.address,
-  ]
-    .filter(Boolean)
-    .join(' ')
-    .toLowerCase();
-}
-
-function buildStudioSearchMeta(
-  studio: Studio,
-  stats: StudioSearchStats | undefined,
-  loading: boolean,
-  areaNameById: ReadonlyMap<number, string>,
-  preferredAreaIds: number[],
-) {
-  const area = buildStudioAreaLabel(studio, areaNameById, preferredAreaIds);
-  if (loading) return `${area} · 확인 중`;
-  if (!stats || stats.slotCount === 0) return `${area} · 현재 조건 빈 시간 없음`;
-  const dayLabel = stats.dayCount > 1 ? `${stats.dayCount}일` : '1일';
-  return `${area} · 현재 조건 ${dayLabel} ${stats.slotCount}개 구간 가능`;
 }
 
 function formatUpdatedAt(date: Date) {
