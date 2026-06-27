@@ -1,4 +1,5 @@
 import { query } from './db.js';
+import { isSuspiciousEmptyResult } from './guard.js';
 import { NaverReservationScraper } from './naver/scraper.js';
 import { SpaceCloudScraper } from './spacecloud/scraper.js';
 import type { AvailabilitySlot, ScrapeRoom, StudioScrapeResult } from './types.js';
@@ -81,6 +82,15 @@ export async function runOnce(): Promise<boolean> {
       if (roomResult.slots.length > 0) roomsWithSlots++;
       allSlots.push(...roomResult.slots);
       totalSlots += roomResult.slots.length;
+    }
+
+    // 빈 결과 가드: 직전엔 슬롯이 있었는데 이번에 0건이면 조용한 실패로 보고
+    // 성공 처리하지 않는다. 그대로 두면 upsert 가 아무것도 갱신하지 않아
+    // 예약된 슬롯이 계속 '가능'으로 노출돼 신뢰를 깬다. 기존 슬롯은 유지한 채
+    // 실패 경로로 보내 재시도/알림을 태운다.
+    const prevSlots = await getLastSuccessSlotCount(source.studio_id, source.source_id);
+    if (isSuspiciousEmptyResult(totalSlots, prevSlots)) {
+      throw new Error(`수집 0건(직전 성공 ${prevSlots}건) — 조용한 실패로 판단, 재시도. 기존 슬롯 유지`);
     }
 
     await upsertSlots(allSlots, roomIdByName);
@@ -276,6 +286,47 @@ async function getMappedRooms(studioId: string, sourceId: string): Promise<RoomR
   return result.rows;
 }
 
+// 직전 성공(또는 부분 성공) 수집의 슬롯 수. 빈 결과 가드의 기준값.
+async function getLastSuccessSlotCount(
+  studioId: string,
+  sourceId: string,
+): Promise<number | null> {
+  const result = await query<{ slots_found: number | null }>(
+    `
+    SELECT slots_found
+    FROM scrape_runs
+    WHERE studio_id = $1 AND source_id = $2 AND status IN ('SUCCESS', 'PARTIAL')
+    ORDER BY finished_at DESC NULLS LAST
+    LIMIT 1
+  `,
+    [studioId, sourceId],
+  );
+  const row = result.rows[0];
+  return row ? (row.slots_found ?? null) : null;
+}
+
+export interface ScrapeFailure {
+  studioName: string;
+  lastError: string | null;
+}
+
+// 주어진 시각 이후 영구 FAILED 로 전이된 합주실 목록(= 이번 실행에서 재시도까지
+// 소진해 더는 수집되지 않는 곳). 매시 실행마다 재알림되지 않도록 '전이된 것'만 잡는다.
+export async function collectFailuresSince(since: Date): Promise<ScrapeFailure[]> {
+  const result = await query<{ studio_name: string; last_error: string | null }>(
+    `
+    SELECT st.name AS studio_name, j.last_error
+    FROM scrape_jobs j
+    INNER JOIN studio_sources ss ON ss.id = j.studio_source_id
+    INNER JOIN studios st ON st.id = ss.studio_id
+    WHERE j.status = 'FAILED' AND j.updated_at >= $1
+    ORDER BY j.updated_at DESC
+  `,
+    [since.toISOString()],
+  );
+  return result.rows.map((r) => ({ studioName: r.studio_name, lastError: r.last_error }));
+}
+
 // 한 INSERT 당 행 수 (Postgres 파라미터 한도 65535 / 7컬럼 ≈ 9362, 여유 있게 500).
 const SLOT_BATCH_SIZE = 500;
 
@@ -420,6 +471,6 @@ async function failJob(jobId: string, message: string, errorKind: string): Promi
 function classifyError(message: string): 'TIMEOUT' | 'AUTH_FAILED' | 'PARSE_FAILED' | 'UNKNOWN' {
   if (/timeout/i.test(message)) return 'TIMEOUT';
   if (/auth|login|session|403|401/i.test(message)) return 'AUTH_FAILED';
-  if (/parse|bizitem|not found|빈 응답|매핑/i.test(message)) return 'PARSE_FAILED';
+  if (/parse|bizitem|not found|빈 응답|0건|조용한 실패|매핑/i.test(message)) return 'PARSE_FAILED';
   return 'UNKNOWN';
 }

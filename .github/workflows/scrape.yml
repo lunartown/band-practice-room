@@ -24,6 +24,10 @@ jobs:
       DATABASE_URL: ${{ secrets.DATABASE_URL }}
       # 스페이스클라우드 가용성 API 가 개인 토큰을 요구하면 시크릿으로 주입(없으면 토큰 없이 시도).
       SPACECLOUD_API_TOKEN: ${{ secrets.SPACECLOUD_API_TOKEN }}
+      # 수집 영구 실패 알림용 Discord/Slack incoming webhook(미설정 시 콘솔 경고만).
+      ALERT_WEBHOOK_URL: ${{ secrets.ALERT_WEBHOOK_URL }}
+      # 영구 실패가 있으면 워크플로를 실패 처리해 GitHub 기본 메일 알림이 가도록 한다.
+      FAIL_ON_SCRAPE_ERRORS: 'true'
       RUN_ONCE: 'true'
     steps:
       - uses: actions/checkout@v4
@@ -47,4 +51,6 @@ jobs:
         working-directory: src/scraper
         run: |
           npm ci
+          npm run typecheck
+          npm test
           npm start
