@@ -952,16 +952,17 @@ function buildStudioSearchSections({
   const recentItems = recentStudioIds
     .map((studioId) => matchById.get(studioId))
     .filter((studio): studio is Studio => Boolean(studio));
+  const recentSet = new Set(recentItems.map((studio) => studio.id));
   if (recentItems.length > 0) {
     sections.push({ title: '최근 선택', items: recentItems });
   }
 
-  const favoriteItems = matches.filter((studio) => favorites.has(studio.id));
+  const favoriteItems = matches.filter((studio) => favorites.has(studio.id) && !recentSet.has(studio.id));
   if (favoriteItems.length > 0) {
     sections.push({ title: '즐겨찾기', items: favoriteItems });
   }
 
-  const otherItems = matches.filter((studio) => !favorites.has(studio.id));
+  const otherItems = matches.filter((studio) => !favorites.has(studio.id) && !recentSet.has(studio.id));
   if (otherItems.length > 0) {
     sections.push({
       title: areaLabel ? `${areaLabel} 합주실` : '전체 합주실',
