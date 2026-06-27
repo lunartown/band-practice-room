@@ -233,7 +233,7 @@ export function SelectedStudioEmptyRow({
               onClick={() => onCreateAlert(studio)}
             >
               <BellIcon />
-              <span>알림</span>
+              <span>빈 자리 알림</span>
             </button>
           )}
         </div>

@@ -706,7 +706,7 @@ function EmptyDay({
         )}
         <button className="inline-alert-button" aria-label="빈 자리 알림" onClick={onCreateAlert}>
           <BellIcon />
-          <span>알림</span>
+          <span>빈 자리 알림</span>
         </button>
       </div>
     </div>
