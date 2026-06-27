@@ -997,6 +997,7 @@ button {
   display: grid;
   place-items: center;
   background: var(--accent-soft);
+  box-shadow: 0 2px 8px -5px rgba(20, 28, 42, 0.42);
   color: var(--accent-strong);
   font-size: var(--fs-lg);
   font-weight: var(--fw-extrabold);
