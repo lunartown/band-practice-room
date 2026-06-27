@@ -21,10 +21,10 @@
 ## 확정된 설계 결정
 
 - MVP는 30일 전체 available 슬롯을 한 응답으로 내려준다
-- 응답은 `practiceRooms`, `slots`로 분리해 중복을 줄인다 (사용자 대상 `freshness` 노출은 제외 — 의사결정 로그 2026-06-21)
-- 프론트엔드는 Vite SPA + React로 시작한다
-- 스케줄러는 API 내부 cron이 아니라 별도 worker process로 설계한다
-- 초기 작업 큐는 PostgreSQL job table로 구현한다
+- 응답은 `status = AVAILABLE` 슬롯의 flat 배열로 내려주고 `studio`/`room`은 각 슬롯에 임베드한다. 중복이 응답 크기 문제를 만들면 normalized 구조로 전환한다 (사용자 대상 `freshness` 노출은 제외 — 의사결정 로그 2026-06-21)
+- 프론트엔드는 Vite SPA + React로 시작한다 (이후 Capacitor로 iOS·Android 패키징)
+- 스케줄러는 API 내부 cron이 아니라 GitHub Actions cron(원샷)으로 둔다
+- 작업 큐는 PostgreSQL job table(`scrape_jobs`)로 구현한다
 - 기본 결과 그룹은 날짜/시간 기준으로 한다
 - 가격은 MVP 결과에 포함하고, 수집 누락 시 수기 입력값을 사용할 수 있게 한다
 - 지역 필터는 행정구가 아니라 지역 기준으로 한다
