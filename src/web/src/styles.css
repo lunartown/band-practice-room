@@ -320,30 +320,43 @@ button {
   background: var(--white);
 }
 
-.sort-row {
+.result-toolbar {
   display: flex;
-  justify-content: flex-end;
-  padding: 0 var(--gutter) var(--sp-3);
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  min-height: 42px;
+  padding: 0 var(--gutter) var(--sp-2);
+  border-bottom: 1px solid var(--border-subtle);
+  color: var(--text-3);
 }
 
-.sort-button {
+.result-summary {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-semibold);
+}
+
+.result-sort-button {
+  flex: 0 0 auto;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: var(--sp-1);
-  min-height: 34px;
-  min-width: 104px;
-  padding: var(--sp-fine) var(--sp-3);
+  min-height: 32px;
+  padding: var(--sp-fine) var(--sp-2);
   border-radius: var(--r-md);
-  background: var(--surface-sunken);
+  background: transparent;
   color: var(--text-2);
   font-size: var(--fs-xs);
-  font-weight: var(--fw-semibold);
+  font-weight: var(--fw-bold);
   white-space: nowrap;
 }
 
-.sort-button.active,
-.sort-button.open {
+.result-sort-button.open {
   background: var(--accent-soft);
   color: var(--accent-strong);
 }
