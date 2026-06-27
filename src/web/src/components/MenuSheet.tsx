@@ -22,10 +22,12 @@ function openPrivacy() {
 }
 
 interface MenuSheetProps {
+  alertCount: number;
   onClose: () => void;
+  onOpenAlerts: () => void;
 }
 
-export function MenuSheet({ onClose }: MenuSheetProps) {
+export function MenuSheet({ alertCount, onClose, onOpenAlerts }: MenuSheetProps) {
   const [version, setVersion] = useState<string | null>(null);
   const [otaVersion, setOtaVersion] = useState<string | null>(null);
 
@@ -104,6 +106,11 @@ export function MenuSheet({ onClose }: MenuSheetProps) {
               <span className="nav-item-icon"><BandIcon /></span>
               <span className="nav-item-label">합주실</span>
             </button>
+            <button className="nav-item" onClick={run(onOpenAlerts)}>
+              <span className="nav-item-icon"><BellIcon /></span>
+              <span className="nav-item-label">내 알림</span>
+              {alertCount > 0 && <span className="menu-count">{alertCount}</span>}
+            </button>
           </nav>
 
           <div className="menu-section-label">지원</div>
@@ -153,6 +160,22 @@ function BandIcon() {
       <path d="M9 18V5l11-2v13" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
       <circle cx="6" cy="18" r="3" stroke="currentColor" strokeWidth="1.8" />
       <circle cx="17" cy="16" r="3" stroke="currentColor" strokeWidth="1.8" />
+    </svg>
+  );
+}
+
+function BellIcon() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden>
+      <path
+        d="M18 15.5c-1-1.2-1.5-2.7-1.5-4.7V9.7a4.5 4.5 0 0 0-9 0v1.1c0 2-.5 3.5-1.5 4.7L5 17h14l-1-1.5z"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path d="M10 20a2.2 2.2 0 0 0 4 0" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+      <path d="M19.2 5.2v3M17.7 6.7h3" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
     </svg>
   );
 }
