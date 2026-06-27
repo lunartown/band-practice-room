@@ -205,7 +205,7 @@ button {
   display: flex;
   align-items: center;
   gap: var(--sp-2);
-  padding: var(--sp-1) var(--gutter) var(--sp-3);
+  padding: var(--sp-1) var(--gutter) var(--sp-2);
 }
 
 .chip-row.has-studio-chip {
@@ -260,7 +260,7 @@ button {
   display: flex;
   flex-wrap: wrap;
   gap: var(--sp-2);
-  padding: 0 var(--gutter) var(--sp-3);
+  padding: 0 var(--gutter) var(--sp-2);
 }
 
 .studio-chip {
@@ -318,6 +318,34 @@ button {
   height: 6px;
   border-radius: 50%;
   background: var(--white);
+}
+
+.sort-row {
+  display: flex;
+  justify-content: flex-end;
+  padding: 0 var(--gutter) var(--sp-3);
+}
+
+.sort-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-1);
+  min-height: 34px;
+  min-width: 104px;
+  padding: var(--sp-fine) var(--sp-3);
+  border-radius: var(--r-md);
+  background: var(--surface-sunken);
+  color: var(--text-2);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-semibold);
+  white-space: nowrap;
+}
+
+.sort-button.active,
+.sort-button.open {
+  background: var(--accent-soft);
+  color: var(--accent-strong);
 }
 
 /* ============================================================
