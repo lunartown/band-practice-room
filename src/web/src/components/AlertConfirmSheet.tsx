@@ -1,18 +1,8 @@
 import type { Area, Studio } from '../api/types';
 import { dateLabel } from '../lib/date';
+import type { AlertDraft } from '../lib/alerts';
 import type { FilterState } from './FilterSheet';
 import { timeWindowLabel } from './TimeWindowPicker';
-
-export type AlertDraft =
-  | {
-      scope: 'studios';
-      studios: Pick<Studio, 'id' | 'name'>[];
-      dates: string[];
-    }
-  | {
-      scope: 'search';
-      dates: string[];
-    };
 
 interface AlertConfirmSheetProps {
   draft: AlertDraft;
@@ -23,10 +13,10 @@ interface AlertConfirmSheetProps {
 }
 
 export function AlertConfirmSheet({ draft, filters, areas, onClose, onConfirm }: AlertConfirmSheetProps) {
-  const targetLabel = buildTargetLabel(draft, filters, areas);
   const headline = buildHeadline(draft);
   const rows = [
-    { label: '대상', value: targetLabel },
+    { label: '합주실', value: draft.scope === 'studios' ? buildStudioNamesLabel(draft.studios) : '전체 합주실' },
+    { label: '지역', value: buildAreaNamesLabel(filters.areaIds, areas) },
     { label: '날짜', value: buildDatesLabel(draft.dates) },
     { label: '시간', value: filters.timeWindows.length > 0 ? timeWindowLabel(filters.timeWindows) : '모든 시간' },
     { label: '연속', value: `${filters.minDuration}시간 이상` },
@@ -50,7 +40,7 @@ export function AlertConfirmSheet({ draft, filters, areas, onClose, onConfirm }:
             <BellIcon />
             <div>
               <strong>{headline}</strong>
-              <span>선택한 날짜 안에서 조건이 맞는 빈 시간을 확인해요</span>
+              <span>아래 조건에 맞는 빈 시간을 확인해요</span>
             </div>
           </div>
 
@@ -66,7 +56,7 @@ export function AlertConfirmSheet({ draft, filters, areas, onClose, onConfirm }:
 
         <footer>
           <button type="button" className="secondary" onClick={onClose}>취소</button>
-          <button type="button" className="primary" onClick={onConfirm}>확인</button>
+          <button type="button" className="primary" onClick={onConfirm}>등록</button>
         </footer>
       </section>
     </div>
@@ -74,16 +64,10 @@ export function AlertConfirmSheet({ draft, filters, areas, onClose, onConfirm }:
 }
 
 function buildHeadline(draft: AlertDraft) {
-  if (draft.scope === 'search') return '이 조건에 맞는 빈 시간이 생기면 알려드릴게요';
-  if (draft.studios.length === 1) return `${draft.studios[0].name}에 빈 시간이 생기면 알려드릴게요`;
-  return `선택한 ${draft.studios.length}곳에 빈 시간이 생기면 알려드릴게요`;
-}
-
-function buildTargetLabel(draft: AlertDraft, filters: FilterState, areas: Area[]) {
-  if (draft.scope === 'studios') {
-    return buildStudioNamesLabel(draft.studios);
+  if (draft.scope === 'studios' && draft.studios.length === 1) {
+    return `${draft.studios[0].name}에 빈 시간이 생기면 알려드릴게요`;
   }
-  return buildAreaNamesLabel(filters.areaIds, areas);
+  return '이 조건으로 빈 시간이 생기면 알려드릴게요';
 }
 
 function buildStudioNamesLabel(studios: Pick<Studio, 'id' | 'name'>[]) {
