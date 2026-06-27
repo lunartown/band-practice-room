@@ -421,6 +421,25 @@ button {
   background: var(--accent-soft);
 }
 
+/* 합주실 검색 토글: 즐겨찾기와 같은 고스트 버튼 톤. 선택 중이면 액센트로 켠다. */
+.search-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--r-md);
+  padding: 0;
+  background: transparent;
+  color: var(--text-faint);
+}
+
+.search-toggle.active,
+.search-toggle.open {
+  color: var(--accent);
+  background: var(--accent-soft);
+}
+
 /* 메뉴(햄버거) 토글: 좌측 상단 1차 진입점. 아웃라인 버튼으로 또렷하게. */
 .menu-toggle {
   display: inline-flex;
@@ -1522,6 +1541,84 @@ button {
 .popover-option .pop-check {
   flex: 0 0 auto;
   color: var(--accent);
+  font-size: var(--fs-sm);
+}
+
+/* ============================================================
+   합주실 검색
+   ============================================================ */
+/* 활성 합주실 필터 표시 줄: 칩 행 아래에 선택한 합주실을 ✕와 함께 보여준다. */
+.active-filter-row {
+  display: flex;
+  padding: 0 var(--sp-4) var(--sp-2);
+}
+
+.active-filter-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  max-width: 100%;
+  padding: var(--sp-1) var(--sp-2) var(--sp-1) var(--sp-3);
+  border-radius: var(--r-pill, 999px);
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-semibold);
+}
+
+.active-filter-pill > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.studio-search {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+.studio-search-input {
+  width: 100%;
+  min-height: var(--tap);
+  padding: var(--sp-2) var(--sp-3);
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  background: var(--surface);
+  color: var(--text-1);
+  font-size: var(--fs-md);
+}
+
+.studio-search-input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.studio-search-list {
+  display: flex;
+  flex-direction: column;
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+.studio-search-name {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.studio-search-sub {
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-regular, 400);
+  color: var(--text-faint);
+}
+
+.studio-search-empty {
+  padding: var(--sp-3);
+  text-align: center;
+  color: var(--text-faint);
   font-size: var(--fs-sm);
 }
 

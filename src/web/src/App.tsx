@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { getAreas, getSlots } from './api/client';
-import type { Area, Slot } from './api/types';
+import { getAreas, getSlots, getStudios } from './api/client';
+import type { Area, Slot, Studio } from './api/types';
 import { StudioRow } from './components/StudioRow';
 import { FilterSheet, defaultFilters } from './components/FilterSheet';
 import type { FilterState } from './components/FilterSheet';
 import { CalendarPicker } from './components/CalendarPicker';
 import { TimeWindowPicker, timeWindowLabel } from './components/TimeWindowPicker';
+import { StudioSearch } from './components/StudioSearch';
 import { Popover } from './components/Popover';
 import { OpenScreen } from './components/OpenScreen';
 import { MenuSheet } from './components/MenuSheet';
@@ -14,8 +15,8 @@ import { dateLabel } from './lib/date';
 import { loadFilters, saveFilters, markEntered } from './lib/prefs';
 import { useFavorites } from './lib/useFavorites';
 
-type PopoverKind = 'time' | 'date' | 'area';
-const POP_WIDTH: Record<PopoverKind, number> = { time: 320, date: 340, area: 220 };
+type PopoverKind = 'time' | 'date' | 'area' | 'search';
+const POP_WIDTH: Record<PopoverKind, number> = { time: 320, date: 340, area: 220, search: 300 };
 interface PopoverState {
   kind: PopoverKind;
   top: number;
@@ -26,6 +27,10 @@ interface PopoverState {
 export function App() {
   const savedPrefs = useMemo(() => loadFilters(), []);
   const [areas, setAreas] = useState<Area[]>([]);
+  const [studios, setStudios] = useState<Studio[]>([]);
+  // 합주실 검색은 필터(지역·시간 등)와 달리 세션에 영구 저장하지 않는다.
+  // "그라운드만 보기"가 새로고침 뒤에도 남으면 사용자가 갇히기 쉬워서다.
+  const [studioFilter, setStudioFilter] = useState<{ id: number; name: string } | null>(null);
   const [slots, setSlots] = useState<Slot[]>([]);
   const [responseDates, setResponseDates] = useState<string[]>([]);
   const [filters, setFilters] = useState<FilterState>(savedPrefs?.filters ?? defaultFilters);
@@ -62,6 +67,10 @@ export function App() {
 
   useEffect(() => {
     loadAreas();
+    // 검색 목록용 전체 합주실 카탈로그. 실패해도 검색만 비고 본 흐름엔 영향 없다.
+    getStudios()
+      .then((r) => setStudios(r.studios))
+      .catch(() => setStudios([]));
   }, []);
 
   useEffect(() => {
@@ -74,7 +83,10 @@ export function App() {
     setLoading(true);
     getSlots({
       dates: filters.dates,
-      areaIds: filters.areaIds.length ? filters.areaIds : undefined,
+      // 특정 합주실을 고르면 그 합주실만 본다 — 지역 조건은 무시한다(지역과 합주실이
+      // 어긋나면 빈 결과가 나와 "그라운드 없네?"를 잘못 답하게 된다).
+      studioId: studioFilter?.id,
+      areaIds: studioFilter || !filters.areaIds.length ? undefined : filters.areaIds,
       timeWindows: filters.timeWindows.length ? filters.timeWindows : undefined,
       minDuration: filters.minDuration > 1 ? filters.minDuration : undefined,
       minCapacity: filters.people > 1 ? filters.people : undefined,
@@ -86,7 +98,7 @@ export function App() {
       })
       .catch(() => setError('예약 가능 시간을 불러오지 못했습니다'))
       .finally(() => setLoading(false));
-  }, [filters, entered]);
+  }, [filters, entered, studioFilter]);
 
   function enterWithAreas(areaIds: number[]) {
     setFilters((f) => ({ ...f, areaIds }));
@@ -153,6 +165,14 @@ export function App() {
                 <span className="sync-label">{syncLabel}</span>
               </div>
               <button
+                className={`search-toggle${studioFilter ? ' active' : ''}${popover?.kind === 'search' ? ' open' : ''}`}
+                aria-label="합주실 검색"
+                aria-haspopup="dialog"
+                onClick={(e) => openPopover('search', e)}
+              >
+                <SearchIcon />
+              </button>
+              <button
                 className={`fav-toggle${favOnly ? ' active' : ''}`}
                 aria-pressed={favOnly}
                 aria-label="즐겨찾기만 보기"
@@ -173,6 +193,15 @@ export function App() {
           </button>
         </div>
 
+        {studioFilter && (
+          <div className="active-filter-row">
+            <button className="active-filter-pill" onClick={() => setStudioFilter(null)}>
+              <span>{studioFilter.name}</span>
+              <CloseIcon />
+            </button>
+          </div>
+        )}
+
         {error && <div className="error-banner">{error}</div>}
         {loading && <div className="loading-bar" aria-hidden />}
 
@@ -182,7 +211,12 @@ export function App() {
           ) : favOnly && totalStudios === 0 ? (
             <FavoritesEmpty hasFavorites={hasFavorites} onShowAll={() => setFavOnly(false)} />
           ) : totalStudios === 0 ? (
-            <EmptyState filters={filters} setFilters={setFilters} />
+            <EmptyState
+              filters={filters}
+              setFilters={setFilters}
+              studioName={studioFilter?.name ?? null}
+              onClearStudio={() => setStudioFilter(null)}
+            />
           ) : (
             visibleGroups.map((group) => (
               <section className="date-section" key={group.date}>
@@ -215,7 +249,7 @@ export function App() {
             top={popover.top}
             left={popover.left}
             width={popover.width}
-            className={popover.kind === 'date' || popover.kind === 'time' ? 'padded' : undefined}
+            className={popover.kind === 'date' || popover.kind === 'time' || popover.kind === 'search' ? 'padded' : undefined}
             onClose={() => setPopover(null)}
           >
             {popover.kind === 'time' && (
@@ -263,6 +297,17 @@ export function App() {
               <CalendarPicker
                 selected={filters.dates}
                 onChange={(dates) => setFilters((f) => ({ ...f, dates }))}
+              />
+            )}
+
+            {popover.kind === 'search' && (
+              <StudioSearch
+                studios={studios}
+                selectedId={studioFilter?.id ?? null}
+                onSelect={(s) => {
+                  setStudioFilter(s ? { id: s.id, name: s.name } : null);
+                  setPopover(null);
+                }}
               />
             )}
           </Popover>
@@ -334,7 +379,37 @@ function EmptyDay({
   );
 }
 
-function EmptyState({ filters, setFilters }: { filters: FilterState; setFilters: React.Dispatch<React.SetStateAction<FilterState>> }) {
+function EmptyState({
+  filters,
+  setFilters,
+  studioName,
+  onClearStudio,
+}: {
+  filters: FilterState;
+  setFilters: React.Dispatch<React.SetStateAction<FilterState>>;
+  studioName: string | null;
+  onClearStudio: () => void;
+}) {
+  // 특정 합주실로 좁혀서 비었으면, 조건 넓히기보다 "그 합주실이 이 기간 비어 있다"를
+  // 분명히 답해 준다. "그라운드 자리 있나? → 없네"의 '없네'에 해당한다.
+  if (studioName) {
+    return (
+      <div className="empty-state">
+        <div className="empty-icon">
+          <svg width="30" height="30" viewBox="0 0 24 24" fill="none">
+            <circle cx="11" cy="11" r="7" stroke="#adb5bd" strokeWidth="2" />
+            <path d="M20 20l-3.8-3.8" stroke="#adb5bd" strokeWidth="2" strokeLinecap="round" />
+          </svg>
+        </div>
+        <h2>{studioName}</h2>
+        <p>선택한 조건에서는 이 합주실에<br />예약 가능한 시간이 없어요</p>
+        <div className="empty-actions">
+          <button onClick={onClearStudio}>전체 합주실 보기</button>
+        </div>
+      </div>
+    );
+  }
+
   const suggestions: { label: string; apply: () => void }[] = [
     { label: '날짜 초기화', apply: () => setFilters((f) => ({ ...f, dates: [] })) },
     {
@@ -415,6 +490,23 @@ function MenuIcon() {
   return (
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" style={{ display: 'block' }} aria-hidden>
       <path d="M4 7h16M4 12h16M4 17h16" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function SearchIcon() {
+  return (
+    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" style={{ display: 'block' }} aria-hidden>
+      <circle cx="11" cy="11" r="7" stroke="currentColor" strokeWidth="2" />
+      <path d="M20 20l-3.8-3.8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function CloseIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" style={{ display: 'block' }} aria-hidden>
+      <path d="M6 6l12 12M18 6L6 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
     </svg>
   );
 }
