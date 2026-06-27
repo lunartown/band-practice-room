@@ -213,7 +213,8 @@ button {
 }
 
 .chip,
-.filter-button {
+.filter-button,
+.sort-filter-button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -289,10 +290,18 @@ button {
   color: var(--accent-strong);
 }
 
+.chip-actions {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-1);
+  margin-left: auto;
+}
+
 /* 보조 액션: 솔리드 다크 대신 고스트/아웃라인으로 무게를 낮춘다.
    pill과 같은 높이의 정사각 */
-.filter-button {
-  margin-left: auto;
+.filter-button,
+.sort-filter-button {
   width: 36px;
   height: 36px;
   min-width: 36px;
@@ -301,6 +310,13 @@ button {
   color: var(--text-2);
   box-shadow: inset 0 0 0 1px var(--border);
   position: relative;
+}
+
+.sort-filter-button.active,
+.sort-filter-button.open {
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+  box-shadow: none;
 }
 
 .filter-button.active {
@@ -933,17 +949,16 @@ button {
   gap: var(--sp-2);
 }
 
-/* 검색/즐겨찾기/정렬 액션: 버튼 박스는 붙여 아이콘끼리 멀어 보이지 않게 한다. */
+/* 검색/즐겨찾기 액션: 버튼 박스는 붙여 아이콘끼리 멀어 보이지 않게 한다. */
 .top-bar-actions {
   display: flex;
   align-items: center;
   gap: 0;
 }
 
-/* 결과 전역 액션은 헤더에 두어 칩 줄 혼잡(칩 글자 잘림)을 피한다. */
+/* 합주실 찾기와 즐겨찾기는 전역 탐색 액션으로 헤더에 둔다. */
 .fav-toggle,
-.search-toggle,
-.sort-toggle {
+.search-toggle {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -956,9 +971,7 @@ button {
 }
 
 .fav-toggle.active,
-.search-toggle.active,
-.sort-toggle.active,
-.sort-toggle.open {
+.search-toggle.active {
   color: var(--accent);
   background: var(--accent-soft);
 }
