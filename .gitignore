@@ -12,6 +12,8 @@ coverage/
 !.env.example
 # 네이티브 앱 빌드용 공개 설정(비밀값 없음, API 공개 URL만 포함)
 !.env.capacitor
+# Vercel 프로덕션·프리뷰 빌드용 공개 설정(비밀값 없음, API 공개 URL만 포함)
+!.env.production
 
 # Capacitor 네이티브 빌드 산출물 (네이티브 프로젝트 자체는 커밋한다)
 src/web/android/.gradle/
