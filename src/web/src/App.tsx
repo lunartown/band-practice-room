@@ -9,6 +9,8 @@ import { TimeWindowPicker, timeWindowLabel } from './components/TimeWindowPicker
 import { Popover } from './components/Popover';
 import { OpenScreen } from './components/OpenScreen';
 import { MenuSheet } from './components/MenuSheet';
+import { AlertConfirmSheet } from './components/AlertConfirmSheet';
+import type { AlertDraft } from './components/AlertConfirmSheet';
 import { buildAvailability } from './lib/availability';
 import { dateLabel } from './lib/date';
 import { loadFilters, saveFilters, markEntered } from './lib/prefs';
@@ -25,7 +27,6 @@ import {
   buildVisibleGroups,
   filterStudiosByAreas,
 } from './lib/studioSearch';
-import type { SelectedStudioEmptyItem } from './lib/studioSearch';
 import { useFavorites } from './lib/useFavorites';
 
 type PopoverKind = 'time' | 'date' | 'area';
@@ -52,6 +53,7 @@ export function App() {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [isStudioSearchOpen, setIsStudioSearchOpen] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [alertDraft, setAlertDraft] = useState<AlertDraft | null>(null);
   const [favOnly, setFavOnly] = useState(false);
   const [collapsedDates, setCollapsedDates] = useState<Set<string>>(() => new Set());
   const [studioSearchQuery, setStudioSearchQuery] = useState('');
@@ -231,6 +233,25 @@ export function App() {
     });
   }
 
+  function openAlertDraft(draft: AlertDraft) {
+    setPopover(null);
+    setIsFilterOpen(false);
+    setIsMenuOpen(false);
+    setAlertDraft(draft);
+  }
+
+  function openStudioAlert(studio: Studio, date: string) {
+    openAlertDraft({ scope: 'studios', studios: [studio], dates: [date] });
+  }
+
+  function openCurrentConditionAlert(date: string) {
+    if (filters.studioIds.length > 0 && selectedStudios.length > 0) {
+      openAlertDraft({ scope: 'studios', studios: selectedStudios, dates: [date] });
+      return;
+    }
+    openAlertDraft({ scope: 'search', dates: [date] });
+  }
+
   const dateGroups = useMemo(
     () => buildAvailability(slots, responseDates, filters.minDuration),
     [slots, responseDates, filters.minDuration],
@@ -266,16 +287,6 @@ export function App() {
   const selectedStudios = useMemo(
     () => buildSelectedStudios(filters.studioIds, studios, slots),
     [filters.studioIds, slots, studios],
-  );
-  const selectedStudioEmptyItems = useMemo(
-    () =>
-      buildSelectedStudioEmptyItems({
-        selectedStudios,
-        visibleGroups,
-        areaNameById,
-        preferredAreaIds: filters.areaIds,
-      }),
-    [areaNameById, filters.areaIds, selectedStudios, visibleGroups],
   );
   const selectedStudioChips = useMemo(
     () => buildSelectedStudioChips(filters.studioIds, studios, slots),
@@ -475,23 +486,32 @@ export function App() {
             {error && <div className="error-banner">{error}</div>}
             {loading && <div className="loading-bar" aria-hidden />}
 
-            <div className={`result-list${loading && (totalStudios > 0 || selectedStudioEmptyItems.length > 0) ? ' is-refreshing' : ''}`}>
-              {loading && totalStudios === 0 && selectedStudioEmptyItems.length === 0 ? (
+            <div className={`result-list${loading && (totalStudios > 0 || visibleGroups.length > 0) ? ' is-refreshing' : ''}`}>
+              {loading && totalStudios === 0 && visibleGroups.length === 0 ? (
                 <SkeletonList />
               ) : favFilterActive && totalStudios === 0 ? (
                 <FavoritesEmpty hasFavorites={hasFavorites} onShowAll={() => setFavOnly(false)} />
               ) : (
                 <>
-                  {selectedStudioEmptyItems.length > 0 && (
-                    <SelectedStudioEmptySection items={selectedStudioEmptyItems} onRemove={removeStudioSelection} />
-                  )}
-                  {totalStudios === 0 && selectedStudioEmptyItems.length === 0 ? (
-                    <EmptyState filters={filters} selectedStudios={selectedStudios} setFilters={setFilters} />
+                  {visibleGroups.length === 0 ? (
+                    <EmptyState
+                      filters={filters}
+                      selectedStudios={selectedStudios}
+                      setFilters={setFilters}
+                    />
                   ) : (
-                    totalStudios > 0 &&
                     visibleGroups.map((group) => {
                       const isCollapsed = collapsedDates.has(group.date);
                       const bodyId = `date-section-${group.date}`;
+                      const selectedEmptyItems = studioActive
+                        ? buildSelectedStudioEmptyItems({
+                            selectedStudios,
+                            visibleGroups: [group],
+                            areaNameById,
+                            preferredAreaIds: filters.areaIds,
+                          })
+                        : [];
+                      const hasBodyRows = group.studios.length > 0 || selectedEmptyItems.length > 0;
 
                       return (
                         <section className="date-section" key={group.date}>
@@ -513,17 +533,32 @@ export function App() {
                             </span>
                           </button>
                           <div id={bodyId} className="date-section-body" hidden={isCollapsed}>
-                            {group.studios.length > 0 ? (
-                              group.studios.map((studio) => (
-                                <StudioRow key={studio.studio.id} studio={studio} />
-                              ))
-                            ) : favFilterActive ? (
-                              <div className="empty-day">
-                                <span>이 날은 즐겨찾기한 곳이 비어 있어요</span>
-                              </div>
-                            ) : (
-                              <EmptyDay minDuration={filters.minDuration} setFilters={setFilters} />
-                            )}
+                            {group.studios.map((studio) => (
+                              <StudioRow key={studio.studio.id} studio={studio} />
+                            ))}
+                            {selectedEmptyItems.map((item) => (
+                              <SelectedStudioEmptyRow
+                                key={item.studio.id}
+                                studio={item.studio}
+                                areaName={item.areaName}
+                                onCreateAlert={(studio) => openStudioAlert(studio, group.date)}
+                                onRemove={removeStudioSelection}
+                              />
+                            ))}
+                            {!hasBodyRows && favFilterActive ? (
+                              <EmptyDay
+                                message="이 날은 즐겨찾기한 곳이 비어 있어요"
+                                minDuration={filters.minDuration}
+                                setFilters={setFilters}
+                                onCreateAlert={() => openCurrentConditionAlert(group.date)}
+                              />
+                            ) : !hasBodyRows ? (
+                              <EmptyDay
+                                minDuration={filters.minDuration}
+                                setFilters={setFilters}
+                                onCreateAlert={() => openCurrentConditionAlert(group.date)}
+                              />
+                            ) : null}
                           </div>
                         </section>
                       );
@@ -604,6 +639,15 @@ export function App() {
         )}
 
         {!isStudioSearchOpen && isMenuOpen && <MenuSheet onClose={() => setIsMenuOpen(false)} />}
+        {alertDraft && (
+          <AlertConfirmSheet
+            draft={alertDraft}
+            filters={filters}
+            areas={areas}
+            onClose={() => setAlertDraft(null)}
+            onConfirm={() => setAlertDraft(null)}
+          />
+        )}
       </section>
     </main>
   );
@@ -641,46 +685,34 @@ function SkeletonList() {
 }
 
 function EmptyDay({
+  message,
   minDuration,
   setFilters,
+  onCreateAlert,
 }: {
+  message?: string;
   minDuration: number;
   setFilters: React.Dispatch<React.SetStateAction<FilterState>>;
+  onCreateAlert: () => void;
 }) {
   return (
     <div className="empty-day">
-      <span>이 날은 연속 {minDuration}시간이 안 돼요</span>
-      {minDuration > 1 && (
-        <button onClick={() => setFilters((f) => ({ ...f, minDuration: (minDuration - 1) as FilterState['minDuration'] }))}>
-          {minDuration - 1}시간으로 보기
+      <span>{message ?? `이 날은 연속 ${minDuration}시간이 안 돼요`}</span>
+      <div className="empty-day-actions">
+        {minDuration > 1 && (
+          <button
+            className="empty-day-secondary"
+            onClick={() => setFilters((f) => ({ ...f, minDuration: (minDuration - 1) as FilterState['minDuration'] }))}
+          >
+            {minDuration - 1}시간으로 보기
+          </button>
+        )}
+        <button className="inline-alert-button" aria-label="빈 자리 알림 받기" onClick={onCreateAlert}>
+          <BellIcon />
+          <span>알림</span>
         </button>
-      )}
-    </div>
-  );
-}
-
-function SelectedStudioEmptySection({
-  items,
-  onRemove,
-}: {
-  items: SelectedStudioEmptyItem[];
-  onRemove: (studioId: number) => void;
-}) {
-  return (
-    <section className="selected-studio-empty-section" aria-label="선택한 합주실 상태">
-      <div className="selected-studio-empty-heading">
-        <span>선택한 합주실</span>
-        <span className="count-pill empty">{items.length}곳 빈 시간 없음</span>
       </div>
-      {items.map((item) => (
-        <SelectedStudioEmptyRow
-          key={item.studio.id}
-          studio={item.studio}
-          areaName={item.areaName}
-          onRemove={onRemove}
-        />
-      ))}
-    </section>
+    </div>
   );
 }
 
@@ -736,6 +768,22 @@ function EmptyState({
         </div>
       )}
     </div>
+  );
+}
+
+function BellIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" style={{ display: 'block' }} aria-hidden>
+      <path
+        d="M18 15.5c-1-1.2-1.5-2.7-1.5-4.7V9.7a4.5 4.5 0 0 0-9 0v1.1c0 2-.5 3.5-1.5 4.7L5 17h14l-1-1.5z"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path d="M10 20a2.2 2.2 0 0 0 4 0" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+      <path d="M19.2 5.2v3M17.7 6.7h3" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+    </svg>
   );
 }
 

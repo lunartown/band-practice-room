@@ -985,24 +985,29 @@ button {
   color: var(--text-3);
 }
 
-.studio-empty-message svg {
+.studio-empty-message > svg {
   flex: 0 0 auto;
   margin-top: 1px;
   color: var(--text-faint);
 }
 
-.studio-empty-message strong,
-.studio-empty-message span {
+.studio-empty-copy {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.studio-empty-copy strong,
+.studio-empty-copy span {
   display: block;
 }
 
-.studio-empty-message strong {
+.studio-empty-copy strong {
   color: var(--text-2);
   font-size: var(--fs-sm);
   font-weight: var(--fw-bold);
 }
 
-.studio-empty-message span {
+.studio-empty-copy span {
   margin-top: 2px;
   font-size: var(--fs-xs);
   font-weight: var(--fw-medium);
@@ -1010,6 +1015,7 @@ button {
 }
 
 .studio-empty-remove {
+  flex: 0 0 auto;
   color: var(--accent-strong);
   font-weight: var(--fw-extrabold);
 }
@@ -1205,12 +1211,58 @@ button {
   font-weight: var(--fw-medium);
 }
 
-.empty-day button {
+.empty-day > span {
+  min-width: 0;
+  line-height: 1.45;
+}
+
+.empty-day-actions {
   flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.empty-day-secondary {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-fine);
   background: transparent;
   color: var(--accent-strong);
-  font-size: var(--fs-sm);
+  font-size: var(--fs-xs);
   font-weight: var(--fw-extrabold);
+}
+
+.inline-alert-button {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-fine);
+  min-height: 28px;
+  padding: 0 var(--sp-3);
+  border-radius: var(--r-sm);
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-extrabold);
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.inline-alert-button svg {
+  width: 14px;
+  height: 14px;
+}
+
+.inline-alert-button span {
+  color: inherit;
+  font: inherit;
+  line-height: 1;
+}
+
+.inline-alert-button:active {
+  background: var(--surface);
 }
 
 /* ============================================================
@@ -1662,6 +1714,80 @@ button {
   flex: 1 1 auto;
   color: var(--white);
   background: var(--accent);
+}
+
+/* ============================================================
+   Alert confirm sheet
+   ============================================================ */
+.alert-sheet {
+  height: auto;
+  max-height: 82%;
+}
+
+.alert-summary {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-3);
+  margin-top: var(--sp-3);
+  padding: var(--sp-4);
+  border-radius: var(--r-lg);
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+}
+
+.alert-summary svg {
+  flex: 0 0 auto;
+  margin-top: 2px;
+}
+
+.alert-summary strong,
+.alert-summary span {
+  display: block;
+}
+
+.alert-summary strong {
+  color: var(--text-1);
+  font-size: var(--fs-lg);
+  font-weight: var(--fw-extrabold);
+  line-height: 1.35;
+}
+
+.alert-summary span {
+  margin-top: var(--sp-1);
+  color: var(--text-2);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-medium);
+  line-height: 1.5;
+}
+
+.alert-condition-list {
+  margin: var(--sp-4) 0 0;
+  padding: 0;
+  border-top: 1px solid var(--border-subtle);
+}
+
+.alert-condition-row {
+  display: flex;
+  gap: var(--sp-3);
+  padding: var(--sp-3) 0;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.alert-condition-row dt {
+  flex: 0 0 48px;
+  color: var(--text-3);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-bold);
+}
+
+.alert-condition-row dd {
+  flex: 1 1 auto;
+  min-width: 0;
+  margin: 0;
+  color: var(--text-1);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-semibold);
+  line-height: 1.45;
 }
 
 /* ============================================================
