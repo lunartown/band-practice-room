@@ -968,6 +968,12 @@ button {
   white-space: nowrap;
 }
 
+/* 전화예약 합주실: "빈 시간 없음" 회색과 구분되게 강조 */
+.studio-unavailable-pill.studio-phone-pill {
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+}
+
 .studio-empty-message {
   display: flex;
   align-items: flex-start;
