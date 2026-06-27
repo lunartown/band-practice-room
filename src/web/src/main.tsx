@@ -1,17 +1,28 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { Capacitor } from '@capacitor/core';
+import { StatusBar } from '@capacitor/status-bar';
 import { Analytics } from '@vercel/analytics/react';
 import { App } from './App';
 import { initFavorites } from './lib/favorites';
 import { notifyLiveUpdateReady } from './lib/liveUpdate';
 import './styles.css';
 
-// 네이티브 앱(Capacitor)은 WebView가 상태표시줄/노치 아래까지 채우므로
-// (contentInset:never + viewport-fit=cover) 상단 안전영역을 CSS로 따로 밀어줘야 한다.
-// 웹/PWA에는 이 클래스가 붙지 않아 기존 최소 여백을 그대로 쓴다.
+// 네이티브 앱(Capacitor)에서 상단 상태표시줄 처리. 플랫폼별 클래스(is-ios/is-android)도
+// 붙여 CSS에서 구분한다. 웹/PWA에는 어떤 클래스도 붙지 않아 기존 최소 여백을 그대로 쓴다.
 if (Capacitor.isNativePlatform()) {
   document.documentElement.classList.add('is-native');
+  document.documentElement.classList.add(`is-${Capacitor.getPlatform()}`);
+
+  // iOS: contentInset:never + viewport-fit=cover 로 edge-to-edge 유지하고,
+  //      상단 안전영역(노치)은 CSS env(safe-area-inset-top)로 민다.
+  // Android: env(safe-area-inset-top)이 노치 없는/특정 기종(예: Galaxy A16)에서
+  //      0으로 잡혀 WebView가 상태표시줄을 덮었다. overlay를 꺼 네이티브가
+  //      상태표시줄 공간을 직접 확보하게 하면 기기 상관없이 콘텐츠가 그 아래에서
+  //      시작한다. (이때 env 는 더하지 않는다 — styles.css 에서 iOS 로만 한정.)
+  if (Capacitor.getPlatform() === 'android') {
+    StatusBar.setOverlaysWebView({ overlay: false }).catch(() => {});
+  }
 }
 
 // 저장된 즐겨찾기를 기기에서 미리 불러온다(렌더 전에 시작, 완료되면 구독자에 반영).
