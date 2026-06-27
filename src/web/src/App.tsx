@@ -700,7 +700,10 @@ function EmptyDay({
       <span>{message ?? `이 날은 연속 ${minDuration}시간이 안 돼요`}</span>
       <div className="empty-day-actions">
         {minDuration > 1 && (
-          <button onClick={() => setFilters((f) => ({ ...f, minDuration: (minDuration - 1) as FilterState['minDuration'] }))}>
+          <button
+            className="empty-day-secondary"
+            onClick={() => setFilters((f) => ({ ...f, minDuration: (minDuration - 1) as FilterState['minDuration'] }))}
+          >
             {minDuration - 1}시간으로 보기
           </button>
         )}
