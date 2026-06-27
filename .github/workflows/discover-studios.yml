@@ -1,0 +1,49 @@
+name: Discover studios
+
+# 네이버 지도에 "합주실"로 검색되는데 우리 카탈로그(시드)에 없는 합주실 후보를 찾아 리스트업한다.
+# DB 를 건드리지 않는 읽기 전용 작업 — 결과는 실행 로그와 업로드된 아티팩트(JSON)로 확인한다.
+# 네이버 지도는 GitHub Actions 러너에서 접근 가능하므로(슬롯 스크래퍼와 동일 경로),
+# 네이버가 막힌 로컬/세션 대신 여기서 돌린다.
+#
+# 수동 실행만(workflow_dispatch). 필요할 때 Actions 탭에서 Run.
+
+on:
+  workflow_dispatch:
+    inputs:
+      area:
+        description: '특정 지역만(예: 강남). 비우면 전체 지역 검색'
+        required: false
+        default: ''
+
+concurrency:
+  group: discover-studios
+  cancel-in-progress: false
+
+jobs:
+  discover:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Discover (사람이 읽는 표 → 로그)
+        working-directory: src/scraper
+        run: |
+          npm ci
+          npx tsx scripts/naver-discover-studios.ts ${{ inputs.area && format('--area {0}', inputs.area) || '' }}
+
+      - name: Discover (JSON → 아티팩트)
+        working-directory: src/scraper
+        run: |
+          npx tsx scripts/naver-discover-studios.ts --json ${{ inputs.area && format('--area {0}', inputs.area) || '' }} > discover-result.json
+          cat discover-result.json
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: discover-result
+          path: src/scraper/discover-result.json
+          if-no-files-found: warn
