@@ -1,5 +1,5 @@
 ---
-name: db-integrity-audit
+name: db-audit
 description: >-
   공유 Postgres(Neon)의 "데이터 정합성 점검"을 읽기 전용(SELECT only)으로 수행한다.
   슬롯 신선도·잡 큐 건강도·수집 신호·참조 무결성·슬롯 sanity·커버리지·매핑·타임존을
