@@ -1,6 +1,6 @@
 # API 명세
 
-> 작성일: 2026-06-15 (구현 반영 갱신: 2026-06-22)
+> 작성일: 2026-06-15 (구현 반영 갱신: 2026-06-27)
 > 상태: 구현 반영 — 실제 `src/api` 구현 기준
 
 ## 1. 기본 규칙
@@ -79,7 +79,8 @@
 | ----------- | --------------- | --------------------------------------------------------------------- |
 | dates       | string[]        | 조회 날짜 목록 (`YYYY-MM-DD` 반복). 미지정 시 서버 기본 범위를 사용한다 |
 | areaIds     | number[]        | 지역 ID 필터 (반복)                                                   |
-| studioId    | number          | 합주실 ID 필터                                                        |
+| studioId    | number          | 합주실 ID 필터 (단일, 레거시)                                         |
+| studioIds   | number[]        | 합주실 ID 필터 (반복). 여러 합주실을 한 번에 조회한다                  |
 | timeWindows | string[]        | 시간대 필터. `HH:mm-HH:mm` 형식 반복 (예: `18:00-24:00`)              |
 | timeFrom    | string          | (레거시) 단일 시작 시각. `timeWindows` 미지정 시 한 윈도우로 흡수      |
 | timeTo      | string          | (레거시) 단일 종료 시각                                               |
@@ -90,7 +91,8 @@
 
 - `minDuration`은 1 이상 4 이하다. 벗어나면 `400 INVALID_PARAMETER`.
 - `areaIds`는 `studio_areas.area_id` 기준으로 필터링한다.
-- `studioId`와 `areaIds`를 함께 보내면 두 조건을 모두 만족하는 슬롯만 반환한다.
+- `studioId`/`studioIds`와 `areaIds`를 함께 보내면 두 조건을 모두 만족하는 슬롯만 반환한다.
+- `studioIds`는 `s.id = ANY(...)`로 OR 처리한다. 선택한 합주실 중 하나라도 맞으면 통과한다.
 - 날짜 범위 정책(양끝 포함 최대 30일, 과거 불가)은 `dates` 파싱 단계에서 검증한다.
 
 **Response 200**

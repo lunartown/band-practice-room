@@ -35,6 +35,7 @@ export interface SlotFilters {
   dates: string[];
   areaIds?: number[];
   studioId?: number;
+  studioIds?: number[];
   timeWindows?: TimeWindow[];
   minCapacity?: number;
   minDuration?: number;
@@ -68,6 +69,11 @@ export class SlotsRepository {
     if (filters.studioId !== undefined) {
       params.push(filters.studioId);
       baseConditions.push(`s.id = $${params.length}`);
+    }
+
+    if (filters.studioIds?.length) {
+      params.push(filters.studioIds);
+      baseConditions.push(`s.id = ANY($${params.length}::int[])`);
     }
 
     if (filters.timeWindows?.length) {

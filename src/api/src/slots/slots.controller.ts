@@ -18,6 +18,7 @@ export class SlotsController {
     @Query('dates') datesQuery?: string | string[],
     @Query('areaIds') areaIdsQuery?: string | string[],
     @Query('studioId') studioIdQuery?: string,
+    @Query('studioIds') studioIdsQuery?: string | string[],
     @Query('timeWindows') timeWindowsQuery?: string | string[],
     @Query('timeFrom') timeFromQuery?: string,
     @Query('timeTo') timeToQuery?: string,
@@ -27,6 +28,7 @@ export class SlotsController {
     const dates = parseDates(datesQuery);
     const areaIds = parseOptionalPositiveIntegers(areaIdsQuery, 'areaIds');
     const studioId = parseOptionalPositiveInteger(studioIdQuery, 'studioId');
+    const studioIds = parseOptionalPositiveIntegers(studioIdsQuery, 'studioIds');
     const parsedWindows = parseOptionalTimeWindows(timeWindowsQuery, 'timeWindows');
     const timeFrom = parseOptionalTime(timeFromQuery, 'timeFrom');
     const timeTo = parseOptionalTime(timeToQuery, 'timeTo');
@@ -50,6 +52,7 @@ export class SlotsController {
       dates,
       areaIds,
       studioId,
+      studioIds,
       timeWindows,
       minCapacity,
       minDuration,

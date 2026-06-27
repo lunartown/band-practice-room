@@ -144,6 +144,7 @@ export async function getMockSlots(query: SlotsQuery): Promise<SlotsResponse> {
     if (!effectiveDates.includes(s.date)) return false;
     if (query.areaIds?.length && !query.areaIds.includes(s.studio.primaryAreaId!)) return false;
     if (query.studioId && s.studio.id !== query.studioId) return false;
+    if (query.studioIds?.length && !query.studioIds.includes(s.studio.id)) return false;
     if (query.minCapacity && (s.room.capacityMax ?? 99) < query.minCapacity) return false;
     if (query.timeWindows?.length) {
       const inWindow = query.timeWindows.some(

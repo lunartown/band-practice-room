@@ -29,8 +29,17 @@ export function App() {
   const [areas, setAreas] = useState<Area[]>([]);
   const [studios, setStudios] = useState<Studio[]>([]);
   // 합주실 검색은 필터(지역·시간 등)와 달리 세션에 영구 저장하지 않는다.
-  // "그라운드만 보기"가 새로고침 뒤에도 남으면 사용자가 갇히기 쉬워서다.
-  const [studioFilter, setStudioFilter] = useState<{ id: number; name: string } | null>(null);
+  // 좁힘이 새로고침 뒤에도 남으면 사용자가 갇히기 쉬워서다.
+  // 단골은 보통 여러 곳이라 다중 선택을 담는다("그라운드 + 하모닉스 한 번에").
+  const [studioFilter, setStudioFilter] = useState<{ id: number; name: string }[]>([]);
+
+  function toggleStudio(s: Studio) {
+    setStudioFilter((prev) =>
+      prev.some((p) => p.id === s.id)
+        ? prev.filter((p) => p.id !== s.id)
+        : [...prev, { id: s.id, name: s.name }],
+    );
+  }
   const [slots, setSlots] = useState<Slot[]>([]);
   const [responseDates, setResponseDates] = useState<string[]>([]);
   const [filters, setFilters] = useState<FilterState>(savedPrefs?.filters ?? defaultFilters);
@@ -83,10 +92,10 @@ export function App() {
     setLoading(true);
     getSlots({
       dates: filters.dates,
-      // 특정 합주실을 고르면 그 합주실만 본다 — 지역 조건은 무시한다(지역과 합주실이
+      // 합주실을 고르면 그 합주실들만 본다 — 지역 조건은 무시한다(지역과 합주실이
       // 어긋나면 빈 결과가 나와 "그라운드 없네?"를 잘못 답하게 된다).
-      studioId: studioFilter?.id,
-      areaIds: studioFilter || !filters.areaIds.length ? undefined : filters.areaIds,
+      studioIds: studioFilter.length ? studioFilter.map((s) => s.id) : undefined,
+      areaIds: studioFilter.length || !filters.areaIds.length ? undefined : filters.areaIds,
       timeWindows: filters.timeWindows.length ? filters.timeWindows : undefined,
       minDuration: filters.minDuration > 1 ? filters.minDuration : undefined,
       minCapacity: filters.people > 1 ? filters.people : undefined,
@@ -164,22 +173,24 @@ export function App() {
                 <span className="fresh-dot" />
                 <span className="sync-label">{syncLabel}</span>
               </div>
-              <button
-                className={`search-toggle${studioFilter ? ' active' : ''}${popover?.kind === 'search' ? ' open' : ''}`}
-                aria-label="합주실 검색"
-                aria-haspopup="dialog"
-                onClick={(e) => openPopover('search', e)}
-              >
-                <SearchIcon />
-              </button>
-              <button
-                className={`fav-toggle${favOnly ? ' active' : ''}`}
-                aria-pressed={favOnly}
-                aria-label="즐겨찾기만 보기"
-                onClick={() => setFavOnly((v) => !v)}
-              >
-                <HeartChipIcon filled={favOnly} />
-              </button>
+              <div className="top-bar-actions">
+                <button
+                  className={`icon-toggle${studioFilter.length ? ' active' : ''}${popover?.kind === 'search' ? ' open' : ''}`}
+                  aria-label="합주실 검색"
+                  aria-haspopup="dialog"
+                  onClick={(e) => openPopover('search', e)}
+                >
+                  <SearchIcon />
+                </button>
+                <button
+                  className={`icon-toggle${favOnly ? ' active' : ''}`}
+                  aria-pressed={favOnly}
+                  aria-label="즐겨찾기만 보기"
+                  onClick={() => setFavOnly((v) => !v)}
+                >
+                  <HeartChipIcon filled={favOnly} />
+                </button>
+              </div>
             </div>
           </div>
         </header>
@@ -193,12 +204,19 @@ export function App() {
           </button>
         </div>
 
-        {studioFilter && (
+        {studioFilter.length > 0 && (
           <div className="active-filter-row">
-            <button className="active-filter-pill" onClick={() => setStudioFilter(null)}>
-              <span>{studioFilter.name}</span>
-              <CloseIcon />
-            </button>
+            {studioFilter.map((s) => (
+              <button
+                key={s.id}
+                className="active-filter-pill"
+                aria-label={`${s.name} 검색 해제`}
+                onClick={() => setStudioFilter((prev) => prev.filter((p) => p.id !== s.id))}
+              >
+                <span>{s.name}</span>
+                <CloseIcon />
+              </button>
+            ))}
           </div>
         )}
 
@@ -214,8 +232,8 @@ export function App() {
             <EmptyState
               filters={filters}
               setFilters={setFilters}
-              studioName={studioFilter?.name ?? null}
-              onClearStudio={() => setStudioFilter(null)}
+              studioNames={studioFilter.map((s) => s.name)}
+              onClearStudio={() => setStudioFilter([])}
             />
           ) : (
             visibleGroups.map((group) => (
@@ -303,11 +321,9 @@ export function App() {
             {popover.kind === 'search' && (
               <StudioSearch
                 studios={studios}
-                selectedId={studioFilter?.id ?? null}
-                onSelect={(s) => {
-                  setStudioFilter(s ? { id: s.id, name: s.name } : null);
-                  setPopover(null);
-                }}
+                selectedIds={studioFilter.map((s) => s.id)}
+                onToggle={toggleStudio}
+                onClearAll={() => setStudioFilter([])}
               />
             )}
           </Popover>
@@ -382,17 +398,18 @@ function EmptyDay({
 function EmptyState({
   filters,
   setFilters,
-  studioName,
+  studioNames,
   onClearStudio,
 }: {
   filters: FilterState;
   setFilters: React.Dispatch<React.SetStateAction<FilterState>>;
-  studioName: string | null;
+  studioNames: string[];
   onClearStudio: () => void;
 }) {
-  // 특정 합주실로 좁혀서 비었으면, 조건 넓히기보다 "그 합주실이 이 기간 비어 있다"를
+  // 합주실로 좁혀서 비었으면, 조건 넓히기보다 "그 합주실들이 이 기간 비어 있다"를
   // 분명히 답해 준다. "그라운드 자리 있나? → 없네"의 '없네'에 해당한다.
-  if (studioName) {
+  if (studioNames.length > 0) {
+    const heading = studioNames.length === 1 ? studioNames[0] : `선택한 합주실 ${studioNames.length}곳`;
     return (
       <div className="empty-state">
         <div className="empty-icon">
@@ -401,8 +418,8 @@ function EmptyState({
             <path d="M20 20l-3.8-3.8" stroke="#adb5bd" strokeWidth="2" strokeLinecap="round" />
           </svg>
         </div>
-        <h2>{studioName}</h2>
-        <p>선택한 조건에서는 이 합주실에<br />예약 가능한 시간이 없어요</p>
+        <h2>{heading}</h2>
+        <p>선택한 조건에서는<br />예약 가능한 시간이 없어요</p>
         <div className="empty-actions">
           <button onClick={onClearStudio}>전체 합주실 보기</button>
         </div>

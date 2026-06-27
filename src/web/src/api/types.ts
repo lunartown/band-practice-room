@@ -67,6 +67,7 @@ export interface SlotsQuery {
   dates?: string[];
   areaIds?: number[];
   studioId?: number;
+  studioIds?: number[];
   timeWindows?: TimeWindow[];
   minCapacity?: number;
   minDuration?: number;

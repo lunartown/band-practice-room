@@ -402,40 +402,29 @@ button {
   gap: var(--sp-3);
 }
 
-/* 즐겨찾기만 보기 토글: 헤더에 두어 칩 줄 혼잡(칩 글자 잘림)을 피한다.
-   배경 없는 고스트 하트, 켜지면 액센트(틸)로 채운다. */
-.fav-toggle {
+/* 헤더 우측 아이콘 묶음(검색·즐겨찾기). 동기화 상태와 떼고 둘은 붙여 한 덩어리로 본다. */
+.top-bar-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-1);
+}
+
+/* 검색·즐겨찾기 토글: 같은 고스트 버튼 톤·크기로 정렬을 맞춘다.
+   헤더에 두어 칩 줄 혼잡을 피하고, 켜지면 액센트(틸)로 채운다. */
+.icon-toggle {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
+  width: 34px;
+  height: 34px;
   border-radius: var(--r-md);
   padding: 0;
   background: transparent;
   color: var(--text-faint);
 }
 
-.fav-toggle.active {
-  color: var(--accent);
-  background: var(--accent-soft);
-}
-
-/* 합주실 검색 토글: 즐겨찾기와 같은 고스트 버튼 톤. 선택 중이면 액센트로 켠다. */
-.search-toggle {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  border-radius: var(--r-md);
-  padding: 0;
-  background: transparent;
-  color: var(--text-faint);
-}
-
-.search-toggle.active,
-.search-toggle.open {
+.icon-toggle.active,
+.icon-toggle.open {
   color: var(--accent);
   background: var(--accent-soft);
 }
@@ -1547,9 +1536,12 @@ button {
 /* ============================================================
    합주실 검색
    ============================================================ */
-/* 활성 합주실 필터 표시 줄: 칩 행 아래에 선택한 합주실을 ✕와 함께 보여준다. */
+/* 활성 합주실 필터 표시 줄: 칩 행 아래에 선택한 합주실들을 ✕와 함께 보여준다.
+   여러 곳을 고르면 줄바꿈해 쌓인다. */
 .active-filter-row {
   display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
   padding: 0 var(--sp-4) var(--sp-2);
 }
 

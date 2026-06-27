@@ -3,15 +3,18 @@ import type { Studio } from '../api/types';
 
 interface StudioSearchProps {
   studios: Studio[];
-  selectedId: number | null;
-  onSelect: (studio: Studio | null) => void;
+  selectedIds: number[];
+  onToggle: (studio: Studio) => void;
+  onClearAll: () => void;
 }
 
 // 합주실 89곳 규모라 평면 목록은 무리 — 이름으로 좁히는 검색.
-// "그라운드 자리 있나?"를 이름 입력 한 번으로 끝낸다. 지역명으로도 걸린다.
-export function StudioSearch({ studios, selectedId, onSelect }: StudioSearchProps) {
+// 단골은 보통 여러 곳이라 다중 선택을 지원한다("그라운드 + 하모닉스 한 번에 보기").
+// 지역명으로도 걸린다.
+export function StudioSearch({ studios, selectedIds, onToggle, onClearAll }: StudioSearchProps) {
   const [query, setQuery] = useState('');
   const q = query.trim().toLowerCase();
+  const selected = new Set(selectedIds);
 
   const sorted = useMemo(
     () => [...studios].sort((a, b) => a.name.localeCompare(b.name, 'ko')),
@@ -37,25 +40,25 @@ export function StudioSearch({ studios, selectedId, onSelect }: StudioSearchProp
         autoFocus
         onChange={(e) => setQuery(e.target.value)}
       />
-      <div className="studio-search-list" role="listbox">
+      <div className="studio-search-list" role="listbox" aria-multiselectable="true">
         <button
           role="option"
-          aria-selected={selectedId === null}
-          className={`popover-option${selectedId === null ? ' selected' : ''}`}
-          onClick={() => onSelect(null)}
+          aria-selected={selected.size === 0}
+          className={`popover-option${selected.size === 0 ? ' selected' : ''}`}
+          onClick={onClearAll}
         >
           <span>전체 합주실</span>
-          {selectedId === null && <span className="pop-check">✓</span>}
+          {selected.size === 0 && <span className="pop-check">✓</span>}
         </button>
         {filtered.map((s) => {
-          const on = s.id === selectedId;
+          const on = selected.has(s.id);
           return (
             <button
               key={s.id}
               role="option"
               aria-selected={on}
               className={`popover-option${on ? ' selected' : ''}`}
-              onClick={() => onSelect(s)}
+              onClick={() => onToggle(s)}
             >
               <span className="studio-search-name">
                 {s.name}
