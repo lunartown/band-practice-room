@@ -14,29 +14,32 @@ CREATE TABLE IF NOT EXISTS devices (
   last_seen_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
--- 2) 구독 규칙: 디바이스가 "이 합주실(또는 이 지역)에 이런 시간대 빈자리가 나면 알려줘".
---    studio_id / area_id 중 최소 하나는 있어야 한다(둘 다면 교집합이 아니라 둘 다 조건).
---    time_from/time_to 는 슬롯 시작시각 필터(NULL=제한 없음). weekdays 는 0=일~6=토(NULL/빈배열=모든 요일).
+-- 2) 구독 규칙: 프런트의 "빈 자리 알림" 한 건 = 이 테이블 한 행. UI 모델에 맞춘다.
+--    대상: studio_ids 가 있으면 그 합주실들(scope=studios),
+--          없고 area_ids 가 있으면 그 지역들(scope=search),
+--          둘 다 비면(NULL) 모든 지역(전체 검색) 대상.
+--    dates: UI가 보고 있는 특정 날짜들(일회성). 지나간 날짜는 dispatcher 가 매칭에서 거른다.
+--    time_windows: [{ "from":"HH:MM", "to":"HH:MM"|"24:00" }] 배열. 비면 모든 시간.
+--    min_capacity: 인원(명) 이상, NULL=제한 없음.
 CREATE TABLE IF NOT EXISTS notification_subscriptions (
   id BIGSERIAL PRIMARY KEY,
   device_id BIGINT NOT NULL REFERENCES devices(id) ON DELETE CASCADE,
-  studio_id BIGINT REFERENCES studios(id),
-  area_id BIGINT REFERENCES areas(id),
-  time_from TIME,
-  time_to TIME,
+  studio_ids BIGINT[],
+  area_ids BIGINT[],
+  dates DATE[] NOT NULL,
+  time_windows JSONB NOT NULL DEFAULT '[]'::jsonb,
   min_duration SMALLINT NOT NULL DEFAULT 1 CHECK (min_duration BETWEEN 1 AND 4),
-  weekdays SMALLINT[],
+  min_capacity SMALLINT,
   is_active BOOLEAN NOT NULL DEFAULT true,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  CHECK (studio_id IS NOT NULL OR area_id IS NOT NULL)
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 CREATE INDEX IF NOT EXISTS idx_notification_subscriptions_device
   ON notification_subscriptions (device_id);
-CREATE INDEX IF NOT EXISTS idx_notification_subscriptions_studio
-  ON notification_subscriptions (studio_id) WHERE studio_id IS NOT NULL;
-CREATE INDEX IF NOT EXISTS idx_notification_subscriptions_area
-  ON notification_subscriptions (area_id) WHERE area_id IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_notification_subscriptions_studio_ids
+  ON notification_subscriptions USING GIN (studio_ids);
+CREATE INDEX IF NOT EXISTS idx_notification_subscriptions_area_ids
+  ON notification_subscriptions USING GIN (area_ids);
 
 -- 3) 발송 로그 + 중복 발송 차단.
 --    (subscription, room, date, start_time) 가 유일 → 같은 슬롯을 같은 구독에 두 번 안 쏜다.
