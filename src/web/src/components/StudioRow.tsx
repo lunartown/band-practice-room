@@ -167,10 +167,16 @@ export function SelectedStudioEmptyRow({
   studio,
   areaName,
   onRemove,
+  canCreateAlert,
+  onCreateAlert,
+  onNeedDate,
 }: {
   studio: Studio;
   areaName: string;
   onRemove: (studioId: number) => void;
+  canCreateAlert: boolean;
+  onCreateAlert: (studio: Studio) => void;
+  onNeedDate: () => void;
 }) {
   const { id, name, reviewCount, reviewKeywords } = studio;
   const badges = toReviewBadges(reviewKeywords, reviewCount);
@@ -227,6 +233,14 @@ export function SelectedStudioEmptyRow({
       </div>
 
       <div className="studio-actions">
+        <button
+          type="button"
+          className="studio-empty-alert"
+          onClick={() => (canCreateAlert ? onCreateAlert(studio) : onNeedDate())}
+        >
+          <BellIcon />
+          <span>{canCreateAlert ? '빈 자리 알림' : '날짜 선택 후 알림'}</span>
+        </button>
         <button type="button" className="room-toggle studio-empty-remove" onClick={() => onRemove(id)}>
           선택 해제
         </button>
@@ -249,6 +263,20 @@ export function SelectedStudioEmptyRow({
         </button>
       </div>
     </div>
+  );
+}
+
+function BellIcon() {
+  return (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden>
+      <path
+        d="M18 16v-4.4c0-3.1-1.9-5.6-5-6.2V4a1 1 0 0 0-2 0v1.4c-3.1.6-5 3.1-5 6.2V16l-1.7 2h15.4L18 16z"
+        stroke="currentColor"
+        strokeWidth="1.9"
+        strokeLinejoin="round"
+      />
+      <path d="M9.5 20a2.6 2.6 0 0 0 5 0" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" />
+    </svg>
   );
 }
 

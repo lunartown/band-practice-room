@@ -9,6 +9,8 @@ import { TimeWindowPicker, timeWindowLabel } from './components/TimeWindowPicker
 import { Popover } from './components/Popover';
 import { OpenScreen } from './components/OpenScreen';
 import { MenuSheet } from './components/MenuSheet';
+import { AlertConfirmSheet } from './components/AlertConfirmSheet';
+import type { AlertDraft } from './components/AlertConfirmSheet';
 import { buildAvailability } from './lib/availability';
 import { dateLabel } from './lib/date';
 import { loadFilters, saveFilters, markEntered } from './lib/prefs';
@@ -52,6 +54,7 @@ export function App() {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [isStudioSearchOpen, setIsStudioSearchOpen] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [alertDraft, setAlertDraft] = useState<AlertDraft | null>(null);
   const [favOnly, setFavOnly] = useState(false);
   const [collapsedDates, setCollapsedDates] = useState<Set<string>>(() => new Set());
   const [studioSearchQuery, setStudioSearchQuery] = useState('');
@@ -229,6 +232,31 @@ export function App() {
       else next.add(date);
       return next;
     });
+  }
+
+  function openAlertDraft(draft: AlertDraft) {
+    if (filters.dates.length === 0) {
+      setPopover(null);
+      setIsMenuOpen(false);
+      setIsFilterOpen(true);
+      return;
+    }
+    setPopover(null);
+    setIsFilterOpen(false);
+    setIsMenuOpen(false);
+    setAlertDraft(draft);
+  }
+
+  function openStudioAlert(studio: Studio) {
+    openAlertDraft({ scope: 'studios', studios: [studio] });
+  }
+
+  function openCurrentConditionAlert() {
+    if (filters.studioIds.length > 0 && selectedStudios.length > 0) {
+      openAlertDraft({ scope: 'studios', studios: selectedStudios });
+      return;
+    }
+    openAlertDraft({ scope: 'search' });
   }
 
   const dateGroups = useMemo(
@@ -483,10 +511,21 @@ export function App() {
               ) : (
                 <>
                   {selectedStudioEmptyItems.length > 0 && (
-                    <SelectedStudioEmptySection items={selectedStudioEmptyItems} onRemove={removeStudioSelection} />
+                    <SelectedStudioEmptySection
+                      items={selectedStudioEmptyItems}
+                      canCreateAlert={filters.dates.length > 0}
+                      onCreateAlert={openStudioAlert}
+                      onNeedDate={() => setIsFilterOpen(true)}
+                      onRemove={removeStudioSelection}
+                    />
                   )}
                   {totalStudios === 0 && selectedStudioEmptyItems.length === 0 ? (
-                    <EmptyState filters={filters} selectedStudios={selectedStudios} setFilters={setFilters} />
+                    <EmptyState
+                      filters={filters}
+                      selectedStudios={selectedStudios}
+                      setFilters={setFilters}
+                      onCreateAlert={openCurrentConditionAlert}
+                    />
                   ) : (
                     totalStudios > 0 &&
                     visibleGroups.map((group) => {
@@ -604,6 +643,15 @@ export function App() {
         )}
 
         {!isStudioSearchOpen && isMenuOpen && <MenuSheet onClose={() => setIsMenuOpen(false)} />}
+        {alertDraft && (
+          <AlertConfirmSheet
+            draft={alertDraft}
+            filters={filters}
+            areas={areas}
+            onClose={() => setAlertDraft(null)}
+            onConfirm={() => setAlertDraft(null)}
+          />
+        )}
       </section>
     </main>
   );
@@ -661,9 +709,15 @@ function EmptyDay({
 
 function SelectedStudioEmptySection({
   items,
+  canCreateAlert,
+  onCreateAlert,
+  onNeedDate,
   onRemove,
 }: {
   items: SelectedStudioEmptyItem[];
+  canCreateAlert: boolean;
+  onCreateAlert: (studio: Studio) => void;
+  onNeedDate: () => void;
   onRemove: (studioId: number) => void;
 }) {
   return (
@@ -677,6 +731,9 @@ function SelectedStudioEmptySection({
           key={item.studio.id}
           studio={item.studio}
           areaName={item.areaName}
+          canCreateAlert={canCreateAlert}
+          onCreateAlert={onCreateAlert}
+          onNeedDate={onNeedDate}
           onRemove={onRemove}
         />
       ))}
@@ -688,10 +745,12 @@ function EmptyState({
   filters,
   selectedStudios,
   setFilters,
+  onCreateAlert,
 }: {
   filters: FilterState;
   selectedStudios: Studio[];
   setFilters: React.Dispatch<React.SetStateAction<FilterState>>;
+  onCreateAlert: () => void;
 }) {
   const suggestions: { label: string; apply: () => void }[] = [
     { label: '합주실 해제', apply: () => setFilters((f) => ({ ...f, studioIds: [] })) },
@@ -735,7 +794,27 @@ function EmptyState({
           ))}
         </div>
       )}
+      <div className="empty-alert-actions">
+        <button type="button" className="empty-alert-button" onClick={onCreateAlert}>
+          <BellIcon />
+          <span>{filters.dates.length > 0 ? '이 조건으로 알림 받기' : '날짜 선택하고 알림 받기'}</span>
+        </button>
+      </div>
     </div>
+  );
+}
+
+function BellIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" style={{ display: 'block' }} aria-hidden>
+      <path
+        d="M18 16v-4.4c0-3.1-1.9-5.6-5-6.2V4a1 1 0 0 0-2 0v1.4c-3.1.6-5 3.1-5 6.2V16l-1.7 2h15.4L18 16z"
+        stroke="currentColor"
+        strokeWidth="1.9"
+        strokeLinejoin="round"
+      />
+      <path d="M9.5 20a2.6 2.6 0 0 0 5 0" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" />
+    </svg>
   );
 }
 

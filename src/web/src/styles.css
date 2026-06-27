@@ -1010,8 +1010,36 @@ button {
 }
 
 .studio-empty-remove {
+  flex: 0 0 auto;
   color: var(--accent-strong);
   font-weight: var(--fw-extrabold);
+}
+
+.studio-empty-alert {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 30px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: var(--sp-fine);
+  padding: 0 var(--sp-2);
+  border-radius: var(--r-md);
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-extrabold);
+}
+
+.studio-empty-alert span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.studio-empty-alert svg {
+  flex: 0 0 auto;
 }
 
 /* 카드/방행 전체가 탭 대상임을 알리는 셰브론. 틸로 칠해 "여기서 예약으로 간다"를 암시 */
@@ -1269,6 +1297,34 @@ button {
   color: var(--text-2);
   font-size: var(--fs-xs);
   font-weight: var(--fw-bold);
+}
+
+.empty-alert-actions {
+  width: 100%;
+  max-width: 280px;
+  margin-top: var(--sp-3);
+}
+
+.empty-alert-button {
+  width: 100%;
+  min-height: var(--tap);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-2);
+  border-radius: var(--r-lg);
+  padding: 0 var(--sp-4);
+  background: var(--accent);
+  color: var(--white);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-extrabold);
+}
+
+.empty-alert-button span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 /* 미선택 칩에서 그레이 fill을 걷어내고 가벼운 1px 보더만. 선택 시에만 teal fill */
@@ -1662,6 +1718,80 @@ button {
   flex: 1 1 auto;
   color: var(--white);
   background: var(--accent);
+}
+
+/* ============================================================
+   Alert confirm sheet
+   ============================================================ */
+.alert-sheet {
+  height: auto;
+  max-height: 82%;
+}
+
+.alert-summary {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-3);
+  margin-top: var(--sp-3);
+  padding: var(--sp-4);
+  border-radius: var(--r-lg);
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+}
+
+.alert-summary svg {
+  flex: 0 0 auto;
+  margin-top: 2px;
+}
+
+.alert-summary strong,
+.alert-summary span {
+  display: block;
+}
+
+.alert-summary strong {
+  color: var(--text-1);
+  font-size: var(--fs-lg);
+  font-weight: var(--fw-extrabold);
+  line-height: 1.35;
+}
+
+.alert-summary span {
+  margin-top: var(--sp-1);
+  color: var(--text-2);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-medium);
+  line-height: 1.5;
+}
+
+.alert-condition-list {
+  margin: var(--sp-4) 0 0;
+  padding: 0;
+  border-top: 1px solid var(--border-subtle);
+}
+
+.alert-condition-row {
+  display: flex;
+  gap: var(--sp-3);
+  padding: var(--sp-3) 0;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.alert-condition-row dt {
+  flex: 0 0 48px;
+  color: var(--text-3);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-bold);
+}
+
+.alert-condition-row dd {
+  flex: 1 1 auto;
+  min-width: 0;
+  margin: 0;
+  color: var(--text-1);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-semibold);
+  line-height: 1.45;
 }
 
 /* ============================================================
