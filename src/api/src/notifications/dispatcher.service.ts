@@ -139,7 +139,7 @@ export class NotificationDispatcher {
       `
       WITH events AS (
         SELECT DISTINCT ev.room_id, ev.slot_date, ev.slot_start_time, r.studio_id,
-               r.name AS room_name, s.name AS studio_name
+               r.name AS room_name, r.capacity_max, s.name AS studio_name
         FROM unnest($1::bigint[], $2::date[], $3::time[])
                AS ev(room_id, slot_date, slot_start_time)
         INNER JOIN rooms r ON r.id = ev.room_id AND r.is_active = true
@@ -162,18 +162,30 @@ export class NotificationDispatcher {
         ns.min_duration
       FROM events e
       INNER JOIN notification_subscriptions ns ON ns.is_active = true
+        -- 대상: 합주실 목록 / 지역 목록 / (둘 다 NULL 이면) 모든 지역
         AND (
-          (ns.studio_id IS NOT NULL AND ns.studio_id = e.studio_id)
-          OR (ns.area_id IS NOT NULL AND EXISTS (
+          (ns.studio_ids IS NOT NULL AND e.studio_id = ANY(ns.studio_ids))
+          OR (ns.studio_ids IS NULL AND ns.area_ids IS NOT NULL AND EXISTS (
                 SELECT 1 FROM studio_areas sa
-                WHERE sa.studio_id = e.studio_id AND sa.area_id = ns.area_id
+                WHERE sa.studio_id = e.studio_id AND sa.area_id = ANY(ns.area_ids)
              ))
+          OR (ns.studio_ids IS NULL AND ns.area_ids IS NULL)
         )
       INNER JOIN devices d ON d.id = ns.device_id AND d.is_active = true
       WHERE
-        (ns.weekdays IS NULL OR EXTRACT(DOW FROM e.slot_date)::int = ANY(ns.weekdays))
-        AND (ns.time_from IS NULL OR e.slot_start_time >= ns.time_from)
-        AND (ns.time_to IS NULL OR e.slot_start_time < ns.time_to)
+        -- 특정 날짜 필터
+        e.slot_date = ANY(ns.dates)
+        -- 시간대 필터: 윈도우가 없으면 모든 시간, 있으면 하나라도 들면 통과(24:00=상한 없음)
+        AND (
+          jsonb_array_length(ns.time_windows) = 0
+          OR EXISTS (
+            SELECT 1 FROM jsonb_array_elements(ns.time_windows) AS w
+            WHERE e.slot_start_time >= (w->>'from')::time
+              AND ((w->>'to') = '24:00' OR e.slot_start_time < (w->>'to')::time)
+          )
+        )
+        -- 인원 필터: capacity_max 가 없으면(미상) 통과
+        AND (ns.min_capacity IS NULL OR e.capacity_max IS NULL OR e.capacity_max >= ns.min_capacity)
         -- 최소 연속 가능 시간: 같은 방·날짜에서 시작시각부터 N시간 연속 AVAILABLE 인지 확인.
         AND (
           SELECT count(*) FROM slots x
