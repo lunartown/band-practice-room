@@ -546,9 +546,12 @@ export function App() {
                               />
                             ))}
                             {!hasBodyRows && favFilterActive ? (
-                              <div className="empty-day">
-                                <span>이 날은 즐겨찾기한 곳이 비어 있어요</span>
-                              </div>
+                              <EmptyDay
+                                message="이 날은 즐겨찾기한 곳이 비어 있어요"
+                                minDuration={filters.minDuration}
+                                setFilters={setFilters}
+                                onCreateAlert={() => openCurrentConditionAlert(group.date)}
+                              />
                             ) : !hasBodyRows ? (
                               <EmptyDay
                                 minDuration={filters.minDuration}
@@ -682,17 +685,19 @@ function SkeletonList() {
 }
 
 function EmptyDay({
+  message,
   minDuration,
   setFilters,
   onCreateAlert,
 }: {
+  message?: string;
   minDuration: number;
   setFilters: React.Dispatch<React.SetStateAction<FilterState>>;
   onCreateAlert: () => void;
 }) {
   return (
     <div className="empty-day">
-      <span>이 날은 연속 {minDuration}시간이 안 돼요</span>
+      <span>{message ?? `이 날은 연속 ${minDuration}시간이 안 돼요`}</span>
       <div className="empty-day-actions">
         {minDuration > 1 && (
           <button onClick={() => setFilters((f) => ({ ...f, minDuration: (minDuration - 1) as FilterState['minDuration'] }))}>
@@ -701,7 +706,7 @@ function EmptyDay({
         )}
         <button className="empty-day-alert" onClick={onCreateAlert}>
           <BellIcon />
-          <span>이 날짜 알림</span>
+          <span>빈 자리 알림</span>
         </button>
       </div>
     </div>

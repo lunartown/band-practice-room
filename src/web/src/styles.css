@@ -1233,6 +1233,11 @@ button {
   font-weight: var(--fw-medium);
 }
 
+.empty-day > span {
+  min-width: 0;
+  line-height: 1.45;
+}
+
 .empty-day-actions {
   flex: 0 0 auto;
   display: inline-flex;
