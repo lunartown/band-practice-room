@@ -3,6 +3,11 @@ import { DatabaseService } from '../database/database.service.js';
 
 export type Platform = 'ios' | 'android' | 'web';
 
+export interface TimeWindow {
+  from: string;
+  to: string;
+}
+
 export interface DeviceRow {
   id: string;
   device_token: string;
@@ -14,26 +19,26 @@ export interface DeviceRow {
 export interface SubscriptionRow {
   id: string;
   device_id: string;
-  studio_id: string | null;
-  area_id: string | null;
-  time_from: string | null;
-  time_to: string | null;
+  studio_ids: string[] | null;
+  area_ids: string[] | null;
+  dates: string[];
+  time_windows: TimeWindow[];
   min_duration: number;
-  weekdays: number[] | null;
+  min_capacity: number | null;
   is_active: boolean;
   created_at: Date;
-  studio_name: string | null;
-  area_name: string | null;
+  studios: Array<{ id: number; name: string }> | null;
+  areas: Array<{ id: number; name: string }> | null;
 }
 
 export interface CreateSubscriptionInput {
   deviceId: string;
-  studioId: number | null;
-  areaId: number | null;
-  timeFrom: string | null;
-  timeTo: string | null;
+  studioIds: number[] | null;
+  areaIds: number[] | null;
+  dates: string[];
+  timeWindows: TimeWindow[];
   minDuration: number;
-  weekdays: number[] | null;
+  minCapacity: number | null;
 }
 
 @Injectable()
@@ -75,18 +80,18 @@ export class NotificationsRepository {
     const result = await this.database.query<{ id: string }>(
       `
       INSERT INTO notification_subscriptions
-        (device_id, studio_id, area_id, time_from, time_to, min_duration, weekdays)
-      VALUES ($1, $2, $3, $4, $5, $6, $7)
+        (device_id, studio_ids, area_ids, dates, time_windows, min_duration, min_capacity)
+      VALUES ($1, $2, $3, $4, $5::jsonb, $6, $7)
       RETURNING id
       `,
       [
         input.deviceId,
-        input.studioId,
-        input.areaId,
-        input.timeFrom,
-        input.timeTo,
+        input.studioIds,
+        input.areaIds,
+        input.dates,
+        JSON.stringify(input.timeWindows),
         input.minDuration,
-        input.weekdays,
+        input.minCapacity,
       ],
     );
     return (await this.findSubscription(result.rows[0].id))!;
@@ -121,13 +126,15 @@ export class NotificationsRepository {
   }
 }
 
+// 대상 합주실/지역 id 를 이름까지 묶어 돌려준다(내 알림 목록 표시용).
 const SUBSCRIPTION_SELECT = `
   SELECT
-    ns.id, ns.device_id, ns.studio_id, ns.area_id,
-    ns.time_from::text AS time_from, ns.time_to::text AS time_to,
-    ns.min_duration, ns.weekdays, ns.is_active, ns.created_at,
-    st.name AS studio_name, a.name AS area_name
+    ns.id, ns.device_id, ns.studio_ids, ns.area_ids,
+    ns.dates::text[] AS dates, ns.time_windows, ns.min_duration, ns.min_capacity,
+    ns.is_active, ns.created_at,
+    (SELECT json_agg(json_build_object('id', s.id, 'name', s.name) ORDER BY s.name)
+       FROM studios s WHERE s.id = ANY(ns.studio_ids)) AS studios,
+    (SELECT json_agg(json_build_object('id', a.id, 'name', a.name) ORDER BY a."order")
+       FROM areas a WHERE a.id = ANY(ns.area_ids)) AS areas
   FROM notification_subscriptions ns
-  LEFT JOIN studios st ON st.id = ns.studio_id
-  LEFT JOIN areas a ON a.id = ns.area_id
 `;
