@@ -93,6 +93,9 @@
   --shadow-phone: 0 18px 50px -16px rgba(20, 28, 42, 0.28);
   --shadow-sheet: 0 -12px 44px rgba(0, 0, 0, 0.2);
   --shadow-pop: 0 10px 30px -8px rgba(20, 28, 42, 0.25);
+
+  --native-safe-area-top: 0px;
+  --app-safe-area-top: var(--native-safe-area-top);
 }
 
 /* ============================================================
@@ -2563,21 +2566,20 @@ button {
     padding-top: var(--sp-3);
   }
 
-  /* iOS 앱에서만: WebView 가 노치 아래까지 edge-to-edge 로 채우므로 안전영역만큼
-     상단을 더 밀어 콘텐츠가 가려지지 않게 한다.
-     Android 는 main.tsx 에서 StatusBar.overlay=false 로 네이티브가 상태표시줄
-     공간을 직접 확보하므로 env 를 더하지 않는다(더하면 노치 기기에서 이중 여백).
-     웹/PWA(.is-ios 없음)에선 위의 최소 여백을 그대로 쓴다. */
-  .is-ios .top-bar {
-    padding-top: calc(var(--sp-2) + env(safe-area-inset-top, 0px));
+  .is-ios {
+    --app-safe-area-top: max(env(safe-area-inset-top, 0px), var(--native-safe-area-top));
+  }
+
+  /* 네이티브 앱에서만: CSS env 값과 StatusBar 플러그인 높이 중 유효한 값을 사용해
+     상태표시줄/노치 아래로 콘텐츠를 내린다. 웹/PWA 는 기본 최소 여백을 유지한다. */
+  .is-native .top-bar {
+    padding-top: calc(var(--sp-2) + var(--app-safe-area-top));
   }
 
   /* 드로어 패널은 상태표시줄 아래에서 시작하게 한다. top-bar 처럼 안전영역을
      헤더 패딩으로 흡수하면 좌측 패널만 상태표시줄을 덮어 상단이 갈라져 보였다.
-     패널 자체를 내려 상태표시줄 영역은 딤(스크림)만 남긴다. (헤더 패딩은 기본값 유지)
-     Android 는 overlay=false 라 WebView 가 이미 상태표시줄 아래에서 시작하므로
-     불필요 — iOS 로만 한정한다. */
-  .is-ios .menu-drawer {
-    top: env(safe-area-inset-top, 0px);
+     패널 자체를 내려 상태표시줄 영역은 딤(스크림)만 남긴다. (헤더 패딩은 기본값 유지) */
+  .is-native .menu-drawer {
+    top: var(--app-safe-area-top);
   }
 }
