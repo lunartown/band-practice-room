@@ -40,6 +40,31 @@ def naver_biz_id(url):
     m = re.search(r'/bizes/(\d+)', url)
     return m.group(1) if m else None
 
+def parse_capacity_bounds(room):
+    def to_int(value):
+        if value is None:
+            return None
+        try:
+            return int(value)
+        except (TypeError, ValueError):
+            return None
+
+    capacity_min = room.get("capacityMin")
+    capacity_max = room.get("capacityMax")
+    if capacity_min is not None or capacity_max is not None:
+        return to_int(capacity_min), to_int(capacity_max)
+
+    capacity = room.get("capacity")
+    if isinstance(capacity, str):
+        nums = [int(n) for n in re.findall(r'\d+', capacity)]
+        if len(nums) >= 2:
+            return nums[0], nums[-1]
+        if len(nums) == 1:
+            return nums[0], nums[0]
+        return None, None
+    capacity = to_int(capacity)
+    return capacity, capacity
+
 data = json.load(open(os.path.join(_REPO_ROOT, "_local", "studio-catalog.json")))
 
 lines = []
@@ -98,18 +123,15 @@ for studio in data["studios"]:
         naver_biz_item_id = room.get("naverBizItemId")
         room_name = room.get("name")
         hourly = room.get("hourlyPrice") or parse_price(room.get("price"))
-        capacity = room.get("capacity")
-        if isinstance(capacity, str):
-            nums = re.findall(r'\d+', capacity)
-            capacity = int(nums[0]) if nums else None
+        capacity_min, capacity_max = parse_capacity_bounds(room)
         price_source = "SCRAPED" if hourly else "UNKNOWN"
 
         lines.append(
             f"INSERT INTO rooms (studio_id, name, price_per_hour, price_source, capacity_min, capacity_max, is_active) "
             f"SELECT id, {esc(room_name)}, "
             f"{'NULL' if not hourly else hourly}, '{price_source}', "
-            f"{'NULL' if capacity is None else capacity}, "
-            f"{'NULL' if capacity is None else capacity}, true "
+            f"{'NULL' if capacity_min is None else capacity_min}, "
+            f"{'NULL' if capacity_max is None else capacity_max}, true "
             f"FROM studios WHERE slug={esc(slug)};"
         )
         if naver_biz_item_id:
