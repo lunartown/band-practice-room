@@ -23,6 +23,7 @@ interface StudioSourceRow {
   studio_id: string;
   source_id: string;
   source_code: string | null;
+  mapping_status: 'ACTIVE' | 'NEEDS_MAPPING' | 'DISABLED' | 'NOT_FOUND';
   url: string | null;
   external_key: string | null;
   studio_name: string;
@@ -45,18 +46,22 @@ export async function runOnce(): Promise<boolean> {
     await failJob(job.id, 'studio_source 를 찾을 수 없습니다', 'UNKNOWN');
     return true;
   }
+  if (source.mapping_status !== 'ACTIVE') {
+    await failJob(job.id, `수집 제외 상태입니다(${source.mapping_status})`, 'UNKNOWN');
+    return true;
+  }
 
   const rooms = await getMappedRooms(source.studio_id, source.source_id);
   if (rooms.length === 0) {
     // 매핑(room_sources)이 없는 스튜디오 → 수집 대상 아님. 재시도해도 의미 없음.
-    await failJob(job.id, '매핑된 방이 없습니다(room_sources)', 'UNKNOWN');
+    await failJob(job.id, '매핑된 방이 없습니다(room_sources)', 'PARSE_FAILED', job.studio_source_id);
     return true;
   }
 
   // 소스 종류(naver/spacecloud)에 따라 스크래퍼를 고른다.
   const dispatch = buildScraper(source, rooms, job.studio_source_id);
   if ('error' in dispatch) {
-    await failJob(job.id, dispatch.error, 'UNKNOWN');
+    await failJob(job.id, dispatch.error, 'PARSE_FAILED', job.studio_source_id);
     return true;
   }
 
@@ -100,6 +105,7 @@ export async function runOnce(): Promise<boolean> {
     });
 
     await requeueJob(job.id, SUCCESS_REQUEUE_MINUTES);
+    await markStudioSourceSuccess(job.studio_source_id);
     console.log(
       `[worker] 수집 완료(${status}): ${source.studio_name} / 슬롯 ${totalSlots}건` +
         (erroredRooms.length ? ` / 방 ${erroredRooms.length}개 실패` : ''),
@@ -120,7 +126,7 @@ export async function runOnce(): Promise<boolean> {
       errorMessage: message,
     });
 
-    await failJob(job.id, message, errorKind);
+    await failJob(job.id, message, errorKind, job.studio_source_id);
     console.error(`[worker] 수집 실패: ${source.studio_name} / ${message}`);
   }
 
@@ -213,7 +219,8 @@ async function provisionJobs() {
     FROM studio_sources ss
     INNER JOIN studios st ON st.id = ss.studio_id AND st.is_active = true
     INNER JOIN sources src ON src.id = ss.source_id AND src.is_active = true
-    WHERE NOT EXISTS (
+    WHERE ss.mapping_status = 'ACTIVE'
+      AND NOT EXISTS (
       SELECT 1 FROM scrape_jobs j
       WHERE j.studio_source_id = ss.id
         AND (
@@ -249,7 +256,7 @@ async function claimJob(): Promise<JobRow | null> {
 async function getStudioSource(studioSourceId: string): Promise<StudioSourceRow | null> {
   const result = await query<StudioSourceRow>(
     `
-    SELECT ss.studio_id, ss.source_id, src.code AS source_code,
+    SELECT ss.studio_id, ss.source_id, src.code AS source_code, ss.mapping_status,
            ss.url, ss.external_key, st.name AS studio_name
     FROM studio_sources ss
     INNER JOIN studios st ON st.id = ss.studio_id
@@ -268,7 +275,10 @@ async function getMappedRooms(studioId: string, sourceId: string): Promise<RoomR
     SELECT r.id, r.name, rs.external_key AS external_key
     FROM rooms r
     INNER JOIN room_sources rs ON rs.room_id = r.id AND rs.source_id = $2
-    WHERE r.studio_id = $1 AND r.is_active = true AND rs.external_key IS NOT NULL
+    WHERE r.studio_id = $1
+      AND r.is_active = true
+      AND rs.mapping_status = 'ACTIVE'
+      AND rs.external_key IS NOT NULL
     ORDER BY r.id ASC
   `,
     [studioId, sourceId],
@@ -391,7 +401,12 @@ async function requeueJob(jobId: string, delayMinutes: number): Promise<void> {
   );
 }
 
-async function failJob(jobId: string, message: string, errorKind: string): Promise<void> {
+async function failJob(
+  jobId: string,
+  message: string,
+  errorKind: string,
+  studioSourceId?: string,
+): Promise<void> {
   const result = await query<{ attempts: number }>(
     `SELECT attempts FROM scrape_jobs WHERE id = $1`,
     [jobId],
@@ -413,8 +428,43 @@ async function failJob(jobId: string, message: string, errorKind: string): Promi
   );
 
   if (!shouldRetry) {
+    if (studioSourceId && errorKind === 'PARSE_FAILED') {
+      await markStudioSourceNeedsMapping(studioSourceId, message);
+    }
     console.error(`[worker] 최대 재시도 횟수 초과, 작업 중단: job ${jobId}`);
   }
+}
+
+async function markStudioSourceSuccess(studioSourceId: string): Promise<void> {
+  await query(
+    `
+    UPDATE studio_sources
+    SET
+      mapping_status = 'ACTIVE',
+      last_lookup_error = NULL,
+      last_verified_at = NOW()
+    WHERE id = $1
+      AND mapping_status = 'ACTIVE'
+  `,
+    [studioSourceId],
+  );
+}
+
+async function markStudioSourceNeedsMapping(
+  studioSourceId: string,
+  message: string,
+): Promise<void> {
+  await query(
+    `
+    UPDATE studio_sources
+    SET
+      mapping_status = 'NEEDS_MAPPING',
+      last_lookup_error = $2
+    WHERE id = $1
+      AND mapping_status = 'ACTIVE'
+  `,
+    [studioSourceId, message],
+  );
 }
 
 function classifyError(message: string): 'TIMEOUT' | 'AUTH_FAILED' | 'PARSE_FAILED' | 'UNKNOWN' {

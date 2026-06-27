@@ -93,7 +93,10 @@ export class CatalogRepository {
             '{}'
           ) AS area_ids,
           s.address,
-          COALESCE(s.image_url_manual, s.image_url_scraped) AS image_url,
+          CASE
+            WHEN s.image_status = 'HIDDEN' THEN NULL
+            ELSE COALESCE(s.image_url_manual, s.image_url_scraped)
+          END AS image_url,
           s.rating,
           s.review_count
         FROM studios s

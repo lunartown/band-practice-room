@@ -8,6 +8,7 @@
     "db:migrate": "tsx src/database/migrate.ts",
     "db:seed": "tsx src/database/seed.ts",
     "dev": "tsx watch src/main.ts",
+    "admin:hash-password": "tsx src/admin/hash-password.ts",
     "start": "tsx src/main.ts",
     "test": "jest --runInBand",
     "typecheck": "tsc --noEmit -p tsconfig.json"

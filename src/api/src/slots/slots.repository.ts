@@ -137,7 +137,10 @@ export class SlotsRepository {
           s.primary_area_id AS studio_primary_area_id,
           a.name    AS studio_primary_area_name,
           s.address AS studio_address,
-          COALESCE(s.image_url_manual, s.image_url_scraped) AS studio_image_url,
+          CASE
+            WHEN s.image_status = 'HIDDEN' THEN NULL
+            ELSE COALESCE(s.image_url_manual, s.image_url_scraped)
+          END AS studio_image_url,
           s.rating        AS studio_rating,
           s.review_count  AS studio_review_count,
           s.review_keywords AS studio_review_keywords,
