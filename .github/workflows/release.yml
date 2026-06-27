@@ -1,0 +1,51 @@
+name: Release (dev→main fast-forward)
+
+# dev를 main으로 "선형" 릴리스한다.
+# GitHub 머지 버튼(merge/squash/rebase)은 SHA를 새로 써서 dev가 갈라지고 dev가
+# 자동 삭제되는 문제가 있다. 이 워크플로는 fast-forward만 해서 main을 dev와
+# 동일 SHA로 맞춘다 → 분기 없음, dev 재동기화·삭제 없음, 선형 히스토리 유지.
+#
+# 사용: Actions 탭 → "Release (dev→main fast-forward)" → Run workflow.
+# dev가 main보다 앞서(선형) 있어야 한다. ff 불가(갈라짐)면 일부러 실패시켜 사고를 막는다.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-main
+  cancel-in-progress: false
+
+jobs:
+  fast-forward:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout main (full history)
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+          # 이후 단계가 origin에 push 할 수 있도록 토큰 자격증명을 남긴다.
+          persist-credentials: true
+
+      - name: Fast-forward main to dev
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          git fetch origin dev:refs/remotes/origin/dev
+
+          if git merge-base --is-ancestor origin/main origin/dev; then
+            echo "main은 dev의 조상 → fast-forward 가능"
+          else
+            echo "::error::main이 dev의 조상이 아닙니다(갈라짐). ff 릴리스 불가 — dev를 먼저 정리하세요."
+            exit 1
+          fi
+
+          git merge --ff-only origin/dev
+          git push origin HEAD:main
+          echo "릴리스 완료: main = $(git rev-parse --short HEAD)"
