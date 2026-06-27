@@ -46,8 +46,8 @@ export function App() {
   const [searchSlots, setSearchSlots] = useState<Slot[]>([]);
   const [searchResponseDates, setSearchResponseDates] = useState<string[]>([]);
   const [filters, setFilters] = useState<FilterState>(savedPrefs?.filters ?? defaultFilters);
-  // 최근(TTL 이내) 방문이면 오픈 화면을 건너뛰고 바로 결과로 진입한다.
-  // 오랜만의 방문이면 조건은 복원하되 오픈 화면을 다시 보여준다.
+  // 같은 실행 세션에서 최근(TTL 이내) 방문한 경우에만 조건을 복원하고 결과로 바로 진입한다.
+  // 콜드스타트나 오랜만의 방문은 오픈 화면 + 기본 필터로 다시 시작한다.
   const [entered, setEntered] = useState(savedPrefs?.fresh ?? false);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [isStudioSearchOpen, setIsStudioSearchOpen] = useState(false);
@@ -103,7 +103,7 @@ export function App() {
     if (!entered) return;
     let canceled = false;
     // 이번 실행에서 진입했음을 기록한다. 같은 세션 안에서의 새로고침은
-    // 오픈 화면을 다시 띄우지 않지만, 콜드스타트(앱 재실행/새 탭)면 다시 뜬다.
+    // 조건을 복원하지만, 콜드스타트(앱 재실행/새 탭)면 기본 필터로 다시 시작한다.
     markEntered();
     saveFilters(filters);
     setError(null);
