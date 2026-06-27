@@ -243,8 +243,8 @@ function AlertEditSheet({ alert, areas, studios, onClose, onSave }: AlertEditShe
                     setIsStudioSearchOpen(true);
                   }}
                 >
-                  <SearchIcon />
                   <span>{selectedStudios.length > 0 ? '합주실 추가' : '합주실 찾기'}</span>
+                  <SearchIcon />
                 </button>
               </div>
             </div>

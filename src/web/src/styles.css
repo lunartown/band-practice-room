@@ -747,12 +747,17 @@ button {
 }
 
 .alert-studio-open-search {
-  color: var(--accent-strong);
-  background: var(--accent-soft);
+  color: var(--text-2);
+  background: var(--surface-sunken);
+}
+
+.alert-studio-open-search span {
+  color: var(--text-1);
 }
 
 .alert-studio-open-search svg {
   flex: 0 0 auto;
+  color: var(--text-3);
 }
 
 /* ============================================================
