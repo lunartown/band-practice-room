@@ -15,9 +15,12 @@ const config: CapacitorConfig = {
       backgroundColor: '#ffffff',
       showSpinner: false,
     },
+    // 상단바가 흰색(--surface)으로 이어지도록 상태표시줄은 흰 배경 + 어두운 아이콘.
+    // (style LIGHT = 밝은 배경용 = 어두운 글자/아이콘.) Android overlay=false 일 때
+    // 이 배경색이 칠해진다. 런타임(main.tsx)에서도 같은 값으로 덮어 깜빡임을 줄인다.
     StatusBar: {
       style: 'LIGHT',
-      backgroundColor: '#009aa6',
+      backgroundColor: '#ffffff',
     },
     // Capgo 라이브 업데이트(OTA). autoUpdate=true 면 앱 실행/복귀 때마다
     // Capgo 클라우드에서 새 웹 번들을 받아 다음 실행 때 자동 적용한다.

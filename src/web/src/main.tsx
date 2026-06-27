@@ -1,7 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { Capacitor } from '@capacitor/core';
-import { StatusBar } from '@capacitor/status-bar';
+import { StatusBar, Style } from '@capacitor/status-bar';
 import { Analytics } from '@vercel/analytics/react';
 import { App } from './App';
 import { initFavorites } from './lib/favorites';
@@ -22,6 +22,10 @@ if (Capacitor.isNativePlatform()) {
   //      시작한다. (이때 env 는 더하지 않는다 — styles.css 에서 iOS 로만 한정.)
   if (Capacitor.getPlatform() === 'android') {
     StatusBar.setOverlaysWebView({ overlay: false }).catch(() => {});
+    // 상단바가 흰색(--surface)으로 이어지도록 상태표시줄도 흰 배경 + 어두운 아이콘.
+    // (Style.Light = 밝은 배경용 = 어두운 글자/아이콘.) config 의 teal 기본값을 덮는다.
+    StatusBar.setBackgroundColor({ color: '#ffffff' }).catch(() => {});
+    StatusBar.setStyle({ style: Style.Light }).catch(() => {});
   }
 }
 
