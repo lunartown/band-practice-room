@@ -407,22 +407,24 @@ export function App() {
                     <span className="fresh-dot" />
                     <span className="sync-label">{syncLabel}</span>
                   </div>
-                  <button
-                    className={`search-toggle${studioActive ? ' active' : ''}`}
-                    aria-pressed={studioActive}
-                    aria-label="합주실 찾기"
-                    onClick={openStudioSearch}
-                  >
-                    <SearchIcon />
-                  </button>
-                  <button
-                    className={`fav-toggle${favFilterActive ? ' active' : ''}`}
-                    aria-pressed={favFilterActive}
-                    aria-label="즐겨찾기만 보기"
-                    onClick={toggleFavoritesFilter}
-                  >
-                    <HeartChipIcon filled={favFilterActive} />
-                  </button>
+                  <div className="top-bar-actions">
+                    <button
+                      className={`search-toggle${studioActive ? ' active' : ''}`}
+                      aria-pressed={studioActive}
+                      aria-label="합주실 찾기"
+                      onClick={openStudioSearch}
+                    >
+                      <SearchIcon />
+                    </button>
+                    <button
+                      className={`fav-toggle${favFilterActive ? ' active' : ''}`}
+                      aria-pressed={favFilterActive}
+                      aria-label="즐겨찾기만 보기"
+                      onClick={toggleFavoritesFilter}
+                    >
+                      <HeartChipIcon filled={favFilterActive} />
+                    </button>
+                  </div>
                 </div>
               </div>
             </header>

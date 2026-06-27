@@ -674,11 +674,18 @@ button {
   color: var(--accent-strong);
 }
 
-/* 헤더 우측: 동기화 상태 + 즐겨찾기만 보기 토글을 묶는다. */
+/* 헤더 우측: 동기화 상태와 아이콘 액션 그룹을 묶는다. */
 .top-bar-right {
   display: flex;
   align-items: center;
   gap: var(--sp-2);
+}
+
+/* 검색/즐겨찾기 토글: 버튼 박스는 붙여 아이콘끼리 멀어 보이지 않게 한다. */
+.top-bar-actions {
+  display: flex;
+  align-items: center;
+  gap: 0;
 }
 
 /* 즐겨찾기만 보기 토글: 헤더에 두어 칩 줄 혼잡(칩 글자 잘림)을 피한다.
