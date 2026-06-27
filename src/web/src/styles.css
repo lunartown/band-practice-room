@@ -1014,23 +1014,6 @@ button {
   line-height: 1.45;
 }
 
-.empty-message-alert {
-  flex: 0 0 auto;
-  display: grid;
-  place-items: center;
-  width: 30px;
-  height: 30px;
-  margin-top: -2px;
-  border-radius: var(--r-md);
-  background: var(--accent-soft);
-  box-shadow: inset 0 0 0 1px var(--accent-border);
-  color: var(--accent-strong);
-}
-
-.empty-message-alert:active {
-  background: var(--surface);
-}
-
 .studio-empty-remove {
   flex: 0 0 auto;
   color: var(--accent-strong);
@@ -1250,16 +1233,30 @@ button {
   font-weight: var(--fw-extrabold);
 }
 
-.empty-day button.empty-day-alert {
-  min-height: 26px;
+.inline-alert-button {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-fine);
+  min-height: 28px;
   padding: 0 var(--sp-2);
   border-radius: var(--r-sm);
   background: var(--accent-soft);
+  box-shadow: inset 0 0 0 1px var(--accent-border);
+  color: var(--accent-strong);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-extrabold);
+  white-space: nowrap;
 }
 
-.empty-day-alert svg {
+.inline-alert-button svg {
   width: 14px;
   height: 14px;
+}
+
+.inline-alert-button:active {
+  background: var(--surface);
 }
 
 /* ============================================================

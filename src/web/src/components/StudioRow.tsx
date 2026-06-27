@@ -228,11 +228,12 @@ export function SelectedStudioEmptyRow({
           {!phoneOnly && (
             <button
               type="button"
-              className="empty-message-alert"
+              className="inline-alert-button"
               aria-label={`${name} 빈 자리 알림 설정`}
               onClick={() => onCreateAlert(studio)}
             >
               <BellIcon />
+              <span>알림</span>
             </button>
           )}
         </div>
@@ -266,7 +267,7 @@ export function SelectedStudioEmptyRow({
 
 function BellIcon() {
   return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden>
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden>
       <path
         d="M18 15.5c-1-1.2-1.5-2.7-1.5-4.7V9.7a4.5 4.5 0 0 0-9 0v1.1c0 2-.5 3.5-1.5 4.7L5 17h14l-1-1.5z"
         stroke="currentColor"
