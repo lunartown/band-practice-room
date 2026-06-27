@@ -9,8 +9,12 @@ android {
         targetSdkVersion rootProject.ext.targetSdkVersion
         // CI 빌드는 ANDROID_VERSION_CODE/NAME 으로 덮어쓴다(없으면 로컬 기본값).
         // 업데이트마다 versionCode 는 단조 증가해야 한다(Play 요구).
-        versionCode (System.getenv("ANDROID_VERSION_CODE") ?: "1").toInteger()
-        versionName System.getenv("ANDROID_VERSION_NAME") ?: "1.0"
+        // def 로 먼저 풀어 쓴다 — `versionCode (...)` 처럼 메서드명 뒤 공백+괄호는
+        // Groovy 가 호출 구문으로 오해해 null 이 들어갈 수 있다.
+        def envVersionCode = System.getenv("ANDROID_VERSION_CODE")
+        def envVersionName = System.getenv("ANDROID_VERSION_NAME")
+        versionCode envVersionCode ? envVersionCode.toInteger() : 1
+        versionName envVersionName ?: "1.0"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
