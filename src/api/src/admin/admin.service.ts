@@ -41,7 +41,7 @@ export class AdminService {
       items: rows.map((row) => ({
         kind: row.kind,
         id: Number(row.id),
-        sourceId: Number(row.source_id),
+        sourceId: row.source_id == null ? null : Number(row.source_id),
         sourceCode: row.source_code,
         sourceName: row.source_name,
         studioId: Number(row.studio_id),
@@ -52,9 +52,16 @@ export class AdminService {
         url: row.url,
         mappingStatus: row.mapping_status,
         mappingNote: row.mapping_note,
+        issueReason: row.issue_reason,
+        roomCount: row.room_count,
+        mappedRoomSourceCount: row.mapped_room_source_count,
         lastLookupError: row.last_lookup_error,
         lastVerifiedAt: toIso(row.last_verified_at),
         manualUpdatedAt: toIso(row.manual_updated_at),
+        latestJobStatus: row.latest_job_status,
+        latestJobAttempts: row.latest_job_attempts,
+        latestJobError: row.latest_job_error,
+        latestJobUpdatedAt: toIso(row.latest_job_updated_at),
         latestRunStatus: row.latest_run_status,
         latestErrorKind: row.latest_error_kind,
         latestErrorMessage: row.latest_error_message,
@@ -261,7 +268,7 @@ function notFound(message: string) {
 
 function sourceResponse(row: {
   id: string;
-  source_id: string;
+  source_id: string | null;
   source_code: string | null;
   source_name: string;
   studio_id: string;
@@ -278,7 +285,7 @@ function sourceResponse(row: {
 }) {
   return {
     id: Number(row.id),
-    sourceId: Number(row.source_id),
+    sourceId: row.source_id == null ? null : Number(row.source_id),
     sourceCode: row.source_code,
     sourceName: row.source_name,
     studioId: Number(row.studio_id),

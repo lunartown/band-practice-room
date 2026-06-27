@@ -12,9 +12,9 @@ export interface AdminOverview {
 }
 
 export interface AdminMappingIssue {
-  kind: 'studio_source' | 'room_source';
+  kind: 'studio_source' | 'room_source' | 'missing_studio_source';
   id: number;
-  sourceId: number;
+  sourceId: number | null;
   sourceCode: string | null;
   sourceName: string;
   studioId: number;
@@ -25,9 +25,16 @@ export interface AdminMappingIssue {
   url: string | null;
   mappingStatus: MappingStatus;
   mappingNote: string | null;
+  issueReason: string | null;
+  roomCount: number;
+  mappedRoomSourceCount: number;
   lastLookupError: string | null;
   lastVerifiedAt: string | null;
   manualUpdatedAt: string | null;
+  latestJobStatus: string | null;
+  latestJobAttempts: number | null;
+  latestJobError: string | null;
+  latestJobUpdatedAt: string | null;
   latestRunStatus: 'SUCCESS' | 'FAILED' | 'PARTIAL' | null;
   latestErrorKind: string | null;
   latestErrorMessage: string | null;
@@ -100,11 +107,13 @@ export async function getAdminAuditLogs(token: string) {
 }
 
 export function updateAdminSource(token: string, item: AdminMappingIssue, patch: SourcePatch) {
+  if (!isEditableMappingIssue(item)) throw new Error('이 항목은 아직 화면에서 직접 수정할 수 없습니다');
   const base = item.kind === 'studio_source' ? 'studio-sources' : 'room-sources';
   return adminFetch(`/admin/${base}/${item.id}`, token, { method: 'PATCH', body: patch });
 }
 
 export function verifyAdminSource(token: string, item: AdminMappingIssue) {
+  if (!isEditableMappingIssue(item)) throw new Error('이 항목은 아직 화면에서 직접 검증할 수 없습니다');
   const base = item.kind === 'studio_source' ? 'studio-sources' : 'room-sources';
   return adminFetch(`/admin/${base}/${item.id}/verify`, token, { method: 'POST' });
 }
@@ -148,4 +157,8 @@ async function adminFetch<T>(path: string, token: string | null, init: AdminFetc
   }
 
   return response.json() as Promise<T>;
+}
+
+function isEditableMappingIssue(item: AdminMappingIssue) {
+  return item.kind === 'studio_source' || item.kind === 'room_source';
 }

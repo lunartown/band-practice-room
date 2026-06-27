@@ -346,6 +346,7 @@ function MappingQueue({
         const key = mappingKey(item);
         const draft = drafts[key] ?? toMappingDraft(item);
         const saving = savingKey === key;
+        const editable = isEditableMappingIssue(item);
         return (
           <article className="admin-row" key={key}>
             <div className="admin-row-head">
@@ -356,15 +357,24 @@ function MappingQueue({
                 </div>
                 <p>
                   {item.sourceName}
+                  {item.roomCount > 0 ? ` · 방 매핑 ${item.mappedRoomSourceCount}/${item.roomCount}` : ' · 방 없음'}
+                  {item.latestJobStatus ? ` · job ${item.latestJobStatus}` : ''}
+                  {item.latestJobAttempts != null ? ` ${item.latestJobAttempts}회` : ''}
                   {item.latestErrorKind ? ` · ${item.latestErrorKind}` : ''}
-                  {item.latestFinishedAt ? ` · ${formatDateTime(item.latestFinishedAt)}` : ''}
+                  {item.latestJobUpdatedAt ? ` · ${formatDateTime(item.latestJobUpdatedAt)}` : ''}
+                  {!item.latestJobUpdatedAt && item.latestFinishedAt ? ` · ${formatDateTime(item.latestFinishedAt)}` : ''}
                 </p>
               </div>
               <StatusPill value={item.mappingStatus} />
             </div>
 
-            {(item.lastLookupError || item.latestErrorMessage) && (
-              <p className="admin-warning">{item.lastLookupError ?? item.latestErrorMessage}</p>
+            {(item.issueReason || item.latestJobError || item.lastLookupError || item.latestErrorMessage) && (
+              <p className="admin-warning">
+                {item.issueReason ?? item.latestJobError ?? item.lastLookupError ?? item.latestErrorMessage}
+              </p>
+            )}
+            {!editable && (
+              <p className="admin-hint">이 항목은 소스/방 매핑 생성이 필요해서 현재 화면에서는 직접 저장할 수 없습니다.</p>
             )}
 
             <div className="admin-form-grid">
@@ -372,6 +382,7 @@ function MappingQueue({
                 식별자
                 <input
                   value={draft.externalKey}
+                  disabled={!editable}
                   onChange={(event) => onDraft(item, { ...draft, externalKey: event.target.value })}
                 />
               </label>
@@ -379,6 +390,7 @@ function MappingQueue({
                 URL
                 <input
                   value={draft.url}
+                  disabled={!editable}
                   onChange={(event) => onDraft(item, { ...draft, url: event.target.value })}
                 />
               </label>
@@ -386,6 +398,7 @@ function MappingQueue({
                 상태
                 <select
                   value={draft.mappingStatus}
+                  disabled={!editable}
                   onChange={(event) => onDraft(item, { ...draft, mappingStatus: event.target.value as MappingStatus })}
                 >
                   {MAPPING_STATUS_OPTIONS.map((status) => (
@@ -397,17 +410,18 @@ function MappingQueue({
                 메모
                 <input
                   value={draft.mappingNote}
+                  disabled={!editable}
                   onChange={(event) => onDraft(item, { ...draft, mappingNote: event.target.value })}
                 />
               </label>
             </div>
 
             <div className="admin-actions">
-              <button className="admin-primary small" disabled={saving} onClick={() => onSave(item)}>
+              <button className="admin-primary small" disabled={saving || !editable} onClick={() => onSave(item)}>
                 {saving ? '저장 중' : '저장'}
               </button>
-              <button className="admin-secondary small" disabled={saving} onClick={() => onVerify(item)}>검증 완료 처리</button>
-              <button className="admin-danger small" disabled={saving} onClick={() => onStatus(item, 'DISABLED')}>비활성화</button>
+              <button className="admin-secondary small" disabled={saving || !editable} onClick={() => onVerify(item)}>검증 완료 처리</button>
+              <button className="admin-danger small" disabled={saving || !editable} onClick={() => onStatus(item, 'DISABLED')}>비활성화</button>
               {item.url && (
                 <a className="admin-link-button" href={item.url} target="_blank" rel="noreferrer">원본 열기</a>
               )}
@@ -560,6 +574,10 @@ function toMappingDraft(item: AdminMappingIssue): MappingDraft {
     mappingStatus: item.mappingStatus,
     mappingNote: item.mappingNote ?? '',
   };
+}
+
+function isEditableMappingIssue(item: AdminMappingIssue) {
+  return item.kind === 'studio_source' || item.kind === 'room_source';
 }
 
 function toImageDraft(item: AdminImageIssue): ImageDraft {

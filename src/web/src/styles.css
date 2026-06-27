@@ -2365,6 +2365,16 @@ button {
   font-weight: var(--fw-semibold);
 }
 
+.admin-hint {
+  margin: -4px 0 0;
+  padding: 10px;
+  border-radius: var(--r-sm);
+  background: var(--surface-sunken);
+  color: var(--text-3);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-semibold);
+}
+
 .admin-form-grid {
   display: grid;
   grid-template-columns: minmax(120px, 0.9fr) minmax(220px, 1.4fr) minmax(150px, 0.7fr) minmax(180px, 1fr);

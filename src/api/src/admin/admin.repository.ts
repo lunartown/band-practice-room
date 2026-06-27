@@ -20,7 +20,7 @@ export interface StudioImagePatch {
 
 export interface AdminSourceRow {
   id: string;
-  source_id: string;
+  source_id: string | null;
   source_code: string | null;
   source_name: string;
   studio_id: string;
@@ -37,7 +37,14 @@ export interface AdminSourceRow {
 }
 
 export interface MappingIssueRow extends AdminSourceRow {
-  kind: 'studio_source' | 'room_source';
+  kind: 'studio_source' | 'room_source' | 'missing_studio_source';
+  issue_reason: string | null;
+  room_count: number;
+  mapped_room_source_count: number;
+  latest_job_status: string | null;
+  latest_job_attempts: number | null;
+  latest_job_error: string | null;
+  latest_job_updated_at: Date | null;
   latest_run_status: 'SUCCESS' | 'FAILED' | 'PARTIAL' | null;
   latest_error_kind: string | null;
   latest_error_message: string | null;
@@ -70,15 +77,60 @@ export class AdminRepository {
       disabled_room_count: string;
       failed_run_count_24h: string;
     }>(`
+      WITH latest_jobs AS (
+        SELECT DISTINCT ON (studio_source_id)
+          studio_source_id,
+          status,
+          attempts,
+          last_error
+        FROM scrape_jobs
+        ORDER BY studio_source_id, updated_at DESC, id DESC
+      ),
+      studio_source_issues AS (
+        SELECT ss.id
+        FROM studio_sources ss
+        LEFT JOIN latest_jobs lj ON lj.studio_source_id = ss.id
+        LEFT JOIN LATERAL (
+          SELECT
+            COUNT(*)::int AS room_count,
+            COUNT(rs.id)::int AS mapped_room_source_count
+          FROM rooms r
+          LEFT JOIN room_sources rs
+            ON rs.room_id = r.id
+            AND rs.source_id = ss.source_id
+            AND rs.mapping_status = 'ACTIVE'
+            AND rs.external_key IS NOT NULL
+          WHERE r.studio_id = ss.studio_id
+            AND r.is_active = true
+        ) stats ON true
+        WHERE ss.mapping_status <> 'ACTIVE'
+          OR ss.last_lookup_error IS NOT NULL
+          OR (lj.status = 'FAILED' AND lj.attempts >= 5)
+          OR (stats.room_count > 0 AND stats.mapped_room_source_count = 0)
+      ),
+      room_source_issues AS (
+        SELECT rs.id
+        FROM room_sources rs
+        WHERE rs.mapping_status <> 'ACTIVE'
+          OR rs.last_lookup_error IS NOT NULL
+      ),
+      missing_source_issues AS (
+        SELECT st.id
+        FROM studios st
+        WHERE st.is_active = true
+          AND NOT EXISTS (
+            SELECT 1 FROM studio_sources ss WHERE ss.studio_id = st.id
+          )
+      )
       SELECT
         (
           SELECT COUNT(*)
           FROM (
-            SELECT id FROM studio_sources
-            WHERE mapping_status <> 'ACTIVE' OR last_lookup_error IS NOT NULL
+            SELECT id FROM studio_source_issues
             UNION ALL
-            SELECT id FROM room_sources
-            WHERE mapping_status <> 'ACTIVE' OR last_lookup_error IS NOT NULL
+            SELECT id FROM room_source_issues
+            UNION ALL
+            SELECT id FROM missing_source_issues
           ) issues
         ) AS mapping_issue_count,
         (
@@ -102,7 +154,28 @@ export class AdminRepository {
 
   async listMappingIssues(): Promise<MappingIssueRow[]> {
     const result = await this.database.query<MappingIssueRow>(`
-      WITH studio_items AS (
+      WITH latest_jobs AS (
+        SELECT DISTINCT ON (studio_source_id)
+          studio_source_id,
+          status,
+          attempts,
+          last_error,
+          updated_at
+        FROM scrape_jobs
+        ORDER BY studio_source_id, updated_at DESC, id DESC
+      ),
+      latest_runs AS (
+        SELECT DISTINCT ON (studio_id, source_id)
+          studio_id,
+          source_id,
+          status,
+          error_kind,
+          error_message,
+          finished_at
+        FROM scrape_runs
+        ORDER BY studio_id, source_id, finished_at DESC NULLS LAST, id DESC
+      ),
+      studio_items AS (
         SELECT
           'studio_source'::text AS kind,
           ss.id,
@@ -120,20 +193,43 @@ export class AdminRepository {
           ss.last_lookup_error,
           ss.last_verified_at,
           ss.manual_updated_at,
+          stats.room_count,
+          stats.mapped_room_source_count,
+          lj.status AS latest_job_status,
+          lj.attempts AS latest_job_attempts,
+          lj.last_error AS latest_job_error,
+          lj.updated_at AS latest_job_updated_at,
           latest.status AS latest_run_status,
           latest.error_kind AS latest_error_kind,
           latest.error_message AS latest_error_message,
-          latest.finished_at AS latest_finished_at
+          latest.finished_at AS latest_finished_at,
+          CASE
+            WHEN ss.mapping_status <> 'ACTIVE' THEN '소스가 수집 제외 상태입니다'
+            WHEN ss.last_lookup_error IS NOT NULL THEN ss.last_lookup_error
+            WHEN lj.status = 'FAILED' AND lj.attempts >= 5 AND lj.last_error IS NOT NULL THEN lj.last_error
+            WHEN stats.room_count = 0 THEN '활성 방이 없습니다(rooms)'
+            WHEN stats.mapped_room_source_count = 0 THEN '매핑된 방이 없습니다(room_sources)'
+            WHEN latest.status IN ('FAILED', 'PARTIAL') THEN latest.error_message
+            ELSE NULL
+          END AS issue_reason
         FROM studio_sources ss
         JOIN studios st ON st.id = ss.studio_id
         JOIN sources src ON src.id = ss.source_id
+        LEFT JOIN latest_jobs lj ON lj.studio_source_id = ss.id
+        LEFT JOIN latest_runs latest ON latest.studio_id = ss.studio_id AND latest.source_id = ss.source_id
         LEFT JOIN LATERAL (
-          SELECT status, error_kind, error_message, finished_at
-          FROM scrape_runs sr
-          WHERE sr.studio_id = ss.studio_id AND sr.source_id = ss.source_id
-          ORDER BY finished_at DESC NULLS LAST, id DESC
-          LIMIT 1
-        ) latest ON true
+          SELECT
+            COUNT(*)::int AS room_count,
+            COUNT(rs.id)::int AS mapped_room_source_count
+          FROM rooms r
+          LEFT JOIN room_sources rs
+            ON rs.room_id = r.id
+            AND rs.source_id = ss.source_id
+            AND rs.mapping_status = 'ACTIVE'
+            AND rs.external_key IS NOT NULL
+          WHERE r.studio_id = ss.studio_id
+            AND r.is_active = true
+        ) stats ON true
       ),
       room_items AS (
         SELECT
@@ -153,31 +249,83 @@ export class AdminRepository {
           rs.last_lookup_error,
           rs.last_verified_at,
           rs.manual_updated_at,
+          1::int AS room_count,
+          CASE WHEN rs.external_key IS NOT NULL AND rs.mapping_status = 'ACTIVE' THEN 1 ELSE 0 END::int
+            AS mapped_room_source_count,
+          NULL::text AS latest_job_status,
+          NULL::int AS latest_job_attempts,
+          NULL::text AS latest_job_error,
+          NULL::timestamptz AS latest_job_updated_at,
           latest.status AS latest_run_status,
           latest.error_kind AS latest_error_kind,
           latest.error_message AS latest_error_message,
-          latest.finished_at AS latest_finished_at
+          latest.finished_at AS latest_finished_at,
+          CASE
+            WHEN rs.mapping_status <> 'ACTIVE' THEN '방 소스가 수집 제외 상태입니다'
+            WHEN rs.last_lookup_error IS NOT NULL THEN rs.last_lookup_error
+            WHEN rs.external_key IS NULL THEN '방 external_key가 없습니다'
+            WHEN latest.status IN ('FAILED', 'PARTIAL') THEN latest.error_message
+            ELSE NULL
+          END AS issue_reason
         FROM room_sources rs
         JOIN rooms r ON r.id = rs.room_id
         JOIN studios st ON st.id = r.studio_id
         JOIN sources src ON src.id = rs.source_id
+        LEFT JOIN latest_runs latest ON latest.studio_id = st.id AND latest.source_id = rs.source_id
+      ),
+      missing_source_items AS (
+        SELECT
+          'missing_studio_source'::text AS kind,
+          st.id,
+          NULL::bigint AS source_id,
+          NULL::text AS source_code,
+          '소스 없음'::text AS source_name,
+          st.id AS studio_id,
+          st.name AS studio_name,
+          NULL::bigint AS room_id,
+          NULL::text AS room_name,
+          NULL::text AS external_key,
+          NULL::text AS url,
+          'NEEDS_MAPPING'::text AS mapping_status,
+          NULL::text AS mapping_note,
+          NULL::text AS last_lookup_error,
+          NULL::timestamptz AS last_verified_at,
+          NULL::timestamptz AS manual_updated_at,
+          stats.room_count,
+          0::int AS mapped_room_source_count,
+          NULL::text AS latest_job_status,
+          NULL::int AS latest_job_attempts,
+          NULL::text AS latest_job_error,
+          NULL::timestamptz AS latest_job_updated_at,
+          NULL::text AS latest_run_status,
+          NULL::text AS latest_error_kind,
+          NULL::text AS latest_error_message,
+          NULL::timestamptz AS latest_finished_at,
+          CASE
+            WHEN stats.room_count = 0 THEN 'studio_sources와 rooms가 모두 없습니다'
+            ELSE 'studio_sources가 없습니다'
+          END AS issue_reason
+        FROM studios st
         LEFT JOIN LATERAL (
-          SELECT status, error_kind, error_message, finished_at
-          FROM scrape_runs sr
-          WHERE sr.studio_id = st.id AND sr.source_id = rs.source_id
-          ORDER BY finished_at DESC NULLS LAST, id DESC
-          LIMIT 1
-        ) latest ON true
+          SELECT COUNT(*)::int AS room_count
+          FROM rooms r
+          WHERE r.studio_id = st.id
+            AND r.is_active = true
+        ) stats ON true
+        WHERE st.is_active = true
+          AND NOT EXISTS (
+            SELECT 1 FROM studio_sources ss WHERE ss.studio_id = st.id
+          )
       )
       SELECT *
       FROM (
         SELECT * FROM studio_items
         UNION ALL
         SELECT * FROM room_items
+        UNION ALL
+        SELECT * FROM missing_source_items
       ) items
-      WHERE mapping_status <> 'ACTIVE'
-        OR last_lookup_error IS NOT NULL
-        OR latest_run_status IN ('FAILED', 'PARTIAL')
+      WHERE issue_reason IS NOT NULL
       ORDER BY
         CASE mapping_status
           WHEN 'NEEDS_MAPPING' THEN 0
@@ -185,6 +333,12 @@ export class AdminRepository {
           WHEN 'NOT_FOUND' THEN 2
           ELSE 3
         END,
+        CASE kind
+          WHEN 'studio_source' THEN 0
+          WHEN 'room_source' THEN 1
+          ELSE 2
+        END,
+        latest_job_updated_at DESC NULLS LAST,
         latest_finished_at DESC NULLS LAST,
         studio_name ASC,
         room_name ASC NULLS FIRST
