@@ -680,7 +680,6 @@ button {
 
 /* 즐겨찾기/공유: 배경 없는 고스트 아이콘. "비는 시간"처럼 플랫하게 두어
    주 액션(예약 셰브론)과 무게로 구분한다. */
-.alert-button,
 .fav-button,
 .share-button {
   flex: 0 0 auto;
@@ -691,10 +690,6 @@ button {
   border-radius: var(--r-sm);
   color: var(--text-faint);
   background: transparent;
-}
-
-.alert-button:active {
-  color: var(--accent-strong);
 }
 
 .fav-button {
@@ -990,10 +985,15 @@ button {
   color: var(--text-3);
 }
 
-.studio-empty-message svg {
+.studio-empty-message > svg {
   flex: 0 0 auto;
   margin-top: 1px;
   color: var(--text-faint);
+}
+
+.studio-empty-copy {
+  flex: 1 1 auto;
+  min-width: 0;
 }
 
 .studio-empty-message strong,
@@ -1012,6 +1012,18 @@ button {
   font-size: var(--fs-xs);
   font-weight: var(--fw-medium);
   line-height: 1.45;
+}
+
+.empty-message-alert {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  margin-top: -2px;
+  border-radius: var(--r-md);
+  background: var(--accent-soft);
+  color: var(--accent-strong);
 }
 
 .studio-empty-remove {

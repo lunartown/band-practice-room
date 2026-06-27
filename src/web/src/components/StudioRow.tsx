@@ -212,7 +212,7 @@ export function SelectedStudioEmptyRow({
 
         <div className="studio-empty-message">
           <ClockIcon />
-          <div>
+          <div className="studio-empty-copy">
             {phoneOnly ? (
               <>
                 <strong>온라인 예약을 지원하지 않는 합주실이에요</strong>
@@ -225,20 +225,22 @@ export function SelectedStudioEmptyRow({
               </>
             )}
           </div>
+          {!phoneOnly && (
+            <button
+              type="button"
+              className="empty-message-alert"
+              aria-label={`${name} 빈 자리 알림`}
+              onClick={() => onCreateAlert(studio)}
+            >
+              <BellIcon />
+            </button>
+          )}
         </div>
       </div>
 
       <div className="studio-actions">
         <button type="button" className="room-toggle studio-empty-remove" onClick={() => onRemove(id)}>
           선택 해제
-        </button>
-        <button
-          type="button"
-          className="alert-button"
-          aria-label={`${name} 빈 자리 알림`}
-          onClick={() => onCreateAlert(studio)}
-        >
-          <BellIcon />
         </button>
         <button
           type="button"
