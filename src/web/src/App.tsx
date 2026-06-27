@@ -53,6 +53,7 @@ export function App() {
   const [isStudioSearchOpen, setIsStudioSearchOpen] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [favOnly, setFavOnly] = useState(false);
+  const [collapsedDates, setCollapsedDates] = useState<Set<string>>(() => new Set());
   const [studioSearchQuery, setStudioSearchQuery] = useState('');
   const [recentStudioIds, setRecentStudioIds] = useState<number[]>(() => loadRecentStudioIds());
   const [popover, setPopover] = useState<PopoverState | null>(null);
@@ -219,6 +220,15 @@ export function App() {
     }
     setFilters((f) => (f.studioIds.length > 0 ? { ...f, studioIds: [] } : f));
     setFavOnly(true);
+  }
+
+  function toggleDateSection(date: string) {
+    setCollapsedDates((prev) => {
+      const next = new Set(prev);
+      if (next.has(date)) next.delete(date);
+      else next.add(date);
+      return next;
+    });
   }
 
   const dateGroups = useMemo(
@@ -470,29 +480,45 @@ export function App() {
                     <EmptyState filters={filters} selectedStudios={selectedStudios} setFilters={setFilters} />
                   ) : (
                     totalStudios > 0 &&
-                    visibleGroups.map((group) => (
-                      <section className="date-section" key={group.date}>
-                        <div className="date-heading">
-                          <span>{dateLabel(group.date)}</span>
-                          {group.studios.length > 0 ? (
-                            <span className="count-pill">{group.studios.length}곳</span>
-                          ) : (
-                            <span className="count-pill empty">없음</span>
-                          )}
-                        </div>
-                        {group.studios.length > 0 ? (
-                          group.studios.map((studio) => (
-                            <StudioRow key={studio.studio.id} studio={studio} />
-                          ))
-                        ) : favFilterActive ? (
-                          <div className="empty-day">
-                            <span>이 날은 즐겨찾기한 곳이 비어 있어요</span>
+                    visibleGroups.map((group) => {
+                      const isCollapsed = collapsedDates.has(group.date);
+                      const bodyId = `date-section-${group.date}`;
+
+                      return (
+                        <section className="date-section" key={group.date}>
+                          <button
+                            type="button"
+                            className={`date-heading${isCollapsed ? ' collapsed' : ''}`}
+                            aria-expanded={!isCollapsed}
+                            aria-controls={bodyId}
+                            onClick={() => toggleDateSection(group.date)}
+                          >
+                            <span className="date-heading-label">{dateLabel(group.date)}</span>
+                            <span className="date-heading-side">
+                              {group.studios.length > 0 ? (
+                                <span className="count-pill">{group.studios.length}곳</span>
+                              ) : (
+                                <span className="count-pill empty">없음</span>
+                              )}
+                              <DateToggleIcon />
+                            </span>
+                          </button>
+                          <div id={bodyId} className="date-section-body" hidden={isCollapsed}>
+                            {group.studios.length > 0 ? (
+                              group.studios.map((studio) => (
+                                <StudioRow key={studio.studio.id} studio={studio} />
+                              ))
+                            ) : favFilterActive ? (
+                              <div className="empty-day">
+                                <span>이 날은 즐겨찾기한 곳이 비어 있어요</span>
+                              </div>
+                            ) : (
+                              <EmptyDay minDuration={filters.minDuration} setFilters={setFilters} />
+                            )}
                           </div>
-                        ) : (
-                          <EmptyDay minDuration={filters.minDuration} setFilters={setFilters} />
-                        )}
-                      </section>
-                    ))
+                        </section>
+                      );
+                    })
                   )}
                 </>
               )}
@@ -781,6 +807,14 @@ function SearchIcon() {
 function ChevronIcon() {
   return (
     <svg className="chip-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden>
+      <path d="M7 10l5 5 5-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function DateToggleIcon() {
+  return (
+    <svg className="date-toggle-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden>
       <path d="M7 10l5 5 5-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );

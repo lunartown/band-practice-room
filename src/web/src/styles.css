@@ -556,12 +556,46 @@ button {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  width: 100%;
   padding: var(--sp-4) var(--gutter);
   background: var(--surface-section);
   border-top: 1px solid var(--gray-150);
   border-bottom: 1px solid var(--gray-150);
+  border-radius: 0;
+  color: var(--text-1);
   font-size: var(--fs-lg);
   font-weight: var(--fw-semibold);
+  text-align: left;
+}
+
+.date-heading:active {
+  background: var(--gray-150);
+}
+
+.date-heading-label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.date-heading-side {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  margin-left: var(--sp-3);
+}
+
+.date-toggle-icon {
+  flex: 0 0 auto;
+  color: var(--text-faint);
+  transform: rotate(180deg);
+  transition: transform 0.15s ease;
+}
+
+.date-heading.collapsed .date-toggle-icon {
+  transform: rotate(0deg);
 }
 
 .date-heading .count-pill {
