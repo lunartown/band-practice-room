@@ -181,7 +181,6 @@ button {
   display: flex;
   align-items: center;
   gap: var(--sp-1);
-  margin-right: var(--sp-1);
 }
 
 .sync-label {
