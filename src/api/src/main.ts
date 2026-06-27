@@ -15,6 +15,8 @@ async function bootstrap() {
     : [
         'https://hapjusil.com',
         'https://www.hapjusil.com',
+        // dev 브랜치 고정 도메인(Vercel 커스텀 도메인). 통합 브랜치 테스트용.
+        'https://dev.hapjusil.com',
         // Capacitor 네이티브 앱(iOS·Android)이 웹뷰에서 쓰는 출처.
         // Android 기본 스킴은 https://localhost, iOS는 capacitor://localhost.
         'https://localhost',
