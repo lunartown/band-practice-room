@@ -1715,6 +1715,24 @@ button {
   background: rgba(17, 22, 31, 0.5);
 }
 
+.filter-dim {
+  animation: filter-dim-in 0.2s ease-out both;
+}
+
+.filter-dim.closing {
+  animation: filter-dim-out 0.22s ease-in both;
+}
+
+@keyframes filter-dim-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes filter-dim-out {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
 /* 드로어 백드롭: 살짝 흐리게 + 페이드인으로 깊이감을 준다. */
 .menu-dim {
   background: rgba(17, 22, 31, 0.42);
@@ -1740,6 +1758,35 @@ button {
   background: var(--surface);
   border-radius: var(--r-sheet) var(--r-sheet) 0 0;
   box-shadow: var(--shadow-sheet);
+}
+
+.filter-sheet-motion {
+  animation: filter-sheet-rise 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+  transition: transform 0.25s ease;
+}
+
+.filter-sheet-motion.closing {
+  animation: none;
+  transition: transform 0.26s cubic-bezier(0.32, 0, 0.67, 0);
+}
+
+@keyframes filter-sheet-rise {
+  from {
+    opacity: 0.98;
+    transform: translateY(calc(100% + var(--sp-4)));
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .filter-dim,
+  .filter-sheet-motion {
+    animation: none;
+    transition: none;
+  }
 }
 
 .sheet-drag {
@@ -2253,19 +2300,10 @@ button {
   border: 1px solid var(--border);
   border-radius: var(--r-lg);
   box-shadow: var(--shadow-pop);
-  transform-origin: top left;
-  animation: popover-in 0.14s ease;
 }
 
 .popover.padded {
   padding: var(--sp-3);
-}
-
-@keyframes popover-in {
-  from {
-    opacity: 0;
-    transform: translateY(-4px);
-  }
 }
 
 .popover-option {

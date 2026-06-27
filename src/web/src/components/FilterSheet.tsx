@@ -1,8 +1,9 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { Area, TimeWindow } from '../api/types';
 import { CalendarPicker } from './CalendarPicker';
 
 const DISMISS_THRESHOLD = 110; // 이 거리 이상 아래로 끌면 닫는다
+const CLOSE_DURATION_MS = 260;
 
 export const DURATION_OPTIONS: { label: string; value: 1 | 2 | 3 | 4 }[] = [
   { label: '1시간', value: 1 },
@@ -49,9 +50,37 @@ export function FilterSheet({ areas, filters, resultCount, onClose, onChange }: 
 
   const [dragY, setDragY] = useState(0);
   const [dragging, setDragging] = useState(false);
+  const [closing, setClosing] = useState(false);
   const startY = useRef(0);
+  const closeTimer = useRef<number | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (closeTimer.current !== null) window.clearTimeout(closeTimer.current);
+    };
+  }, []);
+
+  function requestClose() {
+    if (closing || closeTimer.current !== null) return;
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      onClose();
+      return;
+    }
+
+    setDragging(false);
+    setClosing(true);
+    closeTimer.current = window.setTimeout(onClose, CLOSE_DURATION_MS + 80);
+  }
+
+  function finishClose(e: React.TransitionEvent<HTMLElement>) {
+    if (!closing || e.target !== e.currentTarget || e.propertyName !== 'transform') return;
+    if (closeTimer.current !== null) window.clearTimeout(closeTimer.current);
+    closeTimer.current = null;
+    onClose();
+  }
 
   function onDragStart(e: React.PointerEvent) {
+    if (closing) return;
     if ((e.target as HTMLElement).closest('button')) return; // 초기화 버튼 탭은 드래그로 보지 않음
     startY.current = e.clientY;
     setDragging(true);
@@ -59,25 +88,39 @@ export function FilterSheet({ areas, filters, resultCount, onClose, onChange }: 
   }
 
   function onDragMove(e: React.PointerEvent) {
-    if (!dragging) return;
+    if (!dragging || closing) return;
     setDragY(Math.max(0, e.clientY - startY.current));
   }
 
   function onDragEnd() {
     if (!dragging) return;
     setDragging(false);
-    if (dragY > DISMISS_THRESHOLD) onClose();
+    if (dragY > DISMISS_THRESHOLD) requestClose();
     else setDragY(0);
   }
 
+  const sheetTransform = closing
+    ? 'translateY(calc(100% + var(--sp-4)))'
+    : dragY
+      ? `translateY(${dragY}px)`
+      : undefined;
+
   return (
     <div className="sheet-layer">
-      <button className="sheet-dim" aria-label="필터 닫기" onClick={onClose} />
+      <button
+        className={`sheet-dim filter-dim${closing ? ' closing' : ''}`}
+        aria-label="필터 닫기"
+        onClick={requestClose}
+      />
       <section
-        className="filter-sheet"
+        className={`filter-sheet filter-sheet-motion${closing ? ' closing' : ''}`}
+        role="dialog"
+        aria-modal="true"
+        aria-label="필터"
+        onTransitionEnd={finishClose}
         style={{
-          transform: dragY ? `translateY(${dragY}px)` : undefined,
-          transition: dragging ? 'none' : 'transform 0.25s ease',
+          transform: sheetTransform,
+          transition: dragging ? 'none' : undefined,
         }}
       >
         <div
@@ -153,7 +196,7 @@ export function FilterSheet({ areas, filters, resultCount, onClose, onChange }: 
           >
             초기화
           </button>
-          <button className="primary" onClick={onClose}>결과 {resultCount}곳 보기</button>
+          <button className="primary" onClick={requestClose}>결과 {resultCount}곳 보기</button>
         </footer>
       </section>
     </div>
