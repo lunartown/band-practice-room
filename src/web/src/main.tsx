@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom/client';
 import { Capacitor } from '@capacitor/core';
 import { StatusBar, Style } from '@capacitor/status-bar';
 import { Analytics } from '@vercel/analytics/react';
+import { AdminApp } from './AdminApp';
 import { App } from './App';
 import { initFavorites } from './lib/favorites';
 import { notifyLiveUpdateReady } from './lib/liveUpdate';
@@ -38,7 +39,7 @@ void notifyLiveUpdateReady();
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
-    <App />
+    {window.location.pathname.startsWith('/admin') ? <AdminApp /> : <App />}
     <Analytics />
   </React.StrictMode>,
 );
