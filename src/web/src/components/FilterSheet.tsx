@@ -71,7 +71,7 @@ export function FilterSheet({ areas, filters, resultCount, onClose, onChange }: 
   }
 
   return (
-    <div className="sheet-layer">
+    <div className="sheet-layer sheet-layer--safe">
       <button className="sheet-dim" aria-label="필터 닫기" onClick={onClose} />
       <section
         className="filter-sheet"
