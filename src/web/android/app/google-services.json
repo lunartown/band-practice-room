@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "430795208864",
+    "project_id": "hapjusil",
+    "storage_bucket": "hapjusil.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:430795208864:android:9c800003549d879ec0b1c5",
+        "android_client_info": {
+          "package_name": "com.hapjusil.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCZ59RecP2aRD6WlbXFl8UxbDXjUBcO1TI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
