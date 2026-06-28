@@ -198,6 +198,29 @@ button {
   background: var(--accent);
 }
 
+.fresh-dot.stale {
+  background: var(--danger-text);
+}
+
+/* 데이터가 오래됐을 때만 노출되는 즉시 갱신 버튼. */
+.refresh-now {
+  margin-left: var(--sp-1);
+  padding: 2px var(--sp-2);
+  font-size: var(--fs-2xs);
+  font-weight: var(--fw-medium);
+  color: var(--accent-strong);
+  background: var(--accent-soft);
+  border: 1px solid var(--accent-border);
+  border-radius: var(--radius-pill, 999px);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.refresh-now:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
 /* ============================================================
    Filter chip row
    ============================================================ */

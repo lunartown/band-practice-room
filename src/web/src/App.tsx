@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { getAreas, getSlots, getStudios } from './api/client';
+import { getAreas, getSlots, getStudios, refreshSlots } from './api/client';
 import type { Area, Slot, SlotsQuery, Studio } from './api/types';
 import { SelectedStudioEmptyRow, StudioRow } from './components/StudioRow';
 import { FilterSheet, defaultFilters } from './components/FilterSheet';
@@ -21,7 +21,7 @@ import {
 import type { AlertDraft, SavedAlert } from './lib/alerts';
 import { buildAvailability, sortDateAvailabilityGroups } from './lib/availability';
 import type { StudioSortOption } from './lib/availability';
-import { dateLabel } from './lib/date';
+import { computeFreshness, dateLabel } from './lib/date';
 import { loadFilters, saveFilters, markEntered } from './lib/prefs';
 import { loadRecentStudioIds, recordRecentStudioSelections } from './lib/recentStudios';
 import {
@@ -82,6 +82,9 @@ export function App() {
   const [areasError, setAreasError] = useState(false);
   const [updatedAt, setUpdatedAt] = useState<Date | null>(null);
   const [loading, setLoading] = useState(true);
+  const [manualRefreshing, setManualRefreshing] = useState(false);
+  // 수동 갱신 성공 후 메인 슬롯을 다시 불러오기 위한 트리거.
+  const [reloadNonce, setReloadNonce] = useState(0);
   const [searchLoading, setSearchLoading] = useState(false);
   const phoneRef = useRef<HTMLElement>(null);
 
@@ -145,7 +148,7 @@ export function App() {
     return () => {
       canceled = true;
     };
-  }, [filters, entered]);
+  }, [filters, entered, reloadNonce]);
 
   useEffect(() => {
     if (!entered || !isStudioSearchOpen) return;
@@ -372,6 +375,43 @@ export function App() {
 
   const syncLabel = updatedAt ? formatUpdatedAt(updatedAt) : '–';
 
+  // 화면에 보이는 슬롯 중 가장 최근 수집 시각으로 전체 신선도를 가늠한다.
+  // 가장 최신 데이터마저 오래됐으면(=aging/stale) 수동 갱신을 권한다.
+  const dataFreshness = useMemo(() => {
+    let newest = 0;
+    for (const slot of slots) {
+      if (!slot.scrapedAt) continue;
+      const t = new Date(slot.scrapedAt).getTime();
+      if (t > newest) newest = t;
+    }
+    if (!newest) return 'unknown';
+    return computeFreshness(new Date(newest).toISOString());
+  }, [slots]);
+  const isStale = dataFreshness === 'aging' || dataFreshness === 'stale';
+
+  const visibleStudioIds = useMemo(() => {
+    const ids = new Set<number>();
+    for (const group of visibleGroups) {
+      for (const item of group.studios) ids.add(item.studio.id);
+    }
+    return [...ids];
+  }, [visibleGroups]);
+
+  const handleManualRefresh = useCallback(async () => {
+    if (manualRefreshing || loading || visibleStudioIds.length === 0) return;
+    setManualRefreshing(true);
+    setError(null);
+    try {
+      await refreshSlots(visibleStudioIds.slice(0, 40));
+      // 백엔드가 동기 수집을 마친 뒤 응답하므로, 곧바로 메인 슬롯을 다시 부른다.
+      setReloadNonce((n) => n + 1);
+    } catch {
+      setError('지금 갱신하지 못했습니다. 잠시 후 다시 시도해주세요');
+    } finally {
+      setManualRefreshing(false);
+    }
+  }, [manualRefreshing, loading, visibleStudioIds]);
+
   if (!entered) {
     return (
       <main className="app-shell">
@@ -489,8 +529,18 @@ export function App() {
                 </div>
                 <div className="top-bar-right">
                   <div className="sync-status">
-                    <span className="fresh-dot" />
+                    <span className={`fresh-dot${isStale ? ' stale' : ''}`} />
                     <span className="sync-label">{syncLabel}</span>
+                    {isStale && (
+                      <button
+                        type="button"
+                        className="refresh-now"
+                        onClick={handleManualRefresh}
+                        disabled={manualRefreshing || loading || visibleStudioIds.length === 0}
+                      >
+                        {manualRefreshing ? '갱신 중…' : '지금 갱신'}
+                      </button>
+                    )}
                   </div>
                   <div className="top-bar-actions">
                     <button
