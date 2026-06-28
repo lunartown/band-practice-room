@@ -1,0 +1,7 @@
+{
+  "name": "hapjusil-scrape-core",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "네이버·스페이스클라우드 예약 가능 시간 수집 로직(순수 fetch). 스크래퍼(cron)와 API(온디맨드 수동 갱신)가 함께 쓴다."
+}
