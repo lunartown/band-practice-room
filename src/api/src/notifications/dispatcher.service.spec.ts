@@ -257,7 +257,7 @@ describeDb('NotificationDispatcher (integration)', () => {
       expect(s1.candidates).toBe(0);
     });
 
-    it('연속 2시간이 함께 열리면 시작 시각을 앵커로 매칭된다', async () => {
+    it('연속 2시간이 함께 열리면 블록당 1건만, 시작 시각을 앵커로 매칭된다', async () => {
       const deviceId = await createDevice('tok-dur2');
       await createSubscription({
         deviceId,
@@ -265,13 +265,35 @@ describeDb('NotificationDispatcher (integration)', () => {
         dates: [futureDate],
         minDuration: 2,
       });
-      // 19:00, 20:00 함께 가용 → 19:00 시작 2시간 블록 충족.
-      // 매칭은 블록의 시작 시각(19:00)에 앵커링되므로 후보는 1건이다
-      // (20:00 앵커는 21:00 부재로 미충족 — 순서 의존 한계는 리뷰 노트 참고).
+      // 19:00, 20:00 함께 가용 → 19:00 시작 2시간 블록. 두 슬롯 이벤트가 같은 구간으로 모여
+      // 후보는 1건(중복 방지), 알림은 구간 시작(19:00) 기준.
       await insertAvailableSlot(roomId, futureDate, '19:00', '20:00');
       await insertAvailableSlot(roomId, futureDate, '20:00', '21:00');
       const s = await dispatcher.dispatch();
       expect(s.candidates).toBe(1);
+      const d = await db.query<{ slot_start_time: string }>(
+        `SELECT slot_start_time::text FROM notification_deliveries`,
+      );
+      expect(d.rows.map((r) => r.slot_start_time)).toEqual(['19:00:00']);
+    });
+
+    it('연속 슬롯이 나중에 열려 블록이 완성돼도 놓치지 않는다(순서 무관)', async () => {
+      const deviceId = await createDevice('tok-order');
+      await createSubscription({
+        deviceId,
+        studioIds: [studioId],
+        dates: [futureDate],
+        minDuration: 2,
+      });
+      // 19:00 만 먼저 열림 → 단독이라 미매칭, 이벤트는 소비된다.
+      await insertAvailableSlot(roomId, futureDate, '19:00', '20:00');
+      const s1 = await dispatcher.dispatch();
+      expect(s1.candidates).toBe(0);
+
+      // 20:00 이 나중에 열려 19:00~21:00 2시간 블록 완성 → 시작(19:00) 기준으로 매칭된다.
+      await insertAvailableSlot(roomId, futureDate, '20:00', '21:00');
+      const s2 = await dispatcher.dispatch();
+      expect(s2.candidates).toBe(1);
       const d = await db.query<{ slot_start_time: string }>(
         `SELECT slot_start_time::text FROM notification_deliveries`,
       );

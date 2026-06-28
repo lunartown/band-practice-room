@@ -137,71 +137,97 @@ export class NotificationDispatcher {
 
     const result = await this.database.query<CandidateRow>(
       `
-      WITH events AS (
-        SELECT DISTINCT ev.room_id, ev.slot_date, ev.slot_start_time, r.studio_id,
-               r.name AS room_name, r.capacity_max, s.name AS studio_name
+      -- 1) 클레임한 이벤트 슬롯(미래만). 트리거가 막 가용으로 바꾼 시각들.
+      WITH ev AS (
+        SELECT DISTINCT t.room_id, t.slot_date, t.slot_start_time
         FROM unnest($1::bigint[], $2::date[], $3::time[])
-               AS ev(room_id, slot_date, slot_start_time)
-        INNER JOIN rooms r ON r.id = ev.room_id AND r.is_active = true
-        INNER JOIN studios s ON s.id = r.studio_id AND s.is_active = true
-        -- 지나간 시간대는 알릴 의미가 없다(KST 기준 미래 슬롯만).
-        WHERE ev.slot_date > (NOW() AT TIME ZONE 'Asia/Seoul')::date
-           OR (ev.slot_date = (NOW() AT TIME ZONE 'Asia/Seoul')::date
-               AND ev.slot_start_time > (NOW() AT TIME ZONE 'Asia/Seoul')::time)
+               AS t(room_id, slot_date, slot_start_time)
+        -- 지나간 전이는 알릴 의미가 없다(KST 기준 미래 슬롯만).
+        WHERE t.slot_date > (NOW() AT TIME ZONE 'Asia/Seoul')::date
+           OR (t.slot_date = (NOW() AT TIME ZONE 'Asia/Seoul')::date
+               AND t.slot_start_time > (NOW() AT TIME ZONE 'Asia/Seoul')::time)
+      ),
+      -- 2) 이벤트가 가리키는 방·날짜의 모든 가용 슬롯(연속 구간 계산용, 과거 시각도 포함해야 인접 판정 가능).
+      avail AS (
+        SELECT s.room_id, s.date, EXTRACT(HOUR FROM s.start_time)::int AS h
+        FROM slots s
+        JOIN (SELECT DISTINCT room_id, slot_date FROM ev) rd
+          ON rd.room_id = s.room_id AND rd.slot_date = s.date
+        WHERE s.status = 'AVAILABLE'
+      ),
+      -- 3) gaps-and-islands: 연속된 시(時)는 (h - row_number) 가 일정 → 같은 구간(grp).
+      islands AS (
+        SELECT room_id, date, h,
+               h - ROW_NUMBER() OVER (PARTITION BY room_id, date ORDER BY h) AS grp
+        FROM avail
+      ),
+      -- 4) 각 가용 시각에 자신이 속한 연속 구간의 시작 시(時)·길이를 붙인다.
+      runs AS (
+        SELECT room_id, date, h,
+               MIN(h) OVER (PARTITION BY room_id, date, grp) AS run_start_hour,
+               COUNT(*) OVER (PARTITION BY room_id, date, grp) AS run_len
+        FROM islands
+      ),
+      -- 5) 이벤트 슬롯이 속한 연속 구간으로 환원. 같은 구간을 가리키는 여러 이벤트는 하나로 모은다
+      --    → 알림은 "구간 시작 시각" 1건만(블록당 1알림). 늦게 열려 완성된 블록도 여기서 잡힌다.
+      blocks AS (
+        SELECT DISTINCT
+          ev.room_id, ev.slot_date,
+          make_time(r.run_start_hour, 0, 0) AS slot_start_time,
+          r.run_len,
+          rm.studio_id, rm.name AS room_name, rm.capacity_max, st.name AS studio_name
+        FROM ev
+        JOIN runs r ON r.room_id = ev.room_id AND r.date = ev.slot_date
+                   AND r.h = EXTRACT(HOUR FROM ev.slot_start_time)::int
+        INNER JOIN rooms rm ON rm.id = ev.room_id AND rm.is_active = true
+        INNER JOIN studios st ON st.id = rm.studio_id AND st.is_active = true
       )
       SELECT
         ns.id AS subscription_id,
         d.id AS device_id,
         d.device_token,
-        e.studio_id,
-        e.studio_name,
-        e.room_id,
-        e.room_name,
-        e.slot_date::text AS slot_date,
-        e.slot_start_time::text AS slot_start_time,
+        b.studio_id,
+        b.studio_name,
+        b.room_id,
+        b.room_name,
+        b.slot_date::text AS slot_date,
+        b.slot_start_time::text AS slot_start_time,
         ns.min_duration
-      FROM events e
+      FROM blocks b
       INNER JOIN notification_subscriptions ns ON ns.is_active = true
         -- 대상: 합주실 목록 / 지역 목록 / (둘 다 NULL 이면) 모든 지역
         AND (
-          (ns.studio_ids IS NOT NULL AND e.studio_id = ANY(ns.studio_ids))
+          (ns.studio_ids IS NOT NULL AND b.studio_id = ANY(ns.studio_ids))
           OR (ns.studio_ids IS NULL AND ns.area_ids IS NOT NULL AND EXISTS (
                 SELECT 1 FROM studio_areas sa
-                WHERE sa.studio_id = e.studio_id AND sa.area_id = ANY(ns.area_ids)
+                WHERE sa.studio_id = b.studio_id AND sa.area_id = ANY(ns.area_ids)
              ))
           OR (ns.studio_ids IS NULL AND ns.area_ids IS NULL)
         )
       INNER JOIN devices d ON d.id = ns.device_id AND d.is_active = true
       WHERE
         -- 특정 날짜 필터
-        e.slot_date = ANY(ns.dates)
-        -- 시간대 필터: 윈도우가 없으면 모든 시간, 있으면 하나라도 들면 통과(24:00=상한 없음)
+        b.slot_date = ANY(ns.dates)
+        -- 최소 연속 가능 시간: 이벤트 슬롯이 속한 구간 길이가 N 이상이어야 한다(시작 순서 무관).
+        AND b.run_len >= ns.min_duration
+        -- 시간대 필터: 윈도우가 없으면 모든 시간, 있으면 구간 시작이 하나라도 들면 통과(24:00=상한 없음)
         AND (
           jsonb_array_length(ns.time_windows) = 0
           OR EXISTS (
             SELECT 1 FROM jsonb_array_elements(ns.time_windows) AS w
-            WHERE e.slot_start_time >= (w->>'from')::time
-              AND ((w->>'to') = '24:00' OR e.slot_start_time < (w->>'to')::time)
+            WHERE b.slot_start_time >= (w->>'from')::time
+              AND ((w->>'to') = '24:00' OR b.slot_start_time < (w->>'to')::time)
           )
         )
         -- 인원 필터: capacity_max 가 없으면(미상) 통과
-        AND (ns.min_capacity IS NULL OR e.capacity_max IS NULL OR e.capacity_max >= ns.min_capacity)
-        -- 최소 연속 가능 시간: 같은 방·날짜에서 시작시각부터 N시간 연속 AVAILABLE 인지 확인.
-        AND (
-          SELECT count(*) FROM slots x
-          WHERE x.room_id = e.room_id
-            AND x.date = e.slot_date
-            AND x.status = 'AVAILABLE'
-            AND EXTRACT(HOUR FROM x.start_time) >= EXTRACT(HOUR FROM e.slot_start_time)
-            AND EXTRACT(HOUR FROM x.start_time) < EXTRACT(HOUR FROM e.slot_start_time) + ns.min_duration
-        ) >= ns.min_duration
-        -- 같은 구독·슬롯에 이미 보냈으면 제외.
+        AND (ns.min_capacity IS NULL OR b.capacity_max IS NULL OR b.capacity_max >= ns.min_capacity)
+        -- 같은 구독·구간 시작에 이미 보냈으면 제외(블록당 1회).
         AND NOT EXISTS (
           SELECT 1 FROM notification_deliveries nd
           WHERE nd.subscription_id = ns.id
-            AND nd.room_id = e.room_id
-            AND nd.slot_date = e.slot_date
-            AND nd.slot_start_time = e.slot_start_time
+            AND nd.room_id = b.room_id
+            AND nd.slot_date = b.slot_date
+            AND nd.slot_start_time = b.slot_start_time
         )
       `,
       [roomIds, dates, starts],
