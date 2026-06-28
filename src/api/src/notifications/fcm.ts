@@ -44,7 +44,8 @@ async function init(): Promise<void> {
 
   // 비리터럴 specifier 로 동적 import(컴파일 타임 모듈 해석 회피).
   const moduleName = 'firebase-admin';
-  const admin: any = await import(moduleName);
+  const imported: any = await import(moduleName);
+  const admin = imported.default ?? imported;
   const credential = serviceAccount
     ? admin.credential.cert(serviceAccount)
     : admin.credential.applicationDefault();
@@ -78,6 +79,7 @@ export async function sendPush(messages: PushMessage[]): Promise<SendResult[]> {
     const response = await messaging.sendEach(payload);
     response.responses.forEach((r: any, idx: number) => {
       const code: string | undefined = r.error?.code;
+      const message: string | undefined = r.error?.message;
       results.push({
         token: batch[idx].token,
         success: r.success === true,
@@ -85,7 +87,7 @@ export async function sendPush(messages: PushMessage[]): Promise<SendResult[]> {
           code === 'messaging/registration-token-not-registered' ||
           code === 'messaging/invalid-registration-token' ||
           code === 'messaging/invalid-argument',
-        error: r.error?.message,
+        error: code && message ? `${code}: ${message}` : message,
       });
     });
   }
