@@ -25,7 +25,7 @@ export function AlertConfirmSheet({ draft, filters, areas, onClose, onConfirm }:
 
   return (
     <div className="sheet-layer">
-      <button className="sheet-dim" aria-label="알림 조건 닫기" onClick={onClose} />
+      <div className="sheet-dim" aria-hidden="true" onClick={onClose} />
       <section className="filter-sheet alert-sheet" role="dialog" aria-modal="true" aria-label="빈 자리 알림 조건">
         <div className="sheet-drag">
           <div className="sheet-handle" />

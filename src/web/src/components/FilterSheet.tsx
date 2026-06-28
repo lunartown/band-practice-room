@@ -107,9 +107,9 @@ export function FilterSheet({ areas, filters, resultCount, onClose, onChange }: 
 
   return (
     <div className="sheet-layer">
-      <button
+      <div
         className={`sheet-dim filter-dim${closing ? ' closing' : ''}`}
-        aria-label="필터 닫기"
+        aria-hidden="true"
         onClick={requestClose}
       />
       <section

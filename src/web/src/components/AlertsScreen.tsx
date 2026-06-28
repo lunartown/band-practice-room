@@ -137,7 +137,7 @@ function AlertEditSheet({ alert, areas, studios, onClose, onSave }: AlertEditShe
   if (isStudioSearchOpen) {
     return (
       <div className="sheet-layer">
-        <button className="sheet-dim" aria-label="합주실 선택 닫기" onClick={() => setIsStudioSearchOpen(false)} />
+        <div className="sheet-dim" aria-hidden="true" onClick={() => setIsStudioSearchOpen(false)} />
         <section className="filter-sheet alert-edit-sheet alert-edit-search-sheet" role="dialog" aria-modal="true" aria-label="합주실 선택">
           <div className="alert-edit-search-top">
             <button className="search-back" aria-label="알림 수정으로 돌아가기" onClick={() => setIsStudioSearchOpen(false)}>
@@ -204,7 +204,7 @@ function AlertEditSheet({ alert, areas, studios, onClose, onSave }: AlertEditShe
 
   return (
     <div className="sheet-layer">
-      <button className="sheet-dim" aria-label="알림 수정 닫기" onClick={onClose} />
+      <div className="sheet-dim" aria-hidden="true" onClick={onClose} />
       <section className="filter-sheet alert-edit-sheet" role="dialog" aria-modal="true" aria-label="알림 수정">
         <div className="sheet-drag">
           <div className="sheet-handle" />
