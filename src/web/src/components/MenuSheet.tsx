@@ -73,7 +73,7 @@ export function MenuSheet({ alertCount, onClose, onOpenAlerts }: MenuSheetProps)
 
   return (
     <div className="sheet-layer">
-      <button className="sheet-dim menu-dim" aria-label="메뉴 닫기" onClick={onClose} />
+      <div className="sheet-dim menu-dim" aria-hidden="true" onClick={onClose} />
       <section
         className="menu-drawer"
         role="dialog"

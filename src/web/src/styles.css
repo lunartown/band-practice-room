@@ -1721,12 +1721,18 @@ button {
   position: absolute;
   inset: 0;
   z-index: 10;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .sheet-dim {
   position: absolute;
   inset: 0;
   width: 100%;
+  background: rgba(17, 22, 31, 0.5);
+  touch-action: manipulation;
+}
+
+.sheet-dim:active {
   background: rgba(17, 22, 31, 0.5);
 }
 
@@ -2297,12 +2303,18 @@ button {
   position: absolute;
   inset: 0;
   z-index: 10;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .popover-backdrop {
   position: absolute;
   inset: 0;
   width: 100%;
+  background: transparent;
+  touch-action: manipulation;
+}
+
+.popover-backdrop:active {
   background: transparent;
 }
 
