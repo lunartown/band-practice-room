@@ -19,6 +19,11 @@ import {
   upsertAlert,
 } from './lib/alerts';
 import type { AlertDraft, SavedAlert } from './lib/alerts';
+import {
+  createSubscription,
+  deleteSubscription,
+  resyncSubscription,
+} from './lib/notificationsApi';
 import { buildAvailability, sortDateAvailabilityGroups } from './lib/availability';
 import type { StudioSortOption } from './lib/availability';
 import { dateLabel } from './lib/date';
@@ -216,14 +221,24 @@ export function App() {
     const alert = createAlertFromDraft(alertDraft, filters);
     setAlerts((current) => upsertAlert(current, alert));
     setAlertDraft(null);
+    // 푸시 백엔드에 구독 생성(웹/목/토큰없음이면 no-op). 성공하면 serverId 부착.
+    void createSubscription(alert).then((serverId) => {
+      if (serverId != null) setAlerts((current) => updateAlert(current, { ...alert, serverId }));
+    });
   }
 
   function updateSavedAlert(alert: SavedAlert) {
     setAlerts((current) => updateAlert(current, alert));
+    // 조건이 바뀌었으니 기존 구독을 지우고 다시 만든다(서버에 PATCH 없음).
+    void resyncSubscription(alert).then((serverId) => {
+      setAlerts((current) => updateAlert(current, { ...alert, serverId: serverId ?? undefined }));
+    });
   }
 
   function deleteSavedAlert(alertId: string) {
+    const target = alerts.find((a) => a.id === alertId);
     setAlerts((current) => deleteAlert(current, alertId));
+    if (target?.serverId != null) void deleteSubscription(target.serverId);
   }
 
   function closeStudioSearch({ rememberSelection = true }: { rememberSelection?: boolean } = {}) {

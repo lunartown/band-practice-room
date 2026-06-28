@@ -29,6 +29,8 @@ export interface AlertConditionInput {
 
 export interface SavedAlert {
   id: string;
+  // 서버 구독 id. 푸시 백엔드에 등록되면 채워진다(웹/목 모드면 undefined).
+  serverId?: number;
   scope: AlertScope;
   studios: AlertStudio[];
   areaIds: number[];
@@ -110,6 +112,7 @@ function normalizeAlert(value: unknown): SavedAlert | null {
 
   return withDerivedScope({
     id: record.id,
+    serverId: typeof record.serverId === 'number' ? record.serverId : undefined,
     scope: studios.length > 0 ? 'studios' : 'search',
     studios,
     areaIds: uniqueNumbers(Array.isArray(record.areaIds) ? record.areaIds : []),
