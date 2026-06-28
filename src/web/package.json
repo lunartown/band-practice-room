@@ -14,16 +14,17 @@
     "app:ota": "npm run build:app && npx @capgo/cli bundle upload"
   },
   "dependencies": {
+    "@capacitor-firebase/messaging": "^8.3.0",
     "@capacitor/app": "^8.1.0",
-    "@capgo/capacitor-updater": "^8.49.7",
     "@capacitor/core": "^8.4.1",
     "@capacitor/haptics": "^8.0.2",
     "@capacitor/preferences": "^8.0.1",
-    "@capacitor/push-notifications": "^8.0.1",
     "@capacitor/share": "^8.0.1",
     "@capacitor/splash-screen": "^8.0.1",
     "@capacitor/status-bar": "^8.0.2",
+    "@capgo/capacitor-updater": "^8.49.7",
     "@vercel/analytics": "^2.0.1",
+    "firebase": "^12.15.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1"
   },
