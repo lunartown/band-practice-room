@@ -34,4 +34,12 @@ VITE_DEV_API_PROXY_TARGET=http://127.0.0.1:3000 \
 npm run dev
 ```
 
+Render dev API(`https://band-practice-room-dev.onrender.com`)를 확인할 때도 proxy 타깃만 바꾼다.
+
+```bash
+VITE_USE_MOCK_API=false VITE_API_BASE_URL=/api/v1 \
+VITE_DEV_API_PROXY_TARGET=https://band-practice-room-dev.onrender.com \
+npm run dev
+```
+
 실제 백엔드 응답에는 `scrapedAt`이 포함되지만, 이는 **내부 운영용 값일 뿐 화면에 노출하지 않는다**. 데이터 신선도/마지막 확인 시각/stale 상태는 사용자에게 표시하지 않는다(의사결정 로그 2026-06-21). 신선함은 제품이 주기 수집으로 보장하고, 사용자는 당연히 신선하다고 믿고 쓴다.
