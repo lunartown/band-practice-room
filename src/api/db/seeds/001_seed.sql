@@ -1,8 +1,11 @@
+-- 주의: area id 1~3 은 002_studios.sql 과 반드시 동일해야 한다.
+-- (예전에 여기서 홍대/합정/신촌으로 쪼개 두는 바람에 002 의 합정/홍대 통합과 충돌해
+--  스튜디오들이 한 칸씩 밀려 잘못된 지역에 붙는 사고가 났다.)
 INSERT INTO areas (id, slug, name, "order", is_active)
 VALUES
-  (1, 'hongdae', '홍대', 1, true),
-  (2, 'hapjeong', '합정', 2, true),
-  (3, 'sinchon', '신촌', 3, true)
+  (1, 'hapjeong-hongdae', '합정/홍대', 1, true),
+  (2, 'sinchon', '신촌', 2, true),
+  (3, 'sadang-isu', '사당/이수', 3, true)
 ON CONFLICT (id) DO UPDATE SET
   slug = EXCLUDED.slug,
   name = EXCLUDED.name,
