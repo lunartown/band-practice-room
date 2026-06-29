@@ -19,6 +19,13 @@ export interface StudioRow {
   rating: string | null;
   review_count: number | null;
   review_keywords: Array<{ keyword: string; count: number }> | null;
+  rooms: Array<{
+    id: number | string;
+    name: string;
+    price_per_hour: number | string | null;
+    capacity_min: number | null;
+    capacity_max: number | null;
+  }>;
   has_online_booking: boolean;
 }
 
@@ -104,6 +111,25 @@ export class CatalogRepository {
           s.rating,
           s.review_count,
           s.review_keywords,
+          -- 활성 방 메타를 합주실에 nest 한다. 슬롯마다 방 정보를 중복 전송하지 않고
+          -- 프론트가 roomId 로 참조하게 하기 위함(egress 절감). 슬롯 쿼리와 동일하게
+          -- is_active = true 인 방만 담는다.
+          COALESCE(
+            (
+              SELECT json_agg(
+                json_build_object(
+                  'id', r.id,
+                  'name', r.name,
+                  'price_per_hour', r.price_per_hour,
+                  'capacity_min', r.capacity_min,
+                  'capacity_max', r.capacity_max
+                ) ORDER BY r.name ASC, r.id ASC
+              )
+              FROM rooms r
+              WHERE r.studio_id = s.id AND r.is_active = true
+            ),
+            '[]'
+          ) AS rooms,
           -- 방이 실제 온라인 소스에 매핑(room_sources)됐는지. studio_sources만 있고
           -- bizId가 죽은 곳(매핑 0)은 슬롯이 안 나오므로 전화예약으로 본다(프론트 뱃지/안내용).
           EXISTS (
