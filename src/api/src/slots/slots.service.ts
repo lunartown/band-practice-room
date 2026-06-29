@@ -34,25 +34,10 @@ export class SlotsService {
       price: slot.price,
       priceSource: slot.price_source,
       scrapedAt: toIsoString(slot.scraped_at),
-      studio: {
-        id: Number(slot.studio_id),
-        name: slot.studio_name,
-        primaryAreaId:
-          slot.studio_primary_area_id === null ? null : Number(slot.studio_primary_area_id),
-        primaryAreaName: slot.studio_primary_area_name,
-        address: slot.studio_address,
-        imageUrl: slot.studio_image_url ?? null,
-        rating: slot.studio_rating == null ? null : Number(slot.studio_rating),
-        reviewCount: slot.studio_review_count ?? null,
-        reviewKeywords: slot.studio_review_keywords ?? [],
-      },
-      room: {
-        id: Number(slot.room_id),
-        name: slot.room_name,
-        pricePerHour: slot.room_price_per_hour,
-        capacityMin: slot.room_capacity_min,
-        capacityMax: slot.room_capacity_max,
-      },
+      // 합주실·방 메타는 슬롯마다 싣지 않는다. 클라이언트가 studios 카탈로그로
+      // studioId·roomId 를 조인해 메타를 채운다(egress 절감).
+      studioId: Number(slot.studio_id),
+      roomId: Number(slot.room_id),
       bookingUrl: slot.booking_url,
     };
   }

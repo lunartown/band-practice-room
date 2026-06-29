@@ -19,20 +19,10 @@ export interface SlotRow {
   price_source: 'SCRAPED' | 'MANUAL' | 'UNKNOWN';
   scraped_at: Date;
   booking_url: string | null;
+  // 합주실·방 메타는 슬롯마다 중복 전송하지 않는다. 프론트가 studios 카탈로그로
+  // studioId·roomId 를 조인해 메타를 채운다(egress 절감).
   studio_id: string;
-  studio_name: string;
-  studio_primary_area_id: string | null;
-  studio_primary_area_name: string | null;
-  studio_address: string | null;
-  studio_image_url: string | null;
-  studio_rating: string | null;
-  studio_review_count: number | null;
-  studio_review_keywords: Array<{ keyword: string; count: number }> | null;
   room_id: string;
-  room_name: string;
-  room_price_per_hour: number | null;
-  room_capacity_min: number | null;
-  room_capacity_max: number | null;
 }
 
 export interface TimeWindow {
@@ -154,29 +144,13 @@ export class SlotsRepository {
             ELSE ss.url
           END AS booking_url,
           s.id      AS studio_id,
-          s.name    AS studio_name,
-          s.primary_area_id AS studio_primary_area_id,
-          a.name    AS studio_primary_area_name,
-          s.address AS studio_address,
-          CASE
-            WHEN s.image_status = 'HIDDEN' THEN NULL
-            ELSE COALESCE(s.image_url_manual, s.image_url_scraped)
-          END AS studio_image_url,
-          s.rating        AS studio_rating,
-          s.review_count  AS studio_review_count,
-          s.review_keywords AS studio_review_keywords,
           r.id      AS room_id,
-          r.name    AS room_name,
-          r.price_per_hour  AS room_price_per_hour,
-          r.capacity_min    AS room_capacity_min,
-          r.capacity_max    AS room_capacity_max,
           EXTRACT(HOUR FROM sl.start_time)::int
             - ROW_NUMBER() OVER (PARTITION BY r.id, sl.date ORDER BY sl.start_time)::int
             AS island_key
         FROM slots sl
         INNER JOIN rooms r ON r.id = sl.room_id
         INNER JOIN studios s ON s.id = r.studio_id
-        LEFT JOIN areas a ON a.id = s.primary_area_id
         LEFT JOIN LATERAL (
           SELECT rsx.url, rsx.external_key, src.code
           FROM room_sources rsx
@@ -207,22 +181,10 @@ export class SlotsRepository {
         scraped_at,
         booking_url,
         studio_id,
-        studio_name,
-        studio_primary_area_id,
-        studio_primary_area_name,
-        studio_address,
-        studio_image_url,
-        studio_rating,
-        studio_review_count,
-        studio_review_keywords,
-        room_id,
-        room_name,
-        room_price_per_hour,
-        room_capacity_min,
-        room_capacity_max
+        room_id
       FROM with_island_stats
       WHERE pos_in_island <= island_size - ${durationParam} + 1
-      ORDER BY date ASC, start_time ASC, studio_name ASC, room_name ASC
+      ORDER BY date ASC, start_time ASC, studio_id ASC, room_id ASC
     `;
 
     const result = await this.database.query<SlotRow>(sql, params);
