@@ -42,4 +42,20 @@ VITE_DEV_API_PROXY_TARGET=https://band-practice-room-dev.onrender.com \
 npm run dev
 ```
 
+## 네이티브 앱 실행
+
+기본 네이티브 실행은 스토어 앱을 덮지 않는 `local` variant다.
+
+```bash
+npm run app:ios      # com.hapjusil.app.local
+npm run app:android  # com.hapjusil.app.local
+```
+
+dev OTA 테스트 앱은 `app:ios:dev` / `app:android:dev`, 스토어 제출용 앱은
+`app:ios:prod` / `app:android:prod` 를 명시적으로 사용한다.
+
+variant를 바꾸면 `cap sync`가 복사하는 `capacitor.config.json`도 바뀐다.
+따라서 Xcode scheme이나 Android flavor를 바꿀 때는 같은 variant의
+`app:sync:*` 또는 `app:ios:*` / `app:android:*` 를 다시 실행한다.
+
 실제 백엔드 응답에는 `scrapedAt`이 포함되지만, 이는 **내부 운영용 값일 뿐 화면에 노출하지 않는다**. 데이터 신선도/마지막 확인 시각/stale 상태는 사용자에게 표시하지 않는다(의사결정 로그 2026-06-21). 신선함은 제품이 주기 수집으로 보장하고, 사용자는 당연히 신선하다고 믿고 쓴다.

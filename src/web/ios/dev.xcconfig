@@ -1,0 +1,3 @@
+CAPACITOR_DEBUG = false
+HAPJUSIL_APP_DISPLAY_NAME = 합주실 Dev
+HAPJUSIL_BUNDLE_ID = com.hapjusil.app.dev

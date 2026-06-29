@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">합주실 Dev</string>
+    <string name="title_activity_main">합주실 Dev</string>
+    <string name="package_name">com.hapjusil.app.dev</string>
+    <string name="custom_url_scheme">com.hapjusil.app.dev</string>
+</resources>

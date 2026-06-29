@@ -1,4 +1,4 @@
-name: Android build (AAB)
+name: Android build (AAB/APK)
 
 # 서명된 Android App Bundle(.aab)을 CI에서 빌드해 아티팩트로 올린다.
 # Android Studio 없이 PC/클라우드 어디서든 Play Console 업로드용 .aab 를 얻을 수 있다.
@@ -7,6 +7,9 @@ name: Android build (AAB)
 # 수동 실행 전용(workflow_dispatch). version_name/version_code 를 직접 줄 수 있고,
 # version_code 를 비우면 GitHub run_number 로 단조 증가시킨다(Play 는 versionCode
 # 가 매번 커져야 한다).
+# - prod: com.hapjusil.app Play 업로드용 signed AAB
+# - dev: com.hapjusil.app.dev 테스트 설치용 debug APK
+# - local: com.hapjusil.app.local 로컬 설치 확인용 debug APK
 #
 # 사전 준비 — 저장소 Settings → Secrets and variables → Actions 에 등록:
 #   - ANDROID_KEYSTORE_BASE64    : keystore 파일을 base64 로 인코딩한 값
@@ -22,12 +25,21 @@ name: Android build (AAB)
 on:
   workflow_dispatch:
     inputs:
+      app_variant:
+        description: '빌드 대상 앱'
+        required: true
+        default: 'prod'
+        type: choice
+        options:
+          - prod
+          - dev
+          - local
       version_name:
-        description: 'versionName (예: 1.0.1). 비우면 1.0'
+        description: 'prod versionName (예: 1.0.1). 비우면 1.0'
         required: false
         default: ''
       version_code:
-        description: 'versionCode 정수. 비우면 run_number 사용'
+        description: 'prod versionCode 정수. 비우면 run_number 사용'
         required: false
         default: ''
 
@@ -40,6 +52,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     env:
+      CAPACITOR_APP_VARIANT: ${{ github.event.inputs.app_variant }}
       ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
       ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
       ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
@@ -50,6 +63,10 @@ jobs:
         env:
           KS_B64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
         run: |
+          if [ "$CAPACITOR_APP_VARIANT" != "prod" ]; then
+            echo "$CAPACITOR_APP_VARIANT 빌드는 debug APK라 서명 시크릿을 요구하지 않습니다."
+            exit 0
+          fi
           missing=""
           [ -z "$KS_B64" ] && missing="$missing ANDROID_KEYSTORE_BASE64"
           [ -z "$ANDROID_KEYSTORE_PASSWORD" ] && missing="$missing ANDROID_KEYSTORE_PASSWORD"
@@ -77,11 +94,13 @@ jobs:
           npx cap sync android
 
       - name: 키스토어 복원
+        if: env.CAPACITOR_APP_VARIANT == 'prod'
         run: |
           echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 -d > "$RUNNER_TEMP/release.keystore"
           echo "ANDROID_KEYSTORE_PATH=$RUNNER_TEMP/release.keystore" >> "$GITHUB_ENV"
 
       - name: versionCode/Name 결정
+        if: env.CAPACITOR_APP_VARIANT == 'prod'
         run: |
           VC="${{ github.event.inputs.version_code }}"
           [ -z "$VC" ] && VC="${{ github.run_number }}"
@@ -92,15 +111,49 @@ jobs:
           echo "versionCode=$VC versionName=$VN"
 
       - name: AAB 빌드(서명 포함)
+        if: env.CAPACITOR_APP_VARIANT == 'prod'
         working-directory: src/web/android
         run: |
           chmod +x ./gradlew
-          ./gradlew bundleRelease --no-daemon
+          ./gradlew bundleProdRelease --no-daemon
 
       - name: AAB 아티팩트 업로드
+        if: env.CAPACITOR_APP_VARIANT == 'prod'
         uses: actions/upload-artifact@v4
         with:
           name: hapjusil-release-aab
-          path: src/web/android/app/build/outputs/bundle/release/*.aab
+          path: src/web/android/app/build/outputs/bundle/prodRelease/*.aab
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Dev APK 빌드
+        if: env.CAPACITOR_APP_VARIANT == 'dev'
+        working-directory: src/web/android
+        run: |
+          chmod +x ./gradlew
+          ./gradlew assembleDevDebug --no-daemon
+
+      - name: Dev APK 아티팩트 업로드
+        if: env.CAPACITOR_APP_VARIANT == 'dev'
+        uses: actions/upload-artifact@v4
+        with:
+          name: hapjusil-dev-debug-apk
+          path: src/web/android/app/build/outputs/apk/dev/debug/*.apk
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Local APK 빌드
+        if: env.CAPACITOR_APP_VARIANT == 'local'
+        working-directory: src/web/android
+        run: |
+          chmod +x ./gradlew
+          ./gradlew assembleLocalDebug --no-daemon
+
+      - name: Local APK 아티팩트 업로드
+        if: env.CAPACITOR_APP_VARIANT == 'local'
+        uses: actions/upload-artifact@v4
+        with:
+          name: hapjusil-local-debug-apk
+          path: src/web/android/app/build/outputs/apk/local/debug/*.apk
           if-no-files-found: error
           retention-days: 14
