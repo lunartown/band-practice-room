@@ -1,4 +1,4 @@
-import { parseDates } from './date-range.js';
+import { getNowHourInKst, parseDates } from './date-range.js';
 
 describe('parseDates', () => {
   it('returns 7 days from today when no dates provided', () => {
@@ -56,5 +56,31 @@ describe('parseDates', () => {
     expect(() => parseDates(dates, '2026-06-16')).toThrow(
       expect.objectContaining({ code: 'INVALID_PARAMETER' }),
     );
+  });
+});
+
+describe('getNowHourInKst', () => {
+  it('floors to the hour in KST (UTC+9)', () => {
+    // 05:30 UTC = 14:30 KST → 14:00 으로 내림
+    expect(getNowHourInKst(new Date('2026-06-29T05:30:00.000Z'))).toEqual({
+      date: '2026-06-29',
+      time: '14:00:00',
+    });
+  });
+
+  it('keeps the current hour at exactly :00', () => {
+    // 05:00 UTC = 14:00 KST
+    expect(getNowHourInKst(new Date('2026-06-29T05:00:00.000Z'))).toEqual({
+      date: '2026-06-29',
+      time: '14:00:00',
+    });
+  });
+
+  it('rolls the date forward across the KST day boundary', () => {
+    // 15:00 UTC = 다음날 00:00 KST → 자정은 '00:00:00'
+    expect(getNowHourInKst(new Date('2026-06-28T15:00:00.000Z'))).toEqual({
+      date: '2026-06-29',
+      time: '00:00:00',
+    });
   });
 });

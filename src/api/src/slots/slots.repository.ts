@@ -1,5 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { DatabaseService } from '../database/database.service.js';
+import { getNowHourInKst } from './date-range.js';
 
 // 신선도 컷오프(시간). 수집 주기가 약 60분이라 정상 슬롯은 1~2h 이내에 갱신된다.
 // 이보다 오래 갱신 안 된 AVAILABLE 은, 소스 응답에서 사라졌는데 upsert-only 라 남은
@@ -63,6 +64,17 @@ export class SlotsRepository {
       's.is_active = true',
       `sl.scraped_at > now() - interval '${SLOT_FRESHNESS_HOURS} hour'`,
     ];
+
+    // 오늘(KST) 날짜는 이미 지난 시간대 슬롯을 제외한다. 미래 날짜는 제한 없음.
+    // 시각은 시 단위로 내림해 비교하므로 "지금이 2시면 2시 슬롯부터" 노출된다.
+    const nowKst = getNowHourInKst();
+    params.push(nowKst.date);
+    const nowDateParam = `$${params.length}`;
+    params.push(nowKst.time);
+    const nowTimeParam = `$${params.length}`;
+    baseConditions.push(
+      `(sl.date > ${nowDateParam}::date OR sl.start_time >= ${nowTimeParam}::time)`,
+    );
 
     if (filters.areaIds?.length) {
       params.push(filters.areaIds);

@@ -55,6 +55,27 @@ export function getTodayInKst() {
   }).format(new Date());
 }
 
+// KST 기준 "지금"을 (오늘 날짜, 정시로 내린 시각)으로 돌려준다.
+// 오늘 날짜 조회 시 이미 지난 시간대 슬롯을 빼는 컷오프로 쓴다.
+// 시각은 시 단위로 내림한다(예: 14:30 → 14:00). "지금이 2시면 2시부터" 노출.
+export function getNowHourInKst(now: Date = new Date()): { date: string; time: string } {
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Asia/Seoul',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    hour12: false,
+  }).formatToParts(now);
+  const get = (type: string) => parts.find((p) => p.type === type)?.value ?? '';
+  let hour = get('hour');
+  if (hour === '24') hour = '00'; // 일부 런타임은 자정을 '24'로 반환한다.
+  return {
+    date: `${get('year')}-${get('month')}-${get('day')}`,
+    time: `${hour}:00:00`,
+  };
+}
+
 function defaultDates(today: string): string[] {
   return Array.from({ length: DEFAULT_DAYS }, (_, i) => addDays(today, i));
 }
