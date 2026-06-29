@@ -1,4 +1,4 @@
-import { parseDates } from './date-range.js';
+import { getNowInKst, parseDates } from './date-range.js';
 
 describe('parseDates', () => {
   it('returns 7 days from today when no dates provided', () => {
@@ -56,5 +56,31 @@ describe('parseDates', () => {
     expect(() => parseDates(dates, '2026-06-16')).toThrow(
       expect.objectContaining({ code: 'INVALID_PARAMETER' }),
     );
+  });
+});
+
+describe('getNowInKst', () => {
+  it('returns the current KST time with minutes/seconds (UTC+9)', () => {
+    // 05:30:45 UTC = 14:30:45 KST → 진행 중인 14:00 슬롯은 컷오프(>)로 제외된다
+    expect(getNowInKst(new Date('2026-06-29T05:30:45.000Z'))).toEqual({
+      date: '2026-06-29',
+      time: '14:30:45',
+    });
+  });
+
+  it('keeps an exact hour as HH:00:00', () => {
+    // 05:00:00 UTC = 14:00:00 KST → 14:00 슬롯도 제외, 15:00부터
+    expect(getNowInKst(new Date('2026-06-29T05:00:00.000Z'))).toEqual({
+      date: '2026-06-29',
+      time: '14:00:00',
+    });
+  });
+
+  it('rolls the date forward across the KST day boundary', () => {
+    // 15:00 UTC = 다음날 00:00 KST → 자정은 '00:00:00'
+    expect(getNowInKst(new Date('2026-06-28T15:00:00.000Z'))).toEqual({
+      date: '2026-06-29',
+      time: '00:00:00',
+    });
   });
 });
