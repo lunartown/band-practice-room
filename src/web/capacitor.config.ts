@@ -1,8 +1,42 @@
 import type { CapacitorConfig } from '@capacitor/cli';
 
+type AppVariant = 'prod' | 'dev' | 'local';
+
+const appVariant = (process.env.CAPACITOR_APP_VARIANT ?? 'prod') as AppVariant;
+
+const variantConfig: Record<
+  AppVariant,
+  {
+    appId: string;
+    appName: string;
+    capgoChannel?: string;
+    autoUpdate: boolean;
+  }
+> = {
+  prod: {
+    appId: 'com.hapjusil.app',
+    appName: '합주실',
+    capgoChannel: 'production',
+    autoUpdate: true,
+  },
+  dev: {
+    appId: 'com.hapjusil.app.dev',
+    appName: '합주실 Dev',
+    capgoChannel: 'dev',
+    autoUpdate: true,
+  },
+  local: {
+    appId: 'com.hapjusil.app.local',
+    appName: '합주실 Local',
+    autoUpdate: false,
+  },
+};
+
+const selectedVariant = variantConfig[appVariant] ?? variantConfig.prod;
+
 const config: CapacitorConfig = {
-  appId: 'com.hapjusil.app',
-  appName: '합주실',
+  appId: selectedVariant.appId,
+  appName: selectedVariant.appName,
   webDir: 'dist',
   backgroundColor: '#ffffff',
   ios: {
@@ -26,7 +60,9 @@ const config: CapacitorConfig = {
     // Capgo 클라우드에서 새 웹 번들을 받아 다음 실행 때 자동 적용한다.
     // 스토어 재심사 없이 JS/CSS/HTML 변경을 배포할 수 있다(네이티브 변경은 제외).
     CapacitorUpdater: {
-      autoUpdate: true,
+      appId: selectedVariant.appId,
+      autoUpdate: selectedVariant.autoUpdate,
+      defaultChannel: selectedVariant.capgoChannel,
       // 스토어로 네이티브 앱이 새로 깔리면 쌓여 있던 OTA 번들을 버리고 내장
       // 번들로 리셋한다 — 구버전 OTA 가 신버전 바이너리를 덮는 일을 막는다.
       resetWhenUpdate: true,

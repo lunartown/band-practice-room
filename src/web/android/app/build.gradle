@@ -1,5 +1,17 @@
 apply plugin: 'com.android.application'
 
+def requestedTasks = gradle.startParameter.taskNames.collect { it.toLowerCase() }.join(' ')
+def selectedAppVariant = System.getenv("CAPACITOR_APP_VARIANT")
+if (!selectedAppVariant) {
+    if (requestedTasks.contains("dev")) {
+        selectedAppVariant = "dev"
+    } else if (requestedTasks.contains("local")) {
+        selectedAppVariant = "local"
+    } else {
+        selectedAppVariant = "prod"
+    }
+}
+
 android {
     namespace = "com.hapjusil.app"
     compileSdk = rootProject.ext.compileSdkVersion
@@ -20,6 +32,21 @@ android {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
              // Default: https://android.googlesource.com/platform/frameworks/base/+/282e181b58cf72b6ca770dc7ca5f91f135444502/tools/aapt/AaptAssets.cpp#61
             ignoreAssetsPattern = '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
+        }
+    }
+    flavorDimensions "environment"
+    productFlavors {
+        prod {
+            dimension "environment"
+            applicationId "com.hapjusil.app"
+        }
+        dev {
+            dimension "environment"
+            applicationId "com.hapjusil.app.dev"
+        }
+        local {
+            dimension "environment"
+            applicationId "com.hapjusil.app.local"
         }
     }
     // CI 서명: ANDROID_KEYSTORE_PATH 가 있을 때만 release 서명 설정을 구성한다.
@@ -69,10 +96,13 @@ dependencies {
 apply from: 'capacitor.build.gradle'
 
 try {
-    def servicesJSON = file('google-services.json')
-    if (servicesJSON.text) {
+    def servicesJSON = file("src/${selectedAppVariant}/google-services.json")
+    if (servicesJSON.exists() && servicesJSON.text) {
         apply plugin: 'com.google.gms.google-services'
+        logger.info("google-services.json applied for ${selectedAppVariant}")
+    } else {
+        logger.info("google-services.json not found for ${selectedAppVariant}; Push Notifications won't work for this variant")
     }
 } catch(Exception e) {
-    logger.info("google-services.json not found, google-services plugin not applied. Push Notifications won't work")
+    logger.info("google-services plugin not applied. Push Notifications won't work: ${e.message}")
 }
