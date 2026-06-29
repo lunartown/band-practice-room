@@ -39,6 +39,9 @@ jobs:
         run: |
           npm ci
           npm run db:migrate
+          # 비주얼 시드(003)는 TRUNCATE 없는 멱등 UPDATE 라 매시 돌려도 안전하다.
+          # 썸네일·평점이 수동 실행을 기다리지 않고 반영되게 한다.
+          npm run db:seed:visuals
 
       - name: Seed studios (manual run only)
         if: github.event_name == 'workflow_dispatch'

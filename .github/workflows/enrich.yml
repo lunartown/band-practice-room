@@ -36,6 +36,8 @@ jobs:
         run: |
           npm ci
           npm run db:migrate
+          # 수동 썸네일(image_url_manual)을 멱등 재적용 — 스크랩 보강 전에 항상 보장한다.
+          npm run db:seed:visuals
 
       - name: Enrich studios (images/reviews)
         working-directory: src/scraper
