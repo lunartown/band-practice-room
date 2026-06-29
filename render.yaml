@@ -10,7 +10,9 @@ services:
     plan: free
     dockerfilePath: ./src/api/Dockerfile
     dockerContext: ./src/api
-    healthCheckPath: /api/v1/areas
+    # DB를 건드리지 않는 라이브니스 엔드포인트로 헬스체크한다.
+    # 기존 /api/v1/areas 는 매 헬스체크마다 DB를 조회해 Neon egress 를 24시간 소모했다.
+    healthCheckPath: /api/v1/health
     envVars:
       - key: NODE_ENV
         value: production
