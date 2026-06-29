@@ -82,17 +82,29 @@ export function createAlertFromDraft(draft: AlertDraft, filters: AlertConditionI
 }
 
 export function upsertAlert(alerts: SavedAlert[], alert: SavedAlert): SavedAlert[] {
+  return upsertAlertWithResult(alerts, alert).alerts;
+}
+
+export function upsertAlertWithResult(
+  alerts: SavedAlert[],
+  alert: SavedAlert,
+): { alerts: SavedAlert[]; savedAlert: SavedAlert; wasExisting: boolean } {
   const key = alertKey(alert);
   const existing = alerts.find((item) => alertKey(item) === key);
-  if (!existing) return saveAlerts([alert, ...alerts]);
+  if (!existing) return { alerts: saveAlerts([alert, ...alerts]), savedAlert: alert, wasExisting: false };
 
-  return saveAlerts(
-    alerts.map((item) =>
-      item.id === existing.id
-        ? { ...alert, id: item.id, createdAt: item.createdAt, updatedAt: alert.updatedAt }
-        : item,
-    ),
-  );
+  const savedAlert = {
+    ...alert,
+    id: existing.id,
+    serverId: existing.serverId,
+    createdAt: existing.createdAt,
+    updatedAt: alert.updatedAt,
+  };
+  return {
+    alerts: saveAlerts(alerts.map((item) => (item.id === existing.id ? savedAlert : item))),
+    savedAlert,
+    wasExisting: true,
+  };
 }
 
 export function updateAlert(alerts: SavedAlert[], alert: SavedAlert): SavedAlert[] {

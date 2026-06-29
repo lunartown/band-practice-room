@@ -13,12 +13,18 @@ export type Platform = 'ios' | 'android' | 'web';
 
 let deviceToken: string | null = null;
 let deviceRegistered = false;
+let lastDeviceRegistration: { platform: Platform; appVersion: string | null } | null = null;
+let deviceRegistrationPromise: Promise<boolean> | null = null;
 
 export function getDeviceToken(): string | null {
   return deviceToken;
 }
 
 export function setDeviceToken(token: string): void {
+  if (deviceToken !== token) {
+    deviceRegistered = false;
+    deviceRegistrationPromise = null;
+  }
   deviceToken = token;
 }
 
@@ -28,23 +34,16 @@ export function canSyncRemote(): boolean {
 }
 
 export async function registerDevice(platform: Platform, appVersion: string | null): Promise<void> {
-  if (!canSyncRemote()) return;
-  try {
-    await postJson('/notifications/devices', {
-      deviceToken,
-      platform,
-      appVersion,
-    });
-    deviceRegistered = true;
-  } catch (err) {
-    console.warn('[notify] 디바이스 등록 실패', err);
-  }
+  lastDeviceRegistration = { platform, appVersion };
+  await ensureDeviceRegistered();
 }
 
 // 로컬 SavedAlert 를 서버 구독으로 생성한다. 성공 시 서버 구독 id 를 돌려준다(없으면 null).
 export async function createSubscription(alert: SavedAlert): Promise<number | null> {
   if (!canSyncRemote()) return null;
-  if (!deviceRegistered) return null; // 디바이스 등록이 선행돼야 함
+  // 앱 부팅 직후 알림을 등록해도 디바이스 등록 요청이 끝날 때까지 기다린다.
+  // 이미 서버에 등록된 토큰이면 deviceRegistered 메모리 플래그가 false 여도 구독 POST 는 성공한다.
+  await ensureDeviceRegistered();
   try {
     const res = await postJson<{ id: number }>(
       '/notifications/subscriptions',
@@ -86,6 +85,32 @@ function toSubscriptionPayload(alert: SavedAlert) {
     return { ...base, studioIds: alert.studios.map((s) => s.id) };
   }
   return { ...base, areaIds: alert.areaIds };
+}
+
+async function ensureDeviceRegistered(): Promise<boolean> {
+  if (deviceRegistered) return true;
+  if (!canSyncRemote() || !lastDeviceRegistration) return false;
+  if (deviceRegistrationPromise) return deviceRegistrationPromise;
+
+  const { platform, appVersion } = lastDeviceRegistration;
+  deviceRegistrationPromise = postJson('/notifications/devices', {
+    deviceToken,
+    platform,
+    appVersion,
+  })
+    .then(() => {
+      deviceRegistered = true;
+      return true;
+    })
+    .catch((err) => {
+      console.warn('[notify] 디바이스 등록 실패', err);
+      return false;
+    })
+    .finally(() => {
+      deviceRegistrationPromise = null;
+    });
+
+  return deviceRegistrationPromise;
 }
 
 function postJson<T = unknown>(path: string, body: unknown): Promise<T> {

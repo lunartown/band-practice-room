@@ -16,7 +16,7 @@ import {
   deleteAlert,
   loadAlerts,
   updateAlert,
-  upsertAlert,
+  upsertAlertWithResult,
 } from './lib/alerts';
 import type { AlertDraft, SavedAlert } from './lib/alerts';
 import {
@@ -219,11 +219,13 @@ export function App() {
   function confirmAlertDraft() {
     if (!alertDraft) return;
     const alert = createAlertFromDraft(alertDraft, filters);
-    setAlerts((current) => upsertAlert(current, alert));
+    const { alerts: nextAlerts, savedAlert } = upsertAlertWithResult(alerts, alert);
+    setAlerts(nextAlerts);
     setAlertDraft(null);
     // 푸시 백엔드에 구독 생성(웹/목/토큰없음이면 no-op). 성공하면 serverId 부착.
-    void createSubscription(alert).then((serverId) => {
-      if (serverId != null) setAlerts((current) => updateAlert(current, { ...alert, serverId }));
+    if (savedAlert.serverId != null) return;
+    void createSubscription(savedAlert).then((serverId) => {
+      if (serverId != null) setAlerts((current) => updateAlert(current, { ...savedAlert, serverId }));
     });
   }
 
