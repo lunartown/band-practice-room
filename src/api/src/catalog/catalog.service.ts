@@ -62,6 +62,13 @@ export class CatalogService {
       rating: studio.rating == null ? null : Number(studio.rating),
       reviewCount: studio.review_count ?? null,
       reviewKeywords: studio.review_keywords ?? [],
+      rooms: (studio.rooms ?? []).map((room) => ({
+        id: Number(room.id),
+        name: room.name,
+        pricePerHour: room.price_per_hour == null ? null : Number(room.price_per_hour),
+        capacityMin: room.capacity_min ?? null,
+        capacityMax: room.capacity_max ?? null,
+      })),
       hasOnlineBooking: studio.has_online_booking,
     };
   }

@@ -62,13 +62,22 @@
       "rating": 4.8,
       "reviewCount": 123,
       "reviewKeywords": [{ "keyword": "방음", "count": 30 }],
+      "rooms": [
+        {
+          "id": 10,
+          "name": "A룸",
+          "pricePerHour": 22000,
+          "capacityMin": 2,
+          "capacityMax": 8
+        }
+      ],
       "hasOnlineBooking": true
     }
   ]
 }
 ```
 
-`imageUrl`은 수기 입력값(`image_url_manual`)을 우선하고 없으면 수집값(`image_url_scraped`)을 사용한다. `rating`, `reviewCount`는 값이 없으면 `null`이고, `reviewKeywords`는 없으면 `[]`다. `primaryAreaName`·`reviewKeywords`는 slots 응답의 studio 메타를 슬롯마다 중복 전송하지 않도록, 합주실 정보를 이 엔드포인트로 모으기 위해 포함한다.
+`imageUrl`은 수기 입력값(`image_url_manual`)을 우선하고 없으면 수집값(`image_url_scraped`)을 사용한다. `rating`, `reviewCount`는 값이 없으면 `null`이고, `reviewKeywords`는 없으면 `[]`다. `primaryAreaName`·`reviewKeywords`·`rooms`는 slots 응답의 studio·room 메타를 슬롯마다 중복 전송하지 않도록, 합주실/방 정보를 이 엔드포인트로 모으기 위해 포함한다. `rooms`는 `is_active = true`인 방만 담으며 없으면 `[]`다. 슬롯은 추후 `studioId`·`roomId` 참조만 두고, 프론트가 이 응답으로 `Map<studioId>`·`Map<roomId>`를 구성해 조인한다.
 
 ## 5. GET /slots
 
