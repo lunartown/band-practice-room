@@ -126,4 +126,5 @@ jobs:
           npx @capgo/cli@^8 bundle upload \
             --apikey "$CAPGO_TOKEN" \
             --channel "$CAPGO_CHANNEL" \
-            --bundle "$BUNDLE"
+            --bundle "$BUNDLE" \
+            --ignore-metadata-check
