@@ -109,6 +109,8 @@
 
 응답 최상위는 요청에 사용한 `dates`와 `slots` 배열이다. 슬롯은 **예약 가능한 것(`status = AVAILABLE`)만** 반환한다.
 
+슬롯은 합주실·방 메타를 싣지 않고 `studioId`·`roomId` 참조만 둔다. 클라이언트는 `GET /studios`(방 포함)로 카탈로그를 받아 `studioId`·`roomId` 로 메타를 조인한다. 합주실 한 곳에 슬롯이 수십 개씩 달리는데 메타를 슬롯마다 반복 전송하면 전송량(egress)이 크게 부푸므로 분리한다.
+
 ```json
 {
   "dates": ["2026-06-15", "2026-06-16"],
@@ -121,29 +123,15 @@
       "price": 15000,
       "priceSource": "SCRAPED",
       "scrapedAt": "2026-06-15T09:00:00.000Z",
-      "studio": {
-        "id": 1,
-        "name": "마포 합주실",
-        "primaryAreaId": 1,
-        "primaryAreaName": "홍대",
-        "address": "서울시 마포구 ...",
-        "imageUrl": "https://...",
-        "rating": 4.8,
-        "reviewCount": 123,
-        "reviewKeywords": ["방음 좋아요", "친절해요"]
-      },
-      "room": {
-        "id": 1,
-        "name": "A룸",
-        "pricePerHour": 15000,
-        "capacityMin": 2,
-        "capacityMax": 6
-      },
+      "studioId": 1,
+      "roomId": 1,
       "bookingUrl": "https://m.booking.naver.com/booking/..."
     }
   ]
 }
 ```
+
+`bookingUrl`은 날짜(`startDate`)가 박혀 슬롯마다 다르므로 슬롯에 남긴다.
 
 **Response 400**
 
