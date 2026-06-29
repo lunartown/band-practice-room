@@ -12,11 +12,13 @@ export interface StudioRow {
   slug: string | null;
   name: string;
   primary_area_id: string | null;
+  primary_area_name: string | null;
   area_ids: string[];
   address: string | null;
   image_url: string | null;
   rating: string | null;
   review_count: number | null;
+  review_keywords: Array<{ keyword: string; count: number }> | null;
   has_online_booking: boolean;
 }
 
@@ -88,6 +90,7 @@ export class CatalogRepository {
           s.slug,
           s.name,
           s.primary_area_id,
+          a.name AS primary_area_name,
           COALESCE(
             ARRAY_AGG(sa.area_id ORDER BY sa.area_id)
               FILTER (WHERE sa.area_id IS NOT NULL),
@@ -100,6 +103,7 @@ export class CatalogRepository {
           END AS image_url,
           s.rating,
           s.review_count,
+          s.review_keywords,
           -- 방이 실제 온라인 소스에 매핑(room_sources)됐는지. studio_sources만 있고
           -- bizId가 죽은 곳(매핑 0)은 슬롯이 안 나오므로 전화예약으로 본다(프론트 뱃지/안내용).
           EXISTS (
@@ -109,8 +113,9 @@ export class CatalogRepository {
           ) AS has_online_booking
         FROM studios s
         LEFT JOIN studio_areas sa ON sa.studio_id = s.id
+        LEFT JOIN areas a ON a.id = s.primary_area_id
         WHERE ${where.join(' AND ')}
-        GROUP BY s.id
+        GROUP BY s.id, a.name
         ORDER BY s.name ASC, s.id ASC
       `,
       params,

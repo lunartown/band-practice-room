@@ -55,11 +55,13 @@ export class CatalogService {
       name: studio.name,
       primaryAreaId:
         studio.primary_area_id === null ? null : Number(studio.primary_area_id),
+      primaryAreaName: studio.primary_area_name,
       areaIds: studio.area_ids.map(Number),
       address: studio.address,
       imageUrl: studio.image_url ?? null,
       rating: studio.rating == null ? null : Number(studio.rating),
       reviewCount: studio.review_count ?? null,
+      reviewKeywords: studio.review_keywords ?? [],
       hasOnlineBooking: studio.has_online_booking,
     };
   }

@@ -55,17 +55,20 @@
       "slug": "mapo-studio",
       "name": "마포 합주실",
       "primaryAreaId": 1,
+      "primaryAreaName": "마포",
       "areaIds": [1, 2],
       "address": "서울시 마포구 ...",
       "imageUrl": "https://...",
       "rating": 4.8,
-      "reviewCount": 123
+      "reviewCount": 123,
+      "reviewKeywords": [{ "keyword": "방음", "count": 30 }],
+      "hasOnlineBooking": true
     }
   ]
 }
 ```
 
-`imageUrl`은 수기 입력값(`image_url_manual`)을 우선하고 없으면 수집값(`image_url_scraped`)을 사용한다. `rating`, `reviewCount`는 값이 없으면 `null`이다.
+`imageUrl`은 수기 입력값(`image_url_manual`)을 우선하고 없으면 수집값(`image_url_scraped`)을 사용한다. `rating`, `reviewCount`는 값이 없으면 `null`이고, `reviewKeywords`는 없으면 `[]`다. `primaryAreaName`·`reviewKeywords`는 slots 응답의 studio 메타를 슬롯마다 중복 전송하지 않도록, 합주실 정보를 이 엔드포인트로 모으기 위해 포함한다.
 
 ## 5. GET /slots
 
