@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { getAreas, getSlots, getStudios } from './api/client';
-import type { Area, Slot, SlotsQuery, Studio } from './api/types';
+import type { Area, RawSlot, SlotsQuery, Studio } from './api/types';
+import { buildCatalogIndex, hydrateSlots } from './lib/slotHydration';
 import { SelectedStudioEmptyRow, StudioRow } from './components/StudioRow';
 import { FilterSheet, defaultFilters } from './components/FilterSheet';
 import type { FilterState } from './components/FilterSheet';
@@ -62,9 +63,9 @@ export function App() {
   const savedPrefs = useMemo(() => loadFilters(), []);
   const [areas, setAreas] = useState<Area[]>([]);
   const [studios, setStudios] = useState<Studio[]>([]);
-  const [slots, setSlots] = useState<Slot[]>([]);
+  const [slots, setSlots] = useState<RawSlot[]>([]);
   const [responseDates, setResponseDates] = useState<string[]>([]);
-  const [searchSlots, setSearchSlots] = useState<Slot[]>([]);
+  const [searchSlots, setSearchSlots] = useState<RawSlot[]>([]);
   const [searchResponseDates, setSearchResponseDates] = useState<string[]>([]);
   const [filters, setFilters] = useState<FilterState>(savedPrefs?.filters ?? defaultFilters);
   // 같은 실행 세션에서 최근(TTL 이내) 방문한 경우에만 조건을 복원하고 결과로 바로 진입한다.
@@ -312,13 +313,25 @@ export function App() {
     openAlertDraft({ scope: 'search', dates: [date] });
   }
 
+  // 슬롯 응답은 studio·room 메타를 슬롯마다 중복 전송하지 않도록 분리 중이라,
+  // studios 카탈로그(방 포함)로 조인해 화면용 슬롯으로 하이드레이션한다.
+  const catalogIndex = useMemo(() => buildCatalogIndex(studios), [studios]);
+  const hydratedSlots = useMemo(
+    () => hydrateSlots(slots, catalogIndex.studioById, catalogIndex.roomById),
+    [slots, catalogIndex],
+  );
+  const hydratedSearchSlots = useMemo(
+    () => hydrateSlots(searchSlots, catalogIndex.studioById, catalogIndex.roomById),
+    [searchSlots, catalogIndex],
+  );
+
   const dateGroups = useMemo(
-    () => buildAvailability(slots, responseDates, filters.minDuration),
-    [slots, responseDates, filters.minDuration],
+    () => buildAvailability(hydratedSlots, responseDates, filters.minDuration),
+    [hydratedSlots, responseDates, filters.minDuration],
   );
   const searchDateGroups = useMemo(
-    () => buildAvailability(searchSlots, searchResponseDates, filters.minDuration),
-    [searchSlots, searchResponseDates, filters.minDuration],
+    () => buildAvailability(hydratedSearchSlots, searchResponseDates, filters.minDuration),
+    [hydratedSearchSlots, searchResponseDates, filters.minDuration],
   );
 
   const visibleGroups = useMemo(
@@ -348,12 +361,12 @@ export function App() {
     [filters.areaIds, bookableStudios],
   );
   const selectedStudios = useMemo(
-    () => buildSelectedStudios(filters.studioIds, studios, slots),
-    [filters.studioIds, slots, studios],
+    () => buildSelectedStudios(filters.studioIds, studios, hydratedSlots),
+    [filters.studioIds, hydratedSlots, studios],
   );
   const selectedStudioChips = useMemo(
-    () => buildSelectedStudioChips(filters.studioIds, studios, slots),
-    [filters.studioIds, slots, studios],
+    () => buildSelectedStudioChips(filters.studioIds, studios, hydratedSlots),
+    [filters.studioIds, hydratedSlots, studios],
   );
   const selectedStudioSet = useMemo(() => new Set(filters.studioIds), [filters.studioIds]);
   const studioSearchStats = useMemo(() => buildStudioSearchStats(searchDateGroups), [searchDateGroups]);
