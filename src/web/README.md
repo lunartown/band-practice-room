@@ -53,6 +53,8 @@ npm run app:android  # com.hapjusil.app.local
 
 dev OTA 테스트 앱은 `app:ios:dev` / `app:android:dev`, 스토어 제출용 앱은
 `app:ios:prod` / `app:android:prod` 를 명시적으로 사용한다.
+iOS의 `app:ios` / `app:ios:dev` 는 Xcode를 열어 scheme을 고르게 하지 않고
+각각 `Hapjusil Local` / `Hapjusil Dev` scheme으로 바로 설치한다.
 
 variant를 바꾸면 `cap sync`가 복사하는 `capacitor.config.json`도 바뀐다.
 따라서 Xcode scheme이나 Android flavor를 바꿀 때는 같은 variant의
