@@ -27,10 +27,10 @@ export function contiguousSpan(windows: TimeWindow[]): TimeWindow | null {
   return { from, to };
 }
 
-// 칩 라벨: 미선택은 '아무 때나', 단일 프리셋은 프리셋명, 이어진 구간은 'HH:MM~HH:MM',
+// 칩 라벨: 미선택은 '시간대', 단일 프리셋은 프리셋명, 이어진 구간은 'HH:MM~HH:MM',
 // 떨어진 여러 구간은 'N개 시간대'로 압축한다.
 export function timeWindowLabel(windows: TimeWindow[]): string {
-  if (windows.length === 0) return '아무 때나';
+  if (windows.length === 0) return '시간대';
   if (windows.length === 1) {
     const preset = TIME_PRESETS.find((p) => p.from === windows[0].from && p.to === windows[0].to);
     if (preset) return preset.label;
