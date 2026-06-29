@@ -1004,7 +1004,7 @@ function RemoveChipIcon() {
 }
 
 function buildDateChipLabel(dates: string[]) {
-  if (dates.length === 0) return '일주일 내';
+  if (dates.length === 0) return '날짜';
   return `${dates.length}일 선택`;
 }
 
