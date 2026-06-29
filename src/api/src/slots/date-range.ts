@@ -55,16 +55,18 @@ export function getTodayInKst() {
   }).format(new Date());
 }
 
-// KST 기준 "지금"을 (오늘 날짜, 정시로 내린 시각)으로 돌려준다.
-// 오늘 날짜 조회 시 이미 지난 시간대 슬롯을 빼는 컷오프로 쓴다.
-// 시각은 시 단위로 내림한다(예: 14:30 → 14:00). "지금이 2시면 2시부터" 노출.
-export function getNowHourInKst(now: Date = new Date()): { date: string; time: string } {
+// KST 기준 "지금"을 (오늘 날짜, 현재 시각 HH:MM:SS)으로 돌려준다.
+// 오늘 날짜 조회 시 현재 시각보다 늦게 시작하는 슬롯만 남기는 컷오프로 쓴다.
+// 시간 단위 슬롯이라, 지금이 2시 몇 분이면 진행 중인 2시 슬롯은 빠지고 3시부터 노출된다.
+export function getNowInKst(now: Date = new Date()): { date: string; time: string } {
   const parts = new Intl.DateTimeFormat('en-CA', {
     timeZone: 'Asia/Seoul',
     year: 'numeric',
     month: '2-digit',
     day: '2-digit',
     hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
     hour12: false,
   }).formatToParts(now);
   const get = (type: string) => parts.find((p) => p.type === type)?.value ?? '';
@@ -72,7 +74,7 @@ export function getNowHourInKst(now: Date = new Date()): { date: string; time: s
   if (hour === '24') hour = '00'; // 일부 런타임은 자정을 '24'로 반환한다.
   return {
     date: `${get('year')}-${get('month')}-${get('day')}`,
-    time: `${hour}:00:00`,
+    time: `${hour}:${get('minute')}:${get('second')}`,
   };
 }
 
