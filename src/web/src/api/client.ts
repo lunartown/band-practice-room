@@ -1,6 +1,6 @@
 import { computeFreshness } from '../lib/date';
 import { getMockAreas, getMockSlots, getMockStudios } from './mock';
-import type { AreasResponse, Slot, SlotsQuery, SlotsResponse, StudiosResponse } from './types';
+import type { AreasResponse, RawSlot, SlotsQuery, SlotsResponse, StudiosResponse } from './types';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? '/api/v1';
 const USE_MOCK_API = import.meta.env.VITE_USE_MOCK_API !== 'false';
@@ -32,7 +32,7 @@ export async function getSlots(query: SlotsQuery): Promise<SlotsResponse> {
   return { ...response, slots: response.slots.map(withFreshness) };
 }
 
-function withFreshness(slot: Slot): Slot {
+function withFreshness(slot: RawSlot): RawSlot {
   return { ...slot, freshness: computeFreshness(slot.scrapedAt) };
 }
 

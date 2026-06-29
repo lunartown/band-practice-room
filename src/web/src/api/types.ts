@@ -22,6 +22,8 @@ export interface Studio {
   reviewKeywords?: ReviewKeyword[];
   /** 온라인(네이버/스페이스클라우드) 예약 소스 보유 여부. false면 전화예약 합주실. */
   hasOnlineBooking?: boolean;
+  /** 활성 방 목록. 슬롯이 roomId 만 참조하므로 방 메타를 여기서 받아 조인한다. */
+  rooms?: Room[];
 }
 
 export interface ReviewKeyword {
@@ -37,6 +39,10 @@ export interface Room {
   capacityMax?: number | null;
 }
 
+/**
+ * 화면이 소비하는 슬롯. studio·room 메타가 채워진 상태를 보장한다.
+ * 서버 응답(RawSlot)을 studios 카탈로그로 하이드레이션해 만든다.
+ */
 export interface Slot {
   id?: number;
   date: string;
@@ -50,6 +56,19 @@ export interface Slot {
   bookingUrl: string | null;
   scrapedAt?: string;
   freshness?: Freshness;
+}
+
+/**
+ * 서버가 내려주는 원본 슬롯. studio·room 메타를 슬롯마다 중복 전송하지 않도록
+ * 점진적으로 `studioId`·`roomId` 참조만 남기는 중이라, studio·room 은 optional 이다.
+ * (구버전 백엔드/네이티브 번들은 아직 studio·room 객체를 그대로 실어 보낸다.)
+ * `hydrateSlots` 가 studios 카탈로그로 채워 `Slot` 으로 변환한다.
+ */
+export interface RawSlot extends Omit<Slot, 'studio' | 'room'> {
+  studio?: Studio;
+  room?: Room;
+  studioId?: number;
+  roomId?: number;
 }
 
 export interface AreasResponse {
@@ -76,5 +95,5 @@ export interface SlotsQuery {
 
 export interface SlotsResponse {
   dates: string[];
-  slots: Slot[];
+  slots: RawSlot[];
 }

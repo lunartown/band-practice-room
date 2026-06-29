@@ -9,11 +9,11 @@ export const areas: Area[] = [
 ];
 
 const studioList = [
-  { id: 1, name: '그라운드 합주실 홍대 본점', areaId: 1, areaName: '홍대', imageUrl: 'https://picsum.photos/seed/ground-hongdae/120', rating: 4.7, reviewCount: 213, reviewKeywords: [{ keyword: '시설이 깔끔해요', count: 69 }, { keyword: '가성비가 좋아요', count: 47 }, { keyword: '방음이 잘돼요', count: 40 }] },
-  { id: 2, name: '그라운드 합주실 합정 1호점', areaId: 2, areaName: '합정', imageUrl: null, rating: 4.5, reviewCount: 88, reviewKeywords: [{ keyword: '친절해요', count: 22 }, { keyword: '스피커 성능이 좋아요', count: 18 }] },
-  { id: 3, name: '그루브 합주실', areaId: 3, areaName: '신촌', imageUrl: 'https://picsum.photos/seed/groove/120', rating: 4.2, reviewCount: 41, reviewKeywords: [{ keyword: '인테리어가 멋져요', count: 12 }] },
-  { id: 4, name: '사운딕트', areaId: 1, areaName: '홍대', imageUrl: null, rating: null, reviewCount: null, reviewKeywords: [] },
-  { id: 5, name: '웨이브랩', areaId: 2, areaName: '합정', imageUrl: null, rating: 4.9, reviewCount: 7, reviewKeywords: [] },
+  { id: 1, name: '그라운드 합주실 홍대 본점', areaId: 1, areaName: '홍대', imageUrl: 'https://picsum.photos/seed/ground-hongdae/120', rating: 4.7, reviewCount: 213, reviewKeywords: [{ keyword: '시설이 깔끔해요', count: 69 }, { keyword: '가성비가 좋아요', count: 47 }, { keyword: '방음이 잘돼요', count: 40 }], rooms: [{ id: 1, name: 'A룸', pricePerHour: 16000, capacityMin: 2, capacityMax: 6 }, { id: 2, name: '라이브룸', pricePerHour: 20000, capacityMin: 2, capacityMax: 10 }] },
+  { id: 2, name: '그라운드 합주실 합정 1호점', areaId: 2, areaName: '합정', imageUrl: null, rating: 4.5, reviewCount: 88, reviewKeywords: [{ keyword: '친절해요', count: 22 }, { keyword: '스피커 성능이 좋아요', count: 18 }], rooms: [{ id: 5, name: '1관', pricePerHour: 14000, capacityMin: 2, capacityMax: 8 }, { id: 8, name: '2관', pricePerHour: 14000, capacityMin: 2, capacityMax: 6 }] },
+  { id: 3, name: '그루브 합주실', areaId: 3, areaName: '신촌', imageUrl: 'https://picsum.photos/seed/groove/120', rating: 4.2, reviewCount: 41, reviewKeywords: [{ keyword: '인테리어가 멋져요', count: 12 }], rooms: [{ id: 3, name: '스튜디오 A', pricePerHour: 18000, capacityMin: 2, capacityMax: 4 }, { id: 4, name: '스튜디오 B', pricePerHour: 18000, capacityMin: 2, capacityMax: 4 }] },
+  { id: 4, name: '사운딕트', areaId: 1, areaName: '홍대', imageUrl: null, rating: null, reviewCount: null, reviewKeywords: [], rooms: [{ id: 6, name: '룸1', pricePerHour: 12000, capacityMin: 2, capacityMax: 4 }] },
+  { id: 5, name: '웨이브랩', areaId: 2, areaName: '합정', imageUrl: null, rating: 4.9, reviewCount: 7, reviewKeywords: [], rooms: [{ id: 7, name: 'Room A', pricePerHour: 15000, capacityMin: 2, capacityMax: 6 }] },
 ];
 
 function dateStr(offset: number) {
@@ -93,13 +93,13 @@ const slots: Slot[] = [
   makeSlot(id++, today, 18, 2, 3, '스튜디오 A', 4, 0, 'fresh', 2, 'UNAVAILABLE'),
 
   // 내일
-  makeSlot(id++, d1, 10, 2, 3, '스튜디오 B', 4, 18000, 'fresh', 5),
-  makeSlot(id++, d1, 11, 2, 3, '스튜디오 B', 4, 18000, 'fresh', 5),
-  makeSlot(id++, d1, 12, 2, 3, '스튜디오 B', 4, 18000, 'recent', 25),
+  makeSlot(id++, d1, 10, 2, 4, '스튜디오 B', 4, 18000, 'fresh', 5),
+  makeSlot(id++, d1, 11, 2, 4, '스튜디오 B', 4, 18000, 'fresh', 5),
+  makeSlot(id++, d1, 12, 2, 4, '스튜디오 B', 4, 18000, 'recent', 25),
   makeSlot(id++, d1, 13, 0, 1, 'A룸', 6, 16000, 'fresh', 4),
-  makeSlot(id++, d1, 19, 1, 5, '2관', 6, 14000, 'recent', 30),
-  makeSlot(id++, d1, 20, 1, 5, '2관', 6, 14000, 'recent', 30),
-  makeSlot(id++, d1, 21, 1, 5, '2관', 6, 14000, 'recent', 30),
+  makeSlot(id++, d1, 19, 1, 8, '2관', 6, 14000, 'recent', 30),
+  makeSlot(id++, d1, 20, 1, 8, '2관', 6, 14000, 'recent', 30),
+  makeSlot(id++, d1, 21, 1, 8, '2관', 6, 14000, 'recent', 30),
 
   // d2
   makeSlot(id++, d2, 11, 0, 1, 'A룸', 6, 16000, 'fresh', 1),
@@ -127,6 +127,8 @@ export async function getMockStudios(areaIds?: number[]): Promise<StudiosRespons
     imageUrl: s.imageUrl,
     rating: s.rating,
     reviewCount: s.reviewCount,
+    reviewKeywords: s.reviewKeywords,
+    rooms: s.rooms,
     hasOnlineBooking: s.id !== 5, // 5번은 전화예약 데모
   }));
   return {
