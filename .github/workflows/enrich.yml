@@ -6,11 +6,20 @@ name: Enrich studios
 # - 수동 실행(workflow_dispatch): 필요할 때 즉시 보강
 #
 # 사전 준비: 저장소 Settings → Secrets and variables → Actions 에
-#   DATABASE_URL = Neon 연결 문자열(?sslmode=require) 등록
+#   DATABASE_URL     = Neon prod(main 브랜치) 연결 문자열(?sslmode=require)
+#   DATABASE_URL_DEV = Neon dev 브랜치 연결 문자열(수동 실행에서 dev 대상 선택 시 사용)
 # 전제: studios/studio_sources 가 이미 시드돼 있어야 한다(scrape.yml 수동 실행으로 1회 시드).
 
 on:
   workflow_dispatch:
+    inputs:
+      database:
+        description: '대상 DB (정기 실행은 항상 prod, 수동 실행에서만 적용)'
+        type: choice
+        options:
+          - prod
+          - dev
+        default: prod
   schedule:
     - cron: '30 18 * * *' # 매일 03:30 KST (18:30 UTC)
 
@@ -23,7 +32,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     env:
-      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      # 수동 실행에서 dev 를 고르면 Neon dev 브랜치(DATABASE_URL_DEV), 그 외(정기 실행 포함)는 prod.
+      DATABASE_URL: ${{ (github.event_name == 'workflow_dispatch' && inputs.database == 'dev') && secrets.DATABASE_URL_DEV || secrets.DATABASE_URL }}
     steps:
       - uses: actions/checkout@v4
 
