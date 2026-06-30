@@ -5,11 +5,12 @@
     "deploymentEnabled": {
       "main": true,
       "dev": true,
+      "stg": true,
       "*": false,
       "**": false
     }
   },
-  "buildCommand": "npm run build",
+  "buildCommand": "npm run build:vercel",
   "outputDirectory": "dist",
   "cleanUrls": true,
   "rewrites": [

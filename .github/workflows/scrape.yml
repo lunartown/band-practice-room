@@ -1,14 +1,24 @@
 name: Scrape availability
 
 # 네이버·스페이스클라우드 예약 가능 시간(slots)을 무료로 주기 수집한다.
-# - 수동 실행(workflow_dispatch): 시드(합주실 89곳·매핑) + 스크랩 → 최초 1회 데이터 채우기용
+# - 수동 실행(workflow_dispatch): 대상 DB(prod/dev)를 골라 시드(합주실 89곳·매핑) + 스크랩
 # - 정기 실행(schedule): 스크랩만 → slots 갱신 (시드는 slots 를 TRUNCATE 하므로 제외)
 #
 # 사전 준비: 저장소 Settings → Secrets and variables → Actions 에
 #   DATABASE_URL = Neon 연결 문자열(?sslmode=require) 등록
+#   DEV_DATABASE_URL = Neon dev branch 연결 문자열(?sslmode=require) 등록
 
 on:
   workflow_dispatch:
+    inputs:
+      target:
+        description: 'DB 대상'
+        required: true
+        default: 'prod'
+        type: choice
+        options:
+          - prod
+          - dev
   schedule:
     - cron: '0 * * * *' # 매시 정각(UTC)
 
@@ -21,7 +31,9 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     env:
-      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      DATABASE_TARGET: ${{ github.event.inputs.target || 'prod' }}
+      PROD_DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      DEV_DATABASE_URL: ${{ secrets.DEV_DATABASE_URL }}
       # 스페이스클라우드 가용성 API 가 개인 토큰을 요구하면 시크릿으로 주입(없으면 토큰 없이 시도).
       SPACECLOUD_API_TOKEN: ${{ secrets.SPACECLOUD_API_TOKEN }}
       RUN_ONCE: 'true'
@@ -33,6 +45,34 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+
+      - name: Resolve database target
+        run: |
+          set -euo pipefail
+
+          TARGET="${DATABASE_TARGET:-prod}"
+          case "$TARGET" in
+            prod)
+              RESOLVED_DATABASE_URL="$PROD_DATABASE_URL"
+              ;;
+            dev)
+              RESOLVED_DATABASE_URL="$DEV_DATABASE_URL"
+              ;;
+            *)
+              echo "::error::target은 prod/dev 중 하나여야 합니다: $TARGET"
+              exit 1
+              ;;
+          esac
+
+          if [ -z "$RESOLVED_DATABASE_URL" ]; then
+            echo "::error::${TARGET} DATABASE_URL 시크릿이 없습니다."
+            exit 1
+          fi
+
+          echo "::add-mask::$RESOLVED_DATABASE_URL"
+          echo "DATABASE_URL=$RESOLVED_DATABASE_URL" >> "$GITHUB_ENV"
+          echo "DATABASE_TARGET=$TARGET" >> "$GITHUB_ENV"
+          echo "DB target: $TARGET"
 
       - name: Migrate (idempotent)
         working-directory: src/api
@@ -59,4 +99,9 @@ jobs:
       - name: Dispatch availability notifications
         if: ${{ !cancelled() }}
         working-directory: src/api
-        run: npm run notify:dispatch
+        run: |
+          if [ "$DATABASE_TARGET" != "prod" ]; then
+            echo "dev DB 대상에서는 실제 푸시 발송을 건너뜁니다."
+            exit 0
+          fi
+          npm run notify:dispatch
