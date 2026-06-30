@@ -16,6 +16,7 @@ export interface StudioRow {
   area_ids: string[];
   address: string | null;
   image_url: string | null;
+  images: string[];
   rating: string | null;
   review_count: number | null;
   review_keywords: Array<{ keyword: string; count: number }> | null;
@@ -108,6 +109,19 @@ export class CatalogRepository {
             WHEN s.image_status = 'HIDDEN' THEN NULL
             ELSE COALESCE(s.image_url_manual, s.image_url_scraped)
           END AS image_url,
+          -- 갤러리(여러 장): studio_images 의 노출(OK) 사진을 순서대로 배열로 담는다.
+          -- 합주실 전체가 HIDDEN 이면 커버와 마찬가지로 갤러리도 비운다.
+          CASE
+            WHEN s.image_status = 'HIDDEN' THEN '[]'::json
+            ELSE COALESCE(
+              (
+                SELECT json_agg(si.image_url ORDER BY si.sort_order ASC, si.id ASC)
+                FROM studio_images si
+                WHERE si.studio_id = s.id AND si.status = 'OK'
+              ),
+              '[]'
+            )
+          END AS images,
           s.rating,
           s.review_count,
           s.review_keywords,

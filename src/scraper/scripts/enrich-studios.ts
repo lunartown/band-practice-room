@@ -22,6 +22,9 @@ interface SourceRow {
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
+// 갤러리에 담을 최대 장수. 예약 API business 이미지 상위 N장만 노출한다.
+const MAX_GALLERY_IMAGES = 5;
+
 function parseBusinessTypeId(url: string | null): number | null {
   const m = url?.match(/\/booking\/(\d+)\//);
   return m ? Number(m[1]) : null;
@@ -70,6 +73,30 @@ async function main() {
         [src.studio_id, imageUrl, reviewCount, keywords.length ? JSON.stringify(keywords) : null],
       );
 
+      // 갤러리(별도 테이블): 상위 N장을 upsert 한다.
+      // - (studio_id, image_url) 충돌 시 순서만 갱신하고 status 는 보존 → 운영자가
+      //   HIDDEN 한 사진이 다음 수집에서 되살아나지 않는다.
+      // - API 가 더는 안 주는 SCRAPED 사진은 정리하되 MANUAL 사진은 건드리지 않는다.
+      // - 빈 응답(images=[]) 이면 네이버 차단일 수 있으므로 멀쩡한 갤러리를 지우지 않는다
+      //   (단일 컬럼을 COALESCE 로 보존하는 것과 동일한 이유).
+      const gallery = images.slice(0, MAX_GALLERY_IMAGES);
+      if (gallery.length > 0) {
+        for (let i = 0; i < gallery.length; i++) {
+          await query(
+            `INSERT INTO studio_images (studio_id, source, image_url, sort_order, status)
+             VALUES ($1, 'SCRAPED', $2, $3, 'OK')
+             ON CONFLICT (studio_id, image_url)
+             DO UPDATE SET sort_order = EXCLUDED.sort_order, updated_at = NOW()`,
+            [src.studio_id, gallery[i], i],
+          );
+        }
+        await query(
+          `DELETE FROM studio_images
+           WHERE studio_id = $1 AND source = 'SCRAPED' AND image_url <> ALL($2::text[])`,
+          [src.studio_id, gallery],
+        );
+      }
+
       updated++;
       if (imageUrl) withImage++;
       if (keywords.length) withKeywords++;
@@ -78,7 +105,7 @@ async function main() {
         .map((k) => `${k.keyword}(${k.count})`)
         .join(', ');
       console.log(
-        `[enrich] ${src.studio_name}: img=${imageUrl ? 'O' : 'X'} reviews=${reviewCount ?? '-'} | ${top || '키워드 없음'}`,
+        `[enrich] ${src.studio_name}: img=${gallery.length}장 reviews=${reviewCount ?? '-'} | ${top || '키워드 없음'}`,
       );
     } catch (e) {
       failed++;

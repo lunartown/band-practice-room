@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import type { Studio } from '../api/types';
 import type { AvailabilityChip, RoomAvailability, StudioAvailability } from '../lib/availability';
 import { toReviewBadges } from '../lib/reviewKeywords';
-import { STUDIO_FALLBACK_IMAGE_URL, thumbnailUrl } from '../lib/imageUrl';
+import { STUDIO_FALLBACK_IMAGE_URL, galleryImageUrl, thumbnailUrl } from '../lib/imageUrl';
 import { useFavorites } from '../lib/useFavorites';
 import { toggleFavorite } from '../lib/favorites';
 import { shareStudio } from '../lib/share';
@@ -126,6 +126,50 @@ function StudioAvatar({ studio }: { studio: Pick<Studio, 'imageUrl' | 'name'> })
   );
 }
 
+// 갤러리 사진 한 장. 리사이즈 URL → 실패 시 원본 → 그래도 실패면 숨김(self-healing).
+// 아바타와 같은 이유로 referrerPolicy="no-referrer" 로 CDN 핫링크 보호를 피한다.
+function StudioPhoto({ url }: { url: string }) {
+  const [src, setSrc] = useState(galleryImageUrl(url) ?? url);
+  const [triedOriginal, setTriedOriginal] = useState(false);
+  const [failed, setFailed] = useState(false);
+  const [loaded, setLoaded] = useState(false);
+
+  if (failed) return null;
+
+  return (
+    <div className="studio-photo">
+      <img
+        src={src}
+        alt=""
+        loading="lazy"
+        referrerPolicy="no-referrer"
+        style={{ opacity: loaded ? 1 : 0 }}
+        onLoad={() => setLoaded(true)}
+        onError={() => {
+          if (!triedOriginal && src !== url) {
+            setTriedOriginal(true);
+            setSrc(url);
+          } else {
+            setFailed(true);
+          }
+        }}
+      />
+    </div>
+  );
+}
+
+// 합주실 내부 사진을 가로 스크롤 스트립으로 보여준다(4~5장). 사진이 없으면 렌더하지 않는다.
+function StudioPhotos({ images, name }: { images?: string[]; name: string }) {
+  if (!images || images.length === 0) return null;
+  return (
+    <div className="studio-photos" aria-label={`${name} 사진`}>
+      {images.map((url) => (
+        <StudioPhoto key={url} url={url} />
+      ))}
+    </div>
+  );
+}
+
 function ShareIcon() {
   return (
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden>
@@ -199,6 +243,8 @@ export function SelectedStudioEmptyRow({
             {phoneOnly ? '📞 전화예약' : '빈 시간 없음'}
           </div>
         </div>
+
+        <StudioPhotos images={studio.images} name={name} />
 
         {badges.length > 0 && (
           <div className="review-badges">
@@ -313,6 +359,8 @@ export function StudioRow({ studio }: StudioRowProps) {
           <div className="studio-price">{studio.priceLabel}</div>
           <BookChevron />
         </div>
+
+        <StudioPhotos images={studio.studio.images} name={name} />
 
         {/* 리뷰 배지: 신원(아바타+이름) 헤더 밖, 예약 칩과 같은 게터 라인에 둔다 */}
         {badges.length > 0 && (

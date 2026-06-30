@@ -17,6 +17,8 @@ export interface Studio {
   areaIds?: number[];
   address?: string | null;
   imageUrl?: string | null;
+  /** 합주실 내부 사진 갤러리(여러 장). 비어 있으면 imageUrl(커버 1장)만 쓴다. */
+  images?: string[];
   rating?: number | null;
   reviewCount?: number | null;
   reviewKeywords?: ReviewKeyword[];
