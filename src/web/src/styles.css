@@ -1109,6 +1109,45 @@ button {
   margin-top: var(--sp-3);
 }
 
+/* 합주실 내부 사진 가로 스크롤 스트립. 카드(=예약 링크) 안에 있으므로
+   가로로 드래그하면 스크롤되고, 사진을 탭하면 카드 예약 링크로 이어진다.
+   사진이 전부 로드 실패해 children 이 비면(:empty) 빈 칸 없이 접는다. */
+.studio-photos {
+  display: flex;
+  gap: var(--sp-2);
+  margin-top: var(--sp-3);
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scroll-snap-type: x proximity;
+  scrollbar-width: none;
+}
+
+.studio-photos::-webkit-scrollbar {
+  display: none;
+}
+
+.studio-photos:empty {
+  display: none;
+}
+
+.studio-photo {
+  flex: 0 0 auto;
+  width: 160px;
+  height: 108px;
+  border-radius: var(--r-md);
+  overflow: hidden;
+  background: var(--surface-sunken);
+  scroll-snap-align: start;
+}
+
+.studio-photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: opacity 0.2s ease;
+}
+
 .times-label {
   display: flex;
   align-items: center;

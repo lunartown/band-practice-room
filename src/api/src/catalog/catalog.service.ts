@@ -59,6 +59,7 @@ export class CatalogService {
       areaIds: studio.area_ids.map(Number),
       address: studio.address,
       imageUrl: studio.image_url ?? null,
+      images: studio.images ?? [],
       rating: studio.rating == null ? null : Number(studio.rating),
       reviewCount: studio.review_count ?? null,
       reviewKeywords: studio.review_keywords ?? [],
