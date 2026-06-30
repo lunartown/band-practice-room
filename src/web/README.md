@@ -24,7 +24,7 @@ ipconfig getifaddr en0
 VITE_USE_MOCK_API=false VITE_API_BASE_URL=/api/v1 npm run dev
 ```
 
-개발 서버에서 `/api`는 기본적으로 Render 실 API(`https://hapjusil-api.onrender.com`)로 프록시된다. 휴대폰 브라우저가 직접 Render API를 호출하면 CORS에 막힐 수 있으므로, 로컬 웹에서는 상대경로(`/api/v1`)를 유지한다.
+개발 서버에서 `/api`는 기본적으로 Render prod API(`https://hapjusil-api.onrender.com`)로 프록시된다. 휴대폰 브라우저가 직접 Render API를 호출하면 CORS에 막힐 수 있으므로, 로컬 웹에서는 상대경로(`/api/v1`)를 유지한다.
 
 로컬 API를 의도적으로 확인할 때만 proxy 타깃을 덮어쓴다.
 
@@ -34,7 +34,7 @@ VITE_DEV_API_PROXY_TARGET=http://127.0.0.1:3000 \
 npm run dev
 ```
 
-Render dev API(`https://hapjusil-api-dev.onrender.com`)를 확인할 때도 proxy 타깃만 바꾼다.
+Render dev API(`https://hapjusil-api-dev.onrender.com`)와 Neon dev DB를 확인할 때도 proxy 타깃만 바꾼다.
 
 ```bash
 VITE_USE_MOCK_API=false VITE_API_BASE_URL=/api/v1 \

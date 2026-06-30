@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite --host 0.0.0.0",
     "build": "tsc --noEmit && vite build",
+    "build:vercel": "node ./scripts/build-vercel.mjs",
     "build:app": "tsc --noEmit && vite build --mode capacitor",
     "build:app:prod": "CAPACITOR_APP_VARIANT=prod npm run build:app",
     "build:app:dev": "CAPACITOR_APP_VARIANT=dev npm run build:app",
