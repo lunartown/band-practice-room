@@ -1,0 +1,12 @@
+# API Docker 빌드 컨텍스트는 레포 루트(render.yaml). 불필요한 대용량 경로를 제외해
+# 컨텍스트 전송을 가볍게 한다. Dockerfile 은 필요한 경로만 명시적으로 COPY 한다.
+**/node_modules
+**/dist
+**/.env
+**/.env.*
+!**/.env.example
+**/*.log
+**/coverage
+.git
+src/web
+src/scraper

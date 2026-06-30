@@ -1,7 +1,6 @@
 import { query } from './db.js';
-import { NaverReservationScraper } from './naver/scraper.js';
-import { SpaceCloudScraper } from './spacecloud/scraper.js';
-import type { AvailabilitySlot, ScrapeRoom, StudioScrapeResult } from './types.js';
+import { buildStudioScraper } from '../../scrape-core/build.js';
+import type { AvailabilitySlot } from '../../scrape-core/types.js';
 
 const MAX_ATTEMPTS = 5;
 // 수집 성공 후 재수집까지 간격(분). 운영에선 10 정도가 적당하나, 개발 단계라 기본 60.
@@ -59,7 +58,15 @@ export async function runOnce(): Promise<boolean> {
   }
 
   // 소스 종류(naver/spacecloud)에 따라 스크래퍼를 고른다.
-  const dispatch = buildScraper(source, rooms, job.studio_source_id);
+  const dispatch = buildStudioScraper({
+    sourceCode: source.source_code,
+    studioName: source.studio_name,
+    url: source.url,
+    externalKey: source.external_key,
+    rooms: rooms.map((r) => ({ name: r.name, externalKey: r.external_key })),
+    studioSourceId: job.studio_source_id,
+    debug: process.env.DEBUG === 'true',
+  });
   if ('error' in dispatch) {
     await failJob(job.id, dispatch.error, 'PARSE_FAILED', job.studio_source_id);
     return true;
@@ -131,77 +138,6 @@ export async function runOnce(): Promise<boolean> {
   }
 
   return true;
-}
-
-// URL 의 /booking/{N}/ 세그먼트가 businessTypeId (보통 10, 일부 13).
-function parseBusinessTypeId(url: string): number | null {
-  const m = url.match(/\/booking\/(\d+)\//);
-  return m ? Number(m[1]) : null;
-}
-
-// source.code 가 없는(마이그레이션 전) DB 대비: URL 호스트로 소스 종류를 추정.
-function resolveSourceCode(source: StudioSourceRow): string {
-  if (source.source_code) return source.source_code;
-  if (source.url?.includes('spacecloud')) return 'spacecloud';
-  return 'naver';
-}
-
-type Dispatch =
-  | { scrape: (dateFrom: string, dateTo: string) => Promise<StudioScrapeResult> }
-  | { error: string };
-
-// 소스 종류별로 적절한 스크래퍼를 구성한다. 영구 실패할 설정 오류는 { error } 로 돌려준다.
-function buildScraper(source: StudioSourceRow, rooms: RoomRow[], studioSourceId: string): Dispatch {
-  const debug = process.env.DEBUG === 'true';
-  const code = resolveSourceCode(source);
-
-  if (code === 'spacecloud') {
-    const scRooms = [];
-    for (const r of rooms) {
-      // external_key = "productId:reservationTypeId"
-      const [productId, reservationTypeId] = r.external_key.split(':');
-      if (!productId || !reservationTypeId) {
-        return {
-          error: `스페이스클라우드 external_key 형식 오류(productId:reservationTypeId): ${r.external_key}`,
-        };
-      }
-      scRooms.push({ roomName: r.name, productId, reservationTypeId });
-    }
-    const scraper = new SpaceCloudScraper(
-      { studioName: source.studio_name, rooms: scRooms },
-      { debug },
-    );
-    return { scrape: (from, to) => scraper.scrape(from, to) };
-  }
-
-  // 기본: 네이버
-  if (!source.url || !source.external_key) {
-    return { error: 'studio_source URL/식별자가 없습니다(naver)' };
-  }
-  const businessTypeId = parseBusinessTypeId(source.url);
-  if (businessTypeId === null) {
-    return { error: `URL에서 businessTypeId 파싱 실패: ${source.url}` };
-  }
-  const scrapeRooms: ScrapeRoom[] = rooms.map((r) => ({
-    roomName: r.name,
-    externalKey: r.external_key,
-  }));
-  const scraper = new NaverReservationScraper({ debug });
-  const businessId = source.external_key;
-  return {
-    scrape: (from, to) =>
-      scraper.scrape(
-        {
-          studioSourceId,
-          studioName: source.studio_name,
-          businessId,
-          businessTypeId,
-          rooms: scrapeRooms,
-        },
-        from,
-        to,
-      ),
-  };
 }
 
 async function provisionJobs() {
