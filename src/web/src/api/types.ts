@@ -97,11 +97,3 @@ export interface SlotsResponse {
   dates: string[];
   slots: RawSlot[];
 }
-
-export interface RefreshResponse {
-  dateFrom: string;
-  dateTo: string;
-  refreshed: Array<{ studioId: number; studioName: string; sourceCode: string; slots: number }>;
-  skipped: Array<{ studioId: number; sourceCode: string; reason: 'fresh' | 'cooldown' | 'capped' }>;
-  failed: Array<{ studioId: number; sourceCode: string; error: string }>;
-}

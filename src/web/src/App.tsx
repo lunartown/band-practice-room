@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { getAreas, getSlots, getStudios, refreshSlots } from './api/client';
+import { getAreas, getSlots, getStudios } from './api/client';
 import type { Area, RawSlot, SlotsQuery, Studio } from './api/types';
 import { buildCatalogIndex, hydrateSlots } from './lib/slotHydration';
 import { SelectedStudioEmptyRow, StudioRow } from './components/StudioRow';
@@ -43,7 +43,6 @@ import {
   filterStudiosByAreas,
 } from './lib/studioSearch';
 import { useFavorites } from './lib/useFavorites';
-import { usePullToRefresh } from './lib/usePullToRefresh';
 
 type PopoverKind = 'time' | 'date' | 'area' | 'sort';
 const POP_WIDTH: Record<PopoverKind, number> = { time: 320, date: 340, area: 220, sort: 180 };
@@ -403,47 +402,6 @@ export function App() {
 
   const syncLabel = updatedAt ? formatUpdatedAt(updatedAt) : '–';
 
-  // 당겨서 새로고침: 화면에 보이는 합주실(결과로 떠 있는 곳 + 선택한 곳)만 재수집 대상.
-  // 백엔드가 신선도·쿨다운·동시성을 제한하므로 id 목록만 넘긴다.
-  const visibleStudioIds = useMemo(() => {
-    const ids = new Set<number>();
-    for (const group of visibleGroups) {
-      for (const studio of group.studios) ids.add(studio.studio.id);
-    }
-    for (const studio of selectedStudios) ids.add(studio.id);
-    return [...ids];
-  }, [visibleGroups, selectedStudios]);
-
-  const handlePullRefresh = useCallback(async () => {
-    // 보이는 곳을 즉시 재수집한 뒤, 같은 조건으로 슬롯을 다시 불러온다.
-    // 재수집이 실패하거나 게이트에 막혀도 최신 슬롯 재조회는 시도한다.
-    try {
-      await refreshSlots(visibleStudioIds);
-    } catch {
-      // 무시: 아래에서 어차피 재조회한다.
-    }
-    try {
-      const r = await getSlots(buildSlotsQuery(filters, { includeSelectedStudio: true }));
-      setSlots(r.slots);
-      setResponseDates(r.dates);
-      setUpdatedAt(new Date());
-      setError(null);
-    } catch {
-      setError('예약 가능 시간을 불러오지 못했습니다');
-    }
-  }, [filters, visibleStudioIds]);
-
-  const {
-    ref: resultListRef,
-    pull: pullDistance,
-    progress: pullProgress,
-    refreshing: isPullRefreshing,
-    dragging: isPullDragging,
-  } = usePullToRefresh<HTMLDivElement>({
-    onRefresh: handlePullRefresh,
-    disabled: loading,
-  });
-
   if (!entered) {
     return (
       <main className="app-shell">
@@ -624,23 +582,7 @@ export function App() {
             {error && <div className="error-banner">{error}</div>}
             {loading && <div className="loading-bar" aria-hidden />}
 
-            <div
-              ref={resultListRef}
-              className={`result-list${loading && (totalStudios > 0 || visibleGroups.length > 0) ? ' is-refreshing' : ''}`}
-            >
-              <div
-                className="ptr-indicator"
-                style={{
-                  height: pullDistance,
-                  transition: isPullDragging ? 'none' : 'height 0.22s ease',
-                }}
-                aria-hidden={pullDistance === 0}
-              >
-                <span
-                  className={`ptr-spinner${isPullRefreshing ? ' spinning' : ''}`}
-                  style={isPullRefreshing ? undefined : { transform: `rotate(${pullProgress * 270}deg)`, opacity: pullProgress }}
-                />
-              </div>
+            <div className={`result-list${loading && (totalStudios > 0 || visibleGroups.length > 0) ? ' is-refreshing' : ''}`}>
               {loading && totalStudios === 0 && visibleGroups.length === 0 ? (
                 <SkeletonList />
               ) : favFilterActive && totalStudios === 0 ? (
