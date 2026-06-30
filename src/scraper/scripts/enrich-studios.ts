@@ -10,7 +10,7 @@
  *
  * 실행: cd src/scraper && npx tsx scripts/enrich-studios.ts
  */
-import { fetchBusinessImages, fetchReviewStats } from '../src/naver/client.js';
+import { fetchBusinessImages, fetchReviewStats } from '../../scrape-core/naver/client.js';
 import { query, end } from '../src/db.js';
 
 interface SourceRow {

@@ -17,7 +17,7 @@
 import { readFileSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { spacecloudGet } from '../src/spacecloud/api.js';
+import { spacecloudGet } from '../../scrape-core/spacecloud/api.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const mappingPath = resolve(__dirname, 'spacecloud-mapping.json');

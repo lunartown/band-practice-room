@@ -15,8 +15,8 @@
  *   DATABASE_URL='<neon>' npx tsx scripts/naver-map-rooms.ts --studios 34,35,41
  */
 import { query, end } from '../src/db.js';
-import { fetchBizItems, fetchHourlySchedule, type NaverBizItem } from '../src/naver/client.js';
-import { toAvailabilitySlots } from '../src/naver/mapper.js';
+import { fetchBizItems, fetchHourlySchedule, type NaverBizItem } from '../../scrape-core/naver/client.js';
+import { toAvailabilitySlots } from '../../scrape-core/naver/mapper.js';
 
 const NAVER_SOURCE_ID = '1';
 const SPAN_DAYS = 6;
