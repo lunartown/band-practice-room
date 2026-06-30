@@ -11,8 +11,8 @@ name: Scrape availability
 on:
   workflow_dispatch:
     inputs:
-      target:
-        description: 'DB 대상'
+      database:
+        description: '대상 DB (정기 실행은 항상 prod, 수동 실행에서만 적용)'
         required: true
         default: 'prod'
         type: choice
@@ -31,7 +31,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     env:
-      DATABASE_TARGET: ${{ github.event.inputs.target || 'prod' }}
+      DATABASE_TARGET: ${{ github.event.inputs.database || 'prod' }}
       PROD_DATABASE_URL: ${{ secrets.DATABASE_URL }}
       DATABASE_URL_DEV: ${{ secrets.DATABASE_URL_DEV }}
       # 스페이스클라우드 가용성 API 가 개인 토큰을 요구하면 시크릿으로 주입(없으면 토큰 없이 시도).
@@ -59,7 +59,7 @@ jobs:
               RESOLVED_DATABASE_URL="$DATABASE_URL_DEV"
               ;;
             *)
-              echo "::error::target은 prod/dev 중 하나여야 합니다: $TARGET"
+              echo "::error::database는 prod/dev 중 하나여야 합니다: $TARGET"
               exit 1
               ;;
           esac
