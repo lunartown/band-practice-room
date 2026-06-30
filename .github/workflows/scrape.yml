@@ -6,7 +6,7 @@ name: Scrape availability
 #
 # 사전 준비: 저장소 Settings → Secrets and variables → Actions 에
 #   DATABASE_URL = Neon 연결 문자열(?sslmode=require) 등록
-#   DEV_DATABASE_URL = Neon dev branch 연결 문자열(?sslmode=require) 등록
+#   DATABASE_URL_DEV = Neon dev branch 연결 문자열(?sslmode=require) 등록
 
 on:
   workflow_dispatch:
@@ -33,7 +33,7 @@ jobs:
     env:
       DATABASE_TARGET: ${{ github.event.inputs.target || 'prod' }}
       PROD_DATABASE_URL: ${{ secrets.DATABASE_URL }}
-      DEV_DATABASE_URL: ${{ secrets.DEV_DATABASE_URL }}
+      DATABASE_URL_DEV: ${{ secrets.DATABASE_URL_DEV }}
       # 스페이스클라우드 가용성 API 가 개인 토큰을 요구하면 시크릿으로 주입(없으면 토큰 없이 시도).
       SPACECLOUD_API_TOKEN: ${{ secrets.SPACECLOUD_API_TOKEN }}
       RUN_ONCE: 'true'
@@ -56,7 +56,7 @@ jobs:
               RESOLVED_DATABASE_URL="$PROD_DATABASE_URL"
               ;;
             dev)
-              RESOLVED_DATABASE_URL="$DEV_DATABASE_URL"
+              RESOLVED_DATABASE_URL="$DATABASE_URL_DEV"
               ;;
             *)
               echo "::error::target은 prod/dev 중 하나여야 합니다: $TARGET"
