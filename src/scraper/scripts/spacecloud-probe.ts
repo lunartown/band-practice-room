@@ -14,7 +14,7 @@
  *
  * 토큰 없이도 200 이 오면 인증 불필요라는 뜻(그대로 두면 됨).
  */
-import { SpaceCloudScraper } from '../src/spacecloud/scraper.js';
+import { SpaceCloudScraper } from '../../scrape-core/spacecloud/scraper.js';
 
 function arg(flag: string, fallback?: string): string | undefined {
   const i = process.argv.indexOf(flag);

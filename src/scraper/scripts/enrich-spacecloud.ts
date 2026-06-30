@@ -9,7 +9,7 @@
  *
  * 실행: cd src/scraper && npx tsx scripts/enrich-spacecloud.ts
  */
-import { spacecloudGet } from '../src/spacecloud/api.js';
+import { spacecloudGet } from '../../scrape-core/spacecloud/api.js';
 import { query, end } from '../src/db.js';
 
 interface SourceRow {
