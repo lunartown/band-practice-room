@@ -5,10 +5,71 @@
 //   RUN_DB_TESTS=1 DATABASE_URL=postgres://user:pw@127.0.0.1:5432/db DATABASE_SSL=false npm test
 // DB 가 없는 CI 에서는 자동으로 skip 된다(공유/운영 DB 에는 절대 붙지 않는다).
 import { DatabaseService } from '../database/database.service.js';
-import { NotificationDispatcher } from './dispatcher.service.js';
+import {
+  CandidateRow,
+  NotificationDispatcher,
+  coalesceDeviceCandidates,
+} from './dispatcher.service.js';
 
 const runDbTests = process.env.RUN_DB_TESTS === '1';
 const describeDb = runDbTests ? describe : describe.skip;
+
+describe('coalesceDeviceCandidates', () => {
+  function candidate(input: Partial<CandidateRow>): CandidateRow {
+    return {
+      subscription_id: '1',
+      device_id: '1',
+      device_token: 'token-1',
+      studio_id: '1',
+      studio_name: '홍대합주실',
+      room_id: '1',
+      room_name: 'A룸',
+      slot_date: '2099-01-01',
+      slot_start_time: '19:00:00',
+      min_duration: 1,
+      ...input,
+    };
+  }
+
+  it('같은 디바이스의 같은 슬롯은 구독 id가 가장 작은 후보만 발송 대상으로 남긴다', () => {
+    const result = coalesceDeviceCandidates([
+      candidate({ subscription_id: '12' }),
+      candidate({ subscription_id: '10' }),
+      candidate({ subscription_id: '11' }),
+    ]);
+
+    expect(result.pushCandidates.map((c) => c.candidate.subscription_id)).toEqual(['10']);
+    expect(result.pushCandidates.map((c) => c.slotCount)).toEqual([1]);
+    expect(result.skippedCandidates.map((c) => c.subscription_id)).toEqual(['11', '12']);
+  });
+
+  it('같은 디바이스의 여러 슬롯도 푸시 1건으로 묶고 대표 슬롯은 가장 빠른 슬롯으로 고른다', () => {
+    const result = coalesceDeviceCandidates([
+      candidate({ subscription_id: '1', room_id: '2', slot_start_time: '20:00:00' }),
+      candidate({ subscription_id: '1', room_id: '1', slot_start_time: '19:00:00' }),
+      candidate({ subscription_id: '2', room_id: '1', slot_start_time: '19:00:00' }),
+    ]);
+
+    expect(result.pushCandidates).toHaveLength(1);
+    expect(result.pushCandidates[0].candidate).toMatchObject({
+      subscription_id: '1',
+      room_id: '1',
+      slot_start_time: '19:00:00',
+    });
+    expect(result.pushCandidates[0].slotCount).toBe(2);
+    expect(result.skippedCandidates.map((c) => c.room_id)).toEqual(['1', '2']);
+  });
+
+  it('디바이스가 다르면 같은 슬롯이어도 각각 발송한다', () => {
+    const result = coalesceDeviceCandidates([
+      candidate({ subscription_id: '1', device_id: '1', device_token: 'token-1' }),
+      candidate({ subscription_id: '2', device_id: '2', device_token: 'token-2' }),
+    ]);
+
+    expect(result.pushCandidates.map((c) => c.candidate.subscription_id)).toEqual(['1', '2']);
+    expect(result.skippedCandidates).toHaveLength(0);
+  });
+});
 
 describeDb('NotificationDispatcher (integration)', () => {
   let db: DatabaseService;
@@ -205,6 +266,44 @@ describeDb('NotificationDispatcher (integration)', () => {
       expect(s3.candidates).toBe(0); // 이미 보낸 슬롯이라 후보에서 제외
       const delCnt = await db.query<{ c: string }>(`SELECT count(*) c FROM notification_deliveries`);
       expect(Number(delCnt.rows[0].c)).toBe(1);
+    });
+
+    it('같은 디바이스에 같은 슬롯을 가리키는 구독이 여러 개 있어도 푸시는 1건만 보낸다', async () => {
+      const deviceId = await createDevice('tok-dup-device');
+      const firstSubId = await createSubscription({ deviceId, studioIds: [studioId], dates: [futureDate] });
+      const secondSubId = await createSubscription({ deviceId, studioIds: [studioId], dates: [futureDate] });
+      await insertAvailableSlot(roomId, futureDate, '19:00', '20:00');
+
+      const s1 = await dispatcher.dispatch();
+      expect(s1.claimedEvents).toBe(1);
+      expect(s1.candidates).toBe(1);
+      expect(s1.sent).toBe(1);
+      expect(s1.failed).toBe(0);
+
+      const deliveries = await db.query<{ subscription_id: string; status: string; error: string | null }>(
+        `SELECT subscription_id, status, error
+         FROM notification_deliveries
+         ORDER BY subscription_id`,
+      );
+      expect(deliveries.rows).toEqual([
+        { subscription_id: String(firstSubId), status: 'SENT', error: null },
+        {
+          subscription_id: String(secondSubId),
+          status: 'SKIPPED',
+          error: 'bundled into device notification',
+        },
+      ]);
+
+      await db.query(
+        `INSERT INTO slot_available_events (room_id, slot_date, slot_start_time)
+         VALUES ($1, $2, '19:00')`,
+        [roomId, futureDate],
+      );
+      const s2 = await dispatcher.dispatch();
+      expect(s2.claimedEvents).toBe(1);
+      expect(s2.candidates).toBe(0);
+      const delCnt = await db.query<{ c: string }>(`SELECT count(*) c FROM notification_deliveries`);
+      expect(Number(delCnt.rows[0].c)).toBe(2);
     });
 
     it('이벤트가 없으면 빈 요약을 돌려준다', async () => {
