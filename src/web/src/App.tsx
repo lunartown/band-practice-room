@@ -1,4 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Capacitor } from '@capacitor/core';
+import { App as CapApp } from '@capacitor/app';
 import { getAreas, getSlots, getStudios, refreshSlots } from './api/client';
 import type { Area, RawSlot, SlotsQuery, Studio } from './api/types';
 import { buildCatalogIndex, hydrateSlots } from './lib/slotHydration';
@@ -59,6 +61,15 @@ interface PopoverState {
   left: number;
   width: number;
 }
+interface NativeBackState {
+  alertDraftOpen: boolean;
+  isMenuOpen: boolean;
+  isFilterOpen: boolean;
+  popoverOpen: boolean;
+  isStudioSearchOpen: boolean;
+  isAlertsOpen: boolean;
+  studioIds: number[];
+}
 
 export function App() {
   const savedPrefs = useMemo(() => loadFilters(), []);
@@ -91,6 +102,15 @@ export function App() {
   const [loading, setLoading] = useState(true);
   const [searchLoading, setSearchLoading] = useState(false);
   const phoneRef = useRef<HTMLElement>(null);
+  const nativeBackStateRef = useRef<NativeBackState>({
+    alertDraftOpen: false,
+    isMenuOpen: false,
+    isFilterOpen: false,
+    popoverOpen: false,
+    isStudioSearchOpen: false,
+    isAlertsOpen: false,
+    studioIds: [],
+  });
 
   const rememberRecentStudioSelections = useCallback((studioIds: number[]) => {
     if (studioIds.length > 0) {
@@ -245,11 +265,11 @@ export function App() {
     if (target?.serverId != null) void deleteSubscription(target.serverId);
   }
 
-  function closeStudioSearch({ rememberSelection = true }: { rememberSelection?: boolean } = {}) {
+  const closeStudioSearch = useCallback(({ rememberSelection = true }: { rememberSelection?: boolean } = {}) => {
     if (rememberSelection) rememberRecentStudioSelections(filters.studioIds);
     setIsStudioSearchOpen(false);
     setStudioSearchQuery('');
-  }
+  }, [filters.studioIds, rememberRecentStudioSelections]);
 
   function toggleStudioSelection(studioId: number) {
     setFavOnly(false);
@@ -403,6 +423,16 @@ export function App() {
 
   const syncLabel = updatedAt ? formatUpdatedAt(updatedAt) : '–';
 
+  nativeBackStateRef.current = {
+    alertDraftOpen: alertDraft !== null,
+    isMenuOpen,
+    isFilterOpen,
+    popoverOpen: popover !== null,
+    isStudioSearchOpen,
+    isAlertsOpen,
+    studioIds: filters.studioIds,
+  };
+
   // 당겨서 새로고침: 화면에 보이는 합주실(결과로 떠 있는 곳 + 선택한 곳)만 재수집 대상.
   // 백엔드가 신선도·쿨다운·동시성을 제한하므로 id 목록만 넘긴다.
   const visibleStudioIds = useMemo(() => {
@@ -432,6 +462,58 @@ export function App() {
       setError('예약 가능 시간을 불러오지 못했습니다');
     }
   }, [filters, visibleStudioIds]);
+
+  useEffect(() => {
+    if (!Capacitor.isNativePlatform() || Capacitor.getPlatform() !== 'android') return;
+
+    let listener: { remove: () => Promise<void> } | null = null;
+    let canceled = false;
+
+    void CapApp.addListener('backButton', (event) => {
+      const state = nativeBackStateRef.current;
+
+      if (state.alertDraftOpen) {
+        setAlertDraft(null);
+        return;
+      }
+      if (state.isMenuOpen) {
+        setIsMenuOpen(false);
+        return;
+      }
+      if (state.isFilterOpen) {
+        setIsFilterOpen(false);
+        return;
+      }
+      if (state.popoverOpen) {
+        setPopover(null);
+        return;
+      }
+      if (state.isStudioSearchOpen) {
+        if (state.studioIds.length > 0) rememberRecentStudioSelections(state.studioIds);
+        setIsStudioSearchOpen(false);
+        setStudioSearchQuery('');
+        return;
+      }
+      if (state.isAlertsOpen) {
+        setIsAlertsOpen(false);
+        return;
+      }
+      if (event.canGoBack) window.history.back();
+    })
+      .then((handle) => {
+        if (canceled) {
+          void handle.remove();
+          return;
+        }
+        listener = handle;
+      })
+      .catch(() => {});
+
+    return () => {
+      canceled = true;
+      if (listener) void listener.remove();
+    };
+  }, [rememberRecentStudioSelections]);
 
   const {
     ref: resultListRef,
