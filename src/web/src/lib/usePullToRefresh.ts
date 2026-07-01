@@ -4,8 +4,19 @@ import { Haptics, ImpactStyle } from '@capacitor/haptics';
 // 리스트 맨 위에서 아래로 당기면(scrollTop===0) 새로고침하는 제스처 훅.
 // 모바일(터치) 전용 — 데스크톱에선 트리거되지 않는다.
 const THRESHOLD = 70; // 이 거리 이상 당기고 놓으면 새로고침
-const MAX_PULL = 112; // 시각적으로 늘어나는 최대 거리(고무줄 상한)
 const RESISTANCE = 0.5; // 당김 저항(손가락 이동량 대비 늘어나는 비율)
+const OVER_MAX = 110; // 임계치를 넘어선 뒤 고무줄이 더 늘어날 수 있는 여유(수렴값)
+
+// 손가락 이동량(dy)을 늘어난 거리로 변환한다.
+// 임계치까진 거의 1:1(RESISTANCE) 저항으로 곧장 따라오고,
+// 그 뒤로는 점점 뻣뻣해지며 OVER_MAX 로 부드럽게 수렴한다.
+// 하드 상한(벽)이 없어 당기는 동안 화면이 늘 손가락을 조금씩이라도 따라온다.
+function resist(dy: number): number {
+  const raw = dy * RESISTANCE;
+  if (raw <= THRESHOLD) return raw;
+  const over = raw - THRESHOLD;
+  return THRESHOLD + OVER_MAX * (1 - 1 / (1 + over / OVER_MAX));
+}
 
 interface Options {
   onRefresh: () => Promise<void>;
@@ -56,7 +67,7 @@ export function usePullToRefresh<T extends HTMLElement>({ onRefresh, disabled }:
       // 당기는 동안엔 네이티브 오버스크롤/당겨서-새로고침을 막는다.
       e.preventDefault();
       setDragging(true);
-      const dist = Math.min(MAX_PULL, dy * RESISTANCE);
+      const dist = resist(dy);
       setPull(dist);
       const armed = dist >= THRESHOLD;
       if (armed !== g.armed) {
