@@ -45,6 +45,22 @@ export class DatabaseService implements OnModuleDestroy {
     return this.pool.query<T>(text, params);
   }
 
+  // 여러 문장을 원자적으로 실행해야 할 때 사용한다(예: 디바이스 토큰 이관).
+  async transaction<T>(fn: (client: pg.PoolClient) => Promise<T>): Promise<T> {
+    const client = await this.pool.connect();
+    try {
+      await client.query('BEGIN');
+      const result = await fn(client);
+      await client.query('COMMIT');
+      return result;
+    } catch (err) {
+      await client.query('ROLLBACK').catch(() => {});
+      throw err;
+    } finally {
+      client.release();
+    }
+  }
+
   async onModuleDestroy() {
     await this.pool.end();
   }

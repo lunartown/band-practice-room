@@ -19,10 +19,13 @@ export class NotificationsController {
     return this.notificationsService.createSubscription(body);
   }
 
-  // 로그인이 없으므로 디바이스 토큰을 쿼리로 받아 본인 구독만 돌려준다.
+  // 로그인이 없으므로 설치 ID(구버전 앱은 디바이스 토큰)를 쿼리로 받아 본인 구독만 돌려준다.
   @Get('subscriptions')
-  listSubscriptions(@Query('deviceToken') deviceToken?: string) {
-    return this.notificationsService.listSubscriptions(deviceToken);
+  listSubscriptions(
+    @Query('installId') installId?: string,
+    @Query('deviceToken') deviceToken?: string,
+  ) {
+    return this.notificationsService.listSubscriptions({ installId, deviceToken });
   }
 
   @Delete('subscriptions/:id')

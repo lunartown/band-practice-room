@@ -22,15 +22,27 @@ export class NotificationsService {
     const deviceToken = assertNonEmptyString(input.deviceToken, 'deviceToken');
     const platform = assertEnum(input.platform, 'platform', PLATFORMS);
     const appVersion = optionalString(input.appVersion, 'appVersion');
+    const installId = optionalString(input.installId, 'installId');
 
-    const device = await this.repository.upsertDevice({ deviceToken, platform, appVersion });
+    // 설치 ID 가 있으면(신규 클라이언트) 토큰 회전에도 같은 디바이스를 유지한다.
+    // 없으면(구버전 앱) 기존처럼 토큰을 자연키로 쓴다.
+    const device = installId
+      ? await this.repository.upsertDeviceByInstallId({ installId, deviceToken, platform, appVersion })
+      : await this.repository.upsertDevice({ deviceToken, platform, appVersion });
     return { deviceId: Number(device.id), platform: device.platform };
+  }
+
+  // 신규 클라이언트는 installId, 구버전 앱은 deviceToken 으로 디바이스를 찾는다.
+  private async resolveDevice(input: Record<string, unknown>) {
+    const installId = optionalString(input.installId, 'installId');
+    if (installId) return this.repository.findDeviceByInstallId(installId);
+    const deviceToken = assertNonEmptyString(input.deviceToken, 'deviceToken');
+    return this.repository.findDeviceByToken(deviceToken);
   }
 
   async createSubscription(body: unknown) {
     const input = assertRecord(body);
-    const deviceToken = assertNonEmptyString(input.deviceToken, 'deviceToken');
-    const device = await this.repository.findDeviceByToken(deviceToken);
+    const device = await this.resolveDevice(input);
     if (!device) {
       throw new ApiError('DEVICE_NOT_FOUND', '먼저 디바이스를 등록해 주세요', HttpStatus.NOT_FOUND);
     }
@@ -65,9 +77,11 @@ export class NotificationsService {
     return toSubscriptionDto(row);
   }
 
-  async listSubscriptions(deviceToken: unknown) {
-    const token = assertNonEmptyString(deviceToken, 'deviceToken');
-    const device = await this.repository.findDeviceByToken(token);
+  async listSubscriptions(query: { installId?: unknown; deviceToken?: unknown }) {
+    const device = await this.resolveDevice({
+      installId: query.installId,
+      deviceToken: query.deviceToken,
+    });
     if (!device) {
       return { items: [] };
     }
@@ -77,8 +91,7 @@ export class NotificationsService {
 
   async deleteSubscription(id: number, body: unknown) {
     const input = assertRecord(body);
-    const deviceToken = assertNonEmptyString(input.deviceToken, 'deviceToken');
-    const device = await this.repository.findDeviceByToken(deviceToken);
+    const device = await this.resolveDevice(input);
     if (!device) {
       throw new ApiError('DEVICE_NOT_FOUND', '디바이스를 찾을 수 없습니다', HttpStatus.NOT_FOUND);
     }

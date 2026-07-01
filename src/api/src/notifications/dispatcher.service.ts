@@ -227,7 +227,8 @@ export class NotificationDispatcher {
              ))
           OR (ns.studio_ids IS NULL AND ns.area_ids IS NULL)
         )
-      INNER JOIN devices d ON d.id = ns.device_id AND d.is_active = true
+      -- 토큰이 회수된(다른 설치로 옮겨간) 디바이스는 발송 대상에서 제외한다.
+      INNER JOIN devices d ON d.id = ns.device_id AND d.is_active = true AND d.device_token IS NOT NULL
       WHERE
         -- 특정 날짜 필터
         b.slot_date = ANY(ns.dates)
