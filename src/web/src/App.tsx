@@ -12,19 +12,16 @@ import { OpenScreen } from './components/OpenScreen';
 import { MenuSheet } from './components/MenuSheet';
 import { AlertConfirmSheet } from './components/AlertConfirmSheet';
 import { AlertsScreen } from './components/AlertsScreen';
-import {
-  createAlertFromDraft,
-  deleteAlert,
-  loadAlerts,
-  updateAlert,
-  upsertAlertWithResult,
-} from './lib/alerts';
+import { alertConditionKey, buildAlertConditions, clearLegacyLocalAlerts } from './lib/alerts';
 import type { AlertDraft, SavedAlert } from './lib/alerts';
 import {
-  createSubscription,
-  deleteSubscription,
-  resyncSubscription,
+  createAlert,
+  deleteAlert,
+  fetchAlerts,
+  onDeviceRegistered,
+  replaceAlert,
 } from './lib/notificationsApi';
+import { ensurePushReady } from './lib/pushDevice';
 import { buildAvailability, sortDateAvailabilityGroups } from './lib/availability';
 import type { StudioSortOption } from './lib/availability';
 import { dateLabel } from './lib/date';
@@ -77,7 +74,8 @@ export function App() {
   const [isAlertsOpen, setIsAlertsOpen] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [alertDraft, setAlertDraft] = useState<AlertDraft | null>(null);
-  const [alerts, setAlerts] = useState<SavedAlert[]>(() => loadAlerts());
+  // 알림의 단일 소스는 서버 구독. 디바이스 등록이 끝나는 시점에 목록을 받아온다.
+  const [alerts, setAlerts] = useState<SavedAlert[]>([]);
   const [favOnly, setFavOnly] = useState(false);
   const [sortOption, setSortOption] = useState<StudioSortOption>('popular');
   const [collapsedDates, setCollapsedDates] = useState<Set<string>>(() => new Set());
@@ -125,6 +123,20 @@ export function App() {
     loadAreas();
     loadStudios();
   }, []);
+
+  const refreshAlerts = useCallback(() => {
+    fetchAlerts()
+      .then((list) => {
+        if (list) setAlerts(list);
+      })
+      .catch((err) => console.warn('[notify] 알림 목록 조회 실패', err));
+  }, []);
+
+  useEffect(() => {
+    clearLegacyLocalAlerts();
+    // 디바이스 등록(부팅 시 토큰 수신 포함)이 끝나면 서버 구독 목록을 받아온다.
+    return onDeviceRegistered(refreshAlerts);
+  }, [refreshAlerts]);
 
   useEffect(() => {
     if (!entered) return;
@@ -218,31 +230,59 @@ export function App() {
     setIsAlertsOpen(true);
   }
 
-  function confirmAlertDraft() {
+  async function confirmAlertDraft() {
     if (!alertDraft) return;
-    const alert = createAlertFromDraft(alertDraft, filters);
-    const { alerts: nextAlerts, savedAlert } = upsertAlertWithResult(alerts, alert);
-    setAlerts(nextAlerts);
+    const conditions = buildAlertConditions(alertDraft, filters);
     setAlertDraft(null);
-    // 푸시 백엔드에 구독 생성(웹/목/토큰없음이면 no-op). 성공하면 serverId 부착.
-    if (savedAlert.serverId != null) return;
-    void createSubscription(savedAlert).then((serverId) => {
-      if (serverId != null) setAlerts((current) => updateAlert(current, { ...savedAlert, serverId }));
-    });
+
+    // 권한·토큰은 알림을 원한 이 시점에 확보한다. 못 받는 상태면 정직하게 알리고 만들지 않는다.
+    const readiness = await ensurePushReady();
+    if (readiness !== 'granted') {
+      window.alert(
+        readiness === 'unavailable'
+          ? '빈자리 알림은 합주실 앱에서 받을 수 있어요.'
+          : '알림 권한이 꺼져 있어 푸시를 받을 수 없어요. 기기 설정에서 알림을 허용해 주세요.',
+      );
+      return;
+    }
+
+    // 같은 조건의 알림이 이미 있으면 그대로 둔다(중복 구독 방지).
+    const key = alertConditionKey(conditions);
+    if (alerts.some((item) => alertConditionKey(item) === key)) return;
+
+    try {
+      const created = await createAlert(conditions);
+      setAlerts((current) => [created, ...current.filter((item) => item.id !== created.id)]);
+    } catch (err) {
+      console.warn('[notify] 알림 등록 실패', err);
+      window.alert('알림 등록에 실패했어요. 잠시 후 다시 시도해 주세요.');
+    }
   }
 
-  function updateSavedAlert(alert: SavedAlert) {
-    setAlerts((current) => updateAlert(current, alert));
-    // 조건이 바뀌었으니 기존 구독을 지우고 다시 만든다(서버에 PATCH 없음).
-    void resyncSubscription(alert).then((serverId) => {
-      setAlerts((current) => updateAlert(current, { ...alert, serverId: serverId ?? undefined }));
-    });
+  async function updateSavedAlert(alert: SavedAlert) {
+    // 서버에 PATCH 가 없어 새 구독 생성 후 옛 구독을 지운다. 실패하면 서버 상태로 되돌린다.
+    try {
+      const replaced = await replaceAlert(alert.id, alert);
+      setAlerts((current) => current.map((item) => (item.id === alert.id ? replaced : item)));
+    } catch (err) {
+      console.warn('[notify] 알림 수정 실패', err);
+      window.alert('알림 수정에 실패했어요. 잠시 후 다시 시도해 주세요.');
+      refreshAlerts();
+    }
   }
 
-  function deleteSavedAlert(alertId: string) {
-    const target = alerts.find((a) => a.id === alertId);
-    setAlerts((current) => deleteAlert(current, alertId));
-    if (target?.serverId != null) void deleteSubscription(target.serverId);
+  async function deleteSavedAlert(alertId: number) {
+    const previous = alerts;
+    setAlerts((current) => current.filter((item) => item.id !== alertId));
+    try {
+      await deleteAlert(alertId);
+    } catch (err) {
+      // 서버에 구독이 남으면 푸시가 계속 오므로 실패를 알리고 목록을 되돌린다.
+      console.warn('[notify] 알림 삭제 실패', err);
+      window.alert('알림 삭제에 실패했어요. 잠시 후 다시 시도해 주세요.');
+      setAlerts(previous);
+      refreshAlerts();
+    }
   }
 
   function closeStudioSearch({ rememberSelection = true }: { rememberSelection?: boolean } = {}) {

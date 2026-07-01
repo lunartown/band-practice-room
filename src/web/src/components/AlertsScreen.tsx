@@ -12,7 +12,7 @@ interface AlertsScreenProps {
   studios: Studio[];
   onBack: () => void;
   onUpdate: (alert: SavedAlert) => void;
-  onDelete: (alertId: string) => void;
+  onDelete: (alertId: number) => void;
 }
 
 export function AlertsScreen({ alerts, areas, studios, onBack, onUpdate, onDelete }: AlertsScreenProps) {
