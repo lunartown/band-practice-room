@@ -951,6 +951,7 @@ button {
   place-items: center;
   width: 24px;
   height: 24px;
+  padding: 0;
   border-radius: var(--r-sm);
   color: var(--text-faint);
   background: transparent;
