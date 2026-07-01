@@ -1,6 +1,8 @@
 import type { Studio, TimeWindow } from '../api/types';
 
-const ALERTS_STORAGE_KEY = 'hapjusil.empty-slot-alerts.v1';
+// 알림의 단일 소스는 서버 구독이다(조회·생성·삭제 모두 notificationsApi 경유).
+// 이 모듈은 타입과 조건 정규화·비교, 서버 DTO 매핑만 담당하고 로컬에 저장하지 않는다.
+const LEGACY_STORAGE_KEY = 'hapjusil.empty-slot-alerts.v1';
 
 export type AlertScope = 'studios' | 'search';
 
@@ -27,10 +29,8 @@ export interface AlertConditionInput {
   people: number;
 }
 
-export interface SavedAlert {
-  id: string;
-  // 서버 구독 id. 푸시 백엔드에 등록되면 채워진다(웹/목 모드면 undefined).
-  serverId?: number;
+// 알림 조건 묶음. 생성 요청(id 없음)과 저장된 알림이 공유한다.
+export interface AlertConditions {
   scope: AlertScope;
   studios: AlertStudio[];
   areaIds: number[];
@@ -38,37 +38,17 @@ export interface SavedAlert {
   timeWindows: TimeWindow[];
   minDuration: 1 | 2 | 3 | 4;
   people: number;
+}
+
+export interface SavedAlert extends AlertConditions {
+  // 서버 구독 id.
+  id: number;
   createdAt: string;
-  updatedAt: string;
 }
 
-export function loadAlerts(): SavedAlert[] {
-  try {
-    const raw = localStorage.getItem(ALERTS_STORAGE_KEY);
-    if (!raw) return [];
-    const parsed = JSON.parse(raw);
-    if (!Array.isArray(parsed)) return [];
-    return sortAlerts(parsed.map(normalizeAlert).filter((alert): alert is SavedAlert => Boolean(alert)));
-  } catch {
-    return [];
-  }
-}
-
-export function saveAlerts(alerts: SavedAlert[]): SavedAlert[] {
-  const sorted = sortAlerts(alerts);
-  try {
-    localStorage.setItem(ALERTS_STORAGE_KEY, JSON.stringify(sorted));
-  } catch {
-    // 저장소가 막혀도 현재 세션 상태는 유지한다.
-  }
-  return sorted;
-}
-
-export function createAlertFromDraft(draft: AlertDraft, filters: AlertConditionInput): SavedAlert {
-  const now = new Date().toISOString();
+export function buildAlertConditions(draft: AlertDraft, filters: AlertConditionInput): AlertConditions {
   const studios = draft.scope === 'studios' ? draft.studios.map(({ id, name }) => ({ id, name })) : [];
   return {
-    id: createId(),
     scope: studios.length > 0 ? 'studios' : 'search',
     studios,
     areaIds: uniqueNumbers(filters.areaIds),
@@ -76,65 +56,48 @@ export function createAlertFromDraft(draft: AlertDraft, filters: AlertConditionI
     timeWindows: normalizeTimeWindows(filters.timeWindows),
     minDuration: normalizeDuration(filters.minDuration),
     people: normalizePeople(filters.people),
-    createdAt: now,
-    updatedAt: now,
   };
 }
 
-export function upsertAlert(alerts: SavedAlert[], alert: SavedAlert): SavedAlert[] {
-  return upsertAlertWithResult(alerts, alert).alerts;
+// 같은 조건의 알림을 중복 등록하지 않기 위한 비교 키.
+export function alertConditionKey(alert: AlertConditions): string {
+  return JSON.stringify({
+    studios: alert.studios.map((studio) => studio.id).sort((a, b) => a - b),
+    areaIds: [...alert.areaIds].sort((a, b) => a - b),
+    dates: [...alert.dates].sort(),
+    timeWindows: alert.timeWindows,
+    minDuration: alert.minDuration,
+    people: alert.people,
+  });
 }
 
-export function upsertAlertWithResult(
-  alerts: SavedAlert[],
-  alert: SavedAlert,
-): { alerts: SavedAlert[]; savedAlert: SavedAlert; wasExisting: boolean } {
-  const key = alertKey(alert);
-  const existing = alerts.find((item) => alertKey(item) === key);
-  if (!existing) return { alerts: saveAlerts([alert, ...alerts]), savedAlert: alert, wasExisting: false };
-
-  const savedAlert = {
-    ...alert,
-    id: existing.id,
-    serverId: existing.serverId,
-    createdAt: existing.createdAt,
-    updatedAt: alert.updatedAt,
-  };
-  return {
-    alerts: saveAlerts(alerts.map((item) => (item.id === existing.id ? savedAlert : item))),
-    savedAlert,
-    wasExisting: true,
-  };
-}
-
-export function updateAlert(alerts: SavedAlert[], alert: SavedAlert): SavedAlert[] {
-  const updated = withDerivedScope({ ...alert, updatedAt: new Date().toISOString() });
-  return saveAlerts(alerts.map((item) => (item.id === alert.id ? normalizeAlert(updated) ?? updated : item)));
-}
-
-export function deleteAlert(alerts: SavedAlert[], id: string): SavedAlert[] {
-  return saveAlerts(alerts.filter((alert) => alert.id !== id));
-}
-
-function normalizeAlert(value: unknown): SavedAlert | null {
+// GET/POST /notifications/subscriptions 응답 항목 → SavedAlert.
+export function alertFromSubscriptionDto(value: unknown): SavedAlert | null {
   if (!value || typeof value !== 'object') return null;
   const record = value as Record<string, unknown>;
-  if (typeof record.id !== 'string') return null;
+  if (typeof record.id !== 'number') return null;
   const studios = normalizeStudios(record.studios);
 
-  return withDerivedScope({
+  return {
     id: record.id,
-    serverId: typeof record.serverId === 'number' ? record.serverId : undefined,
     scope: studios.length > 0 ? 'studios' : 'search',
     studios,
     areaIds: uniqueNumbers(Array.isArray(record.areaIds) ? record.areaIds : []),
     dates: uniqueStrings(Array.isArray(record.dates) ? record.dates : []).sort(),
     timeWindows: normalizeTimeWindows(Array.isArray(record.timeWindows) ? record.timeWindows : []),
     minDuration: normalizeDuration(record.minDuration),
-    people: normalizePeople(record.people),
+    people: normalizePeople(record.minCapacity),
     createdAt: typeof record.createdAt === 'string' ? record.createdAt : new Date().toISOString(),
-    updatedAt: typeof record.updatedAt === 'string' ? record.updatedAt : new Date().toISOString(),
-  });
+  };
+}
+
+// 서버 단일 소스 전환 이전에 로컬로만 저장하던 알림 데이터를 정리한다.
+export function clearLegacyLocalAlerts(): void {
+  try {
+    localStorage.removeItem(LEGACY_STORAGE_KEY);
+  } catch {
+    // 저장소가 막혀 있으면 지울 것도 없다.
+  }
 }
 
 function normalizeStudios(value: unknown): AlertStudio[] {
@@ -175,31 +138,4 @@ function uniqueNumbers(value: unknown[]): number[] {
 
 function uniqueStrings(value: unknown[]): string[] {
   return [...new Set(value.filter((item): item is string => typeof item === 'string' && item.length > 0))];
-}
-
-function sortAlerts(alerts: SavedAlert[]): SavedAlert[] {
-  return [...alerts].sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
-}
-
-function alertKey(alert: SavedAlert): string {
-  return JSON.stringify({
-    studios: alert.studios.map((studio) => studio.id).sort((a, b) => a - b),
-    areaIds: [...alert.areaIds].sort((a, b) => a - b),
-    dates: [...alert.dates].sort(),
-    timeWindows: alert.timeWindows,
-    minDuration: alert.minDuration,
-    people: alert.people,
-  });
-}
-
-function withDerivedScope(alert: SavedAlert): SavedAlert {
-  return {
-    ...alert,
-    scope: alert.studios.length > 0 ? 'studios' : 'search',
-  };
-}
-
-function createId(): string {
-  if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) return crypto.randomUUID();
-  return `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
 }
