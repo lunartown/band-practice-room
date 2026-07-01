@@ -136,7 +136,7 @@ function AlertEditSheet({ alert, areas, studios, onClose, onSave }: AlertEditShe
 
   if (isStudioSearchOpen) {
     return (
-      <div className="sheet-layer">
+      <div className="sheet-layer sheet-layer--safe">
         <div className="sheet-dim" aria-hidden="true" onClick={() => setIsStudioSearchOpen(false)} />
         <section className="filter-sheet alert-edit-sheet alert-edit-search-sheet" role="dialog" aria-modal="true" aria-label="합주실 선택">
           <div className="alert-edit-search-top">
@@ -203,7 +203,7 @@ function AlertEditSheet({ alert, areas, studios, onClose, onSave }: AlertEditShe
   }
 
   return (
-    <div className="sheet-layer">
+    <div className="sheet-layer sheet-layer--safe">
       <div className="sheet-dim" aria-hidden="true" onClick={onClose} />
       <section className="filter-sheet alert-edit-sheet" role="dialog" aria-modal="true" aria-label="알림 수정">
         <div className="sheet-drag">

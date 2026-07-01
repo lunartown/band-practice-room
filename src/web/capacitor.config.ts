@@ -55,6 +55,11 @@ const config: CapacitorConfig = {
     StatusBar: {
       style: 'LIGHT',
       backgroundColor: '#ffffff',
+      overlaysWebView: false,
+    },
+    SystemBars: {
+      style: 'LIGHT',
+      insetsHandling: 'css',
     },
     // Capgo 라이브 업데이트(OTA). autoUpdate=true 면 앱 실행/복귀 때마다
     // Capgo 클라우드에서 새 웹 번들을 받아 다음 실행 때 자동 적용한다.

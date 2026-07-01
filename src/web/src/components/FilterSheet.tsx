@@ -106,7 +106,7 @@ export function FilterSheet({ areas, filters, resultCount, onClose, onChange }: 
       : undefined;
 
   return (
-    <div className="sheet-layer">
+    <div className="sheet-layer sheet-layer--safe">
       <div
         className={`sheet-dim filter-dim${closing ? ' closing' : ''}`}
         aria-hidden="true"

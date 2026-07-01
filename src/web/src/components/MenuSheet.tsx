@@ -72,7 +72,7 @@ export function MenuSheet({ alertCount, onClose, onOpenAlerts }: MenuSheetProps)
   };
 
   return (
-    <div className="sheet-layer">
+    <div className="sheet-layer sheet-layer--safe">
       <div className="sheet-dim menu-dim" aria-hidden="true" onClick={onClose} />
       <section
         className="menu-drawer"
