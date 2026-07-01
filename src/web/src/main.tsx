@@ -19,9 +19,9 @@ if (Capacitor.isNativePlatform()) {
   root.classList.add('is-native');
   root.classList.add(`is-${platform}`);
 
-  // 네이티브 앱에서는 WebView 가 상태표시줄 아래에서 시작하게 한다.
-  // iOS 의 CSS env(safe-area-inset-top) 값이 0으로 떨어지는 케이스가 있어,
-  // CSS padding 대신 StatusBar 플러그인의 native inset 처리를 사용한다.
+  // 네이티브 앱에서는 가능한 경우 WebView 가 상태표시줄 아래에서 시작하게 한다.
+  // Android 15+ edge-to-edge 에서는 Capacitor SystemBars 가 주입하는 CSS 변수도
+  // 함께 사용해 시스템바 침범을 막는다.
   if (platform === 'ios' || platform === 'android') {
     StatusBar.setOverlaysWebView({ overlay: false }).catch(() => {});
     // 상단바가 흰색(--surface)으로 이어지도록 상태표시줄도 흰 배경 + 어두운 아이콘.
