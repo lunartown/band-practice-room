@@ -103,7 +103,7 @@ describeDb('NotificationDispatcher (integration)', () => {
 
   async function createDevice(token: string): Promise<number> {
     const r = await db.query<{ id: string }>(
-      `INSERT INTO devices (device_token, platform) VALUES ($1, 'ios') RETURNING id`,
+      `INSERT INTO devices (install_id, device_token, platform) VALUES ($1, $1, 'ios') RETURNING id`,
       [token],
     );
     return Number(r.rows[0].id);

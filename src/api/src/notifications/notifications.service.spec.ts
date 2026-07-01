@@ -10,7 +10,9 @@ import {
 function makeRepo(overrides: Partial<Record<keyof RepoShape, jest.Mock>> = {}) {
   const repo = {
     upsertDevice: jest.fn(),
+    upsertDeviceByInstallId: jest.fn(),
     findDeviceByToken: jest.fn(),
+    findDeviceByInstallId: jest.fn(),
     createSubscription: jest.fn(),
     listSubscriptionsByDevice: jest.fn(),
     deactivateSubscription: jest.fn(),
@@ -21,7 +23,9 @@ function makeRepo(overrides: Partial<Record<keyof RepoShape, jest.Mock>> = {}) {
 
 type RepoShape = {
   upsertDevice: unknown;
+  upsertDeviceByInstallId: unknown;
   findDeviceByToken: unknown;
+  findDeviceByInstallId: unknown;
   createSubscription: unknown;
   listSubscriptionsByDevice: unknown;
   deactivateSubscription: unknown;
@@ -29,6 +33,7 @@ type RepoShape = {
 
 const device: DeviceRow = {
   id: '7',
+  install_id: 'install-1',
   device_token: 'tok-abc',
   platform: 'ios',
   app_version: '1.2.3',
@@ -68,6 +73,31 @@ describe('NotificationsService.registerDevice', () => {
       platform: 'ios',
       appVersion: '1.2.3',
     });
+  });
+
+  it('installId 가 있으면 설치 ID 기준으로 등록한다(토큰 회전 대비)', async () => {
+    const upsertDeviceByInstallId = jest.fn().mockResolvedValue({ id: '7', platform: 'ios' });
+    const upsertDevice = jest.fn();
+    const service = new NotificationsService(
+      makeRepo({ upsertDevice, upsertDeviceByInstallId }) as never,
+    );
+
+    await expect(
+      service.registerDevice({
+        installId: 'install-1',
+        deviceToken: 'tok-abc',
+        platform: 'ios',
+        appVersion: '1.2.3',
+      }),
+    ).resolves.toEqual({ deviceId: 7, platform: 'ios' });
+
+    expect(upsertDeviceByInstallId).toHaveBeenCalledWith({
+      installId: 'install-1',
+      deviceToken: 'tok-abc',
+      platform: 'ios',
+      appVersion: '1.2.3',
+    });
+    expect(upsertDevice).not.toHaveBeenCalled();
   });
 
   it('platform 이 허용값이 아니면 거부한다', async () => {
@@ -217,7 +247,20 @@ describe('NotificationsService.listSubscriptions', () => {
   it('디바이스가 없으면 빈 목록', async () => {
     const findDeviceByToken = jest.fn().mockResolvedValue(null);
     const service = new NotificationsService(makeRepo({ findDeviceByToken }) as never);
-    await expect(service.listSubscriptions('tok')).resolves.toEqual({ items: [] });
+    await expect(service.listSubscriptions({ deviceToken: 'tok' })).resolves.toEqual({ items: [] });
+  });
+
+  it('installId 가 있으면 설치 ID 로 디바이스를 찾는다', async () => {
+    const findDeviceByInstallId = jest.fn().mockResolvedValue(device);
+    const findDeviceByToken = jest.fn();
+    const listSubscriptionsByDevice = jest.fn().mockResolvedValue([]);
+    const service = new NotificationsService(
+      makeRepo({ findDeviceByInstallId, findDeviceByToken, listSubscriptionsByDevice }) as never,
+    );
+
+    await expect(service.listSubscriptions({ installId: 'install-1' })).resolves.toEqual({ items: [] });
+    expect(findDeviceByInstallId).toHaveBeenCalledWith('install-1');
+    expect(findDeviceByToken).not.toHaveBeenCalled();
   });
 
   it('구독 행을 DTO 로 매핑한다', async () => {
@@ -240,7 +283,7 @@ describe('NotificationsService.listSubscriptions', () => {
       makeRepo({ findDeviceByToken, listSubscriptionsByDevice }) as never,
     );
 
-    const result = await service.listSubscriptions('tok');
+    const result = await service.listSubscriptions({ deviceToken: 'tok' });
     expect(result.items).toHaveLength(1);
     expect(result.items[0]).toMatchObject({
       scope: 'studios',
