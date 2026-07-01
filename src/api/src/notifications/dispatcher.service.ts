@@ -12,7 +12,7 @@ interface ClaimedEvent {
   slot_start_time: string;
 }
 
-interface CandidateRow {
+export interface CandidateRow {
   subscription_id: string;
   device_id: string;
   device_token: string;
@@ -23,6 +23,16 @@ interface CandidateRow {
   slot_date: string;
   slot_start_time: string;
   min_duration: number;
+}
+
+interface CoalescedCandidates {
+  pushCandidates: PushCandidate[];
+  skippedCandidates: CandidateRow[];
+}
+
+interface PushCandidate {
+  candidate: CandidateRow;
+  slotCount: number;
 }
 
 export interface DispatchSummary {
@@ -62,33 +72,44 @@ export class NotificationDispatcher {
       };
     }
 
-    // 3) FCM 메시지 구성 + 전송.
-    const messages: PushMessage[] = candidates.map((c) => ({
+    // 3) 같은 디바이스에 매칭된 후보는 푸시 1건으로 묶는다.
+    const { pushCandidates, skippedCandidates } = coalesceDeviceCandidates(candidates);
+
+    // 4) FCM 메시지 구성 + 전송.
+    const messages: PushMessage[] = pushCandidates.map(({ candidate: c, slotCount }) => ({
       token: c.device_token,
-      title: `${c.studio_name} 빈자리`,
-      body: `${c.room_name} · ${formatDate(c.slot_date)} ${c.slot_start_time.slice(0, 5)} 예약 가능`,
+      title: slotCount === 1 ? `${c.studio_name} 빈자리` : `빈자리 ${slotCount}개`,
+      body:
+        slotCount === 1
+          ? `${c.room_name} · ${formatDate(c.slot_date)} ${c.slot_start_time.slice(0, 5)} 예약 가능`
+          : `${c.studio_name} ${c.room_name} · ${formatDate(c.slot_date)} ${c.slot_start_time.slice(0, 5)} 외 ${slotCount - 1}건`,
       data: {
         type: 'slot_available',
         studioId: String(c.studio_id),
         roomId: String(c.room_id),
         date: c.slot_date,
         startTime: c.slot_start_time.slice(0, 5),
+        slotCount: String(slotCount),
       },
     }));
 
     const results = await sendPush(messages);
 
-    // 4) 발송 로그 기록 + 무효 토큰 디바이스 비활성화.
+    // 5) 발송 로그 기록 + 무효 토큰 디바이스 비활성화.
     let sent = 0;
     let failed = 0;
     const invalidDeviceIds = new Set<string>();
-    for (let i = 0; i < candidates.length; i++) {
-      const c = candidates[i];
+    for (let i = 0; i < pushCandidates.length; i++) {
+      const c = pushCandidates[i].candidate;
       const r: SendResult = results[i];
       if (r.success) sent++;
       else failed++;
       if (r.invalidToken) invalidDeviceIds.add(c.device_id);
-      await this.recordDelivery(c, r);
+      await this.recordDelivery(c, r.success ? 'SENT' : 'FAILED', r.error ?? null);
+    }
+
+    for (const c of skippedCandidates) {
+      await this.recordDelivery(c, 'SKIPPED', 'bundled into device notification');
     }
 
     for (const deviceId of invalidDeviceIds) {
@@ -97,14 +118,16 @@ export class NotificationDispatcher {
 
     const summary: DispatchSummary = {
       claimedEvents: events.length,
-      candidates: candidates.length,
+      candidates: pushCandidates.length,
       sent,
       failed,
       deactivatedDevices: invalidDeviceIds.size,
       dryRun,
     };
     this.logger.log(
-      `dispatch 완료: 이벤트 ${events.length} / 후보 ${candidates.length} / 발송 ${sent} / 실패 ${failed}` +
+      `dispatch 완료: 이벤트 ${events.length} / 발송 후보 ${pushCandidates.length}` +
+        (skippedCandidates.length ? ` / 묶음 제외 ${skippedCandidates.length}` : '') +
+        ` / 발송 ${sent} / 실패 ${failed}` +
         (dryRun ? ' (dry-run: FCM 미설정)' : ''),
     );
     return summary;
@@ -229,13 +252,18 @@ export class NotificationDispatcher {
             AND nd.slot_date = b.slot_date
             AND nd.slot_start_time = b.slot_start_time
         )
+      ORDER BY b.slot_date, b.slot_start_time, b.room_id, d.id, ns.id
       `,
       [roomIds, dates, starts],
     );
     return result.rows;
   }
 
-  private async recordDelivery(c: CandidateRow, r: SendResult): Promise<void> {
+  private async recordDelivery(
+    c: CandidateRow,
+    status: 'SENT' | 'FAILED' | 'SKIPPED',
+    error: string | null,
+  ): Promise<void> {
     await this.database.query(
       `
       INSERT INTO notification_deliveries
@@ -249,11 +277,59 @@ export class NotificationDispatcher {
         c.room_id,
         c.slot_date,
         c.slot_start_time,
-        r.success ? 'SENT' : 'FAILED',
-        r.error ?? null,
+        status,
+        error,
       ],
     );
   }
+}
+
+export function coalesceDeviceCandidates(candidates: CandidateRow[]): CoalescedCandidates {
+  const pushCandidates: PushCandidate[] = [];
+  const skippedCandidates: CandidateRow[] = [];
+  const byDevice = new Map<string, CandidateRow[]>();
+
+  for (const candidate of candidates) {
+    const group = byDevice.get(candidate.device_id);
+    if (group) group.push(candidate);
+    else byDevice.set(candidate.device_id, [candidate]);
+  }
+
+  for (const group of byDevice.values()) {
+    group.sort(compareCandidateForDeviceBundle);
+    pushCandidates.push({
+      candidate: group[0],
+      slotCount: new Set(group.map(deviceSlotKey)).size,
+    });
+    skippedCandidates.push(...group.slice(1));
+  }
+
+  return { pushCandidates, skippedCandidates };
+}
+
+function deviceSlotKey(candidate: CandidateRow): string {
+  return [
+    candidate.room_id,
+    candidate.slot_date,
+    candidate.slot_start_time,
+  ].join('|');
+}
+
+function compareCandidateForDeviceBundle(a: CandidateRow, b: CandidateRow): number {
+  const slotCompare =
+    a.slot_date.localeCompare(b.slot_date) ||
+    a.slot_start_time.localeCompare(b.slot_start_time) ||
+    compareBigIntString(a.room_id, b.room_id);
+  if (slotCompare !== 0) return slotCompare;
+  return compareBigIntString(a.subscription_id, b.subscription_id);
+}
+
+function compareBigIntString(a: string, b: string): number {
+  const aid = BigInt(a);
+  const bid = BigInt(b);
+  if (aid < bid) return -1;
+  if (aid > bid) return 1;
+  return 0;
 }
 
 function formatDate(isoDate: string): string {
