@@ -60,7 +60,7 @@ export class RefreshRepository {
       ) fresh ON true
       WHERE ss.studio_id = ANY($1::bigint[])
         AND ss.mapping_status = 'ACTIVE'
-      ORDER BY ss.studio_id ASC, ss.id ASC
+      ORDER BY fresh.last_scraped_at ASC NULLS FIRST, ss.studio_id ASC, ss.id ASC
     `,
       [studioIds],
     );

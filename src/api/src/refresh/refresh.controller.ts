@@ -2,8 +2,11 @@ import { Body, Controller, HttpStatus, Inject, Post } from '@nestjs/common';
 import { ApiError } from '../shared/api-error.js';
 import { RefreshService } from './refresh.service.js';
 
-// 한 요청에서 받을 합주실 수 상한(검색 결과 화면에 보이는 만큼). 과도한 페이로드 방지.
-const MAX_STUDIO_IDS = 40;
+// 입력 payload 보호용 상한. 실제 스크랩 개수 제한은 RefreshService 의 MAX_SOURCES 가 담당한다.
+const MAX_STUDIO_IDS = Math.max(
+  1,
+  Math.floor(Number(process.env.MANUAL_MAX_REQUEST_STUDIO_IDS) || 200),
+);
 
 @Controller('slots')
 export class RefreshController {
@@ -21,14 +24,6 @@ function parseStudioIds(value: unknown): number[] {
   if (!Array.isArray(value)) {
     throw new ApiError('INVALID_PARAMETER', 'studioIds must be an array', HttpStatus.BAD_REQUEST);
   }
-  if (value.length > MAX_STUDIO_IDS) {
-    throw new ApiError(
-      'INVALID_PARAMETER',
-      `studioIds must contain at most ${MAX_STUDIO_IDS} items`,
-      HttpStatus.BAD_REQUEST,
-    );
-  }
-
   const ids = new Set<number>();
   for (const item of value) {
     const n = typeof item === 'number' ? item : Number(item);
@@ -40,6 +35,13 @@ function parseStudioIds(value: unknown): number[] {
       );
     }
     ids.add(n);
+  }
+  if (ids.size > MAX_STUDIO_IDS) {
+    throw new ApiError(
+      'INVALID_PARAMETER',
+      `studioIds must contain at most ${MAX_STUDIO_IDS} unique items`,
+      HttpStatus.BAD_REQUEST,
+    );
   }
   return [...ids];
 }
