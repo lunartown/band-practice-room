@@ -99,6 +99,15 @@ function StudioAvatar({ studio }: { studio: Pick<Studio, 'imageUrl' | 'name'> })
     else setImgFailed(true);
   };
 
+  // 캐시 히트면 <img>가 DOM 에 붙기 전에 load 이벤트가 지나가 onLoad 가 안 불릴 수
+  // 있다(React img 캐시 레이스). 그러면 opacity 0 으로 실제 이미지가 숨어 폴백만
+  // 보인다. ref 로 마운트 시 complete 상태를 직접 확인해 이 누락을 메운다.
+  const markLoadedIfComplete = (img: HTMLImageElement | null) => {
+    if (img && img.complete && img.naturalWidth > 0) {
+      setLoadedSrc(img.getAttribute('src'));
+    }
+  };
+
   return (
     <div className={`studio-avatar${showFallback ? ' is-fallback' : ''}`} aria-hidden>
       {showFallback && (
@@ -113,6 +122,7 @@ function StudioAvatar({ studio }: { studio: Pick<Studio, 'imageUrl' | 'name'> })
         // 보내 CDN 핫링크 보호에 막히곤 한다("이미지 다 깨짐"). Referer 를 아예
         // 빼서 두 환경의 요청을 통일하고, 깨짐을 막는다(phinf 는 no-referer 로 받힘).
         <img
+          ref={markLoadedIfComplete}
           src={sourceImgSrc}
           alt=""
           loading="lazy"
@@ -136,9 +146,15 @@ function StudioPhoto({ url }: { url: string }) {
 
   if (failed) return null;
 
+  // 아바타와 동일한 캐시 레이스 대비: 마운트 시 이미 로드됐으면 즉시 반영한다.
+  const markLoadedIfComplete = (img: HTMLImageElement | null) => {
+    if (img && img.complete && img.naturalWidth > 0) setLoaded(true);
+  };
+
   return (
     <div className="studio-photo">
       <img
+        ref={markLoadedIfComplete}
         src={src}
         alt=""
         loading="lazy"
