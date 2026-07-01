@@ -7,7 +7,7 @@ const FRESH_MINUTES = Math.max(1, Math.floor(Number(process.env.MANUAL_FRESH_MIN
 // 쿨다운: 같은 소스를 직전 수동 갱신한 지 이 시간 이내면 스킵(연타·남용 방지).
 const COOLDOWN_MINUTES = Math.max(1, Math.floor(Number(process.env.MANUAL_COOLDOWN_MINUTES) || 5));
 // 한 요청에서 실제 스크랩할 소스 최대 개수(무료 dyno 보호).
-const MAX_SOURCES = Math.max(1, Math.floor(Number(process.env.MANUAL_MAX_SOURCES) || 12));
+const MAX_SOURCES = Math.max(1, Math.floor(Number(process.env.MANUAL_MAX_SOURCES) || 6));
 // 전역 동시 스크랩 상한(모든 요청 합산). 외부 사이트 과부하·차단과 dyno 부하를 막는다.
 const CONCURRENCY = Math.max(1, Math.floor(Number(process.env.MANUAL_SCRAPE_CONCURRENCY) || 2));
 // 소스 1건 스크랩 타임아웃(ms). 넘으면 실패로 처리하고 응답을 막지 않는다.
@@ -17,12 +17,89 @@ const DATE_SPAN_DAYS = 6;
 
 export type SkipReason = 'fresh' | 'cooldown' | 'capped';
 
+export interface RefreshSkipped {
+  studioId: number;
+  sourceCode: string;
+  reason: SkipReason;
+}
+
 export interface RefreshResult {
   dateFrom: string;
   dateTo: string;
   refreshed: Array<{ studioId: number; studioName: string; sourceCode: string; slots: number }>;
-  skipped: Array<{ studioId: number; sourceCode: string; reason: SkipReason }>;
+  skipped: RefreshSkipped[];
   failed: Array<{ studioId: number; sourceCode: string; error: string }>;
+}
+
+interface RefreshPlanOptions {
+  now: number;
+  freshMs: number;
+  cooldownMs: number;
+  maxSources: number;
+}
+
+export interface RefreshPlan {
+  toScrape: RefreshTargetRow[];
+  skipped: RefreshSkipped[];
+}
+
+function timestamp(value: Date | null): number | null {
+  if (!value) return null;
+  const n = new Date(value).getTime();
+  return Number.isFinite(n) ? n : null;
+}
+
+function targetStudioId(target: RefreshTargetRow): number {
+  return Number(target.studio_id);
+}
+
+function targetSourceCode(target: RefreshTargetRow): string {
+  return target.source_code ?? 'naver';
+}
+
+export function compareRefreshTargets(a: RefreshTargetRow, b: RefreshTargetRow): number {
+  const aScraped = timestamp(a.last_scraped_at);
+  const bScraped = timestamp(b.last_scraped_at);
+  if (aScraped == null && bScraped != null) return -1;
+  if (aScraped != null && bScraped == null) return 1;
+  if (aScraped != null && bScraped != null && aScraped !== bScraped) {
+    return aScraped - bScraped;
+  }
+  return targetStudioId(a) - targetStudioId(b) || Number(a.id) - Number(b.id);
+}
+
+export function buildRefreshPlan(
+  targets: RefreshTargetRow[],
+  { now, freshMs, cooldownMs, maxSources }: RefreshPlanOptions,
+): RefreshPlan {
+  const eligible: RefreshTargetRow[] = [];
+  const skipped: RefreshSkipped[] = [];
+
+  for (const target of [...targets].sort(compareRefreshTargets)) {
+    const sourceCode = targetSourceCode(target);
+    const studioId = targetStudioId(target);
+    const lastScraped = timestamp(target.last_scraped_at);
+    const lastManual = timestamp(target.manual_updated_at);
+
+    if (lastScraped != null && now - lastScraped < freshMs) {
+      skipped.push({ studioId, sourceCode, reason: 'fresh' });
+    } else if (lastManual != null && now - lastManual < cooldownMs) {
+      skipped.push({ studioId, sourceCode, reason: 'cooldown' });
+    } else {
+      eligible.push(target);
+    }
+  }
+
+  const toScrape = eligible.slice(0, maxSources);
+  for (const target of eligible.slice(maxSources)) {
+    skipped.push({
+      studioId: targetStudioId(target),
+      sourceCode: targetSourceCode(target),
+      reason: 'capped',
+    });
+  }
+
+  return { toScrape, skipped };
 }
 
 // 모든 요청이 공유하는 전역 세마포어. 동시 스크랩 수를 CONCURRENCY 로 제한한다.
@@ -94,41 +171,16 @@ export class RefreshService {
     if (studioIds.length === 0) return result;
 
     const targets = await this.repository.findRefreshTargets(studioIds);
-
-    const now = Date.now();
-    const freshCutoff = FRESH_MINUTES * 60_000;
-    const cooldownCutoff = COOLDOWN_MINUTES * 60_000;
-
-    const eligible: RefreshTargetRow[] = [];
-    for (const target of targets) {
-      const sourceCode = target.source_code ?? 'naver';
-      const studioId = Number(target.studio_id);
-      const lastScraped = target.last_scraped_at ? new Date(target.last_scraped_at).getTime() : 0;
-      const lastManual = target.manual_updated_at
-        ? new Date(target.manual_updated_at).getTime()
-        : 0;
-
-      if (lastScraped && now - lastScraped < freshCutoff) {
-        result.skipped.push({ studioId, sourceCode, reason: 'fresh' });
-      } else if (lastManual && now - lastManual < cooldownCutoff) {
-        result.skipped.push({ studioId, sourceCode, reason: 'cooldown' });
-      } else {
-        eligible.push(target);
-      }
-    }
-
-    // 무료 dyno 보호: 요청당 소스 개수 상한. 초과분은 capped 로 표시(다음 요청에서 처리 가능).
-    const toScrape = eligible.slice(0, MAX_SOURCES);
-    for (const target of eligible.slice(MAX_SOURCES)) {
-      result.skipped.push({
-        studioId: Number(target.studio_id),
-        sourceCode: target.source_code ?? 'naver',
-        reason: 'capped',
-      });
-    }
+    const plan = buildRefreshPlan(targets, {
+      now: Date.now(),
+      freshMs: FRESH_MINUTES * 60_000,
+      cooldownMs: COOLDOWN_MINUTES * 60_000,
+      maxSources: MAX_SOURCES,
+    });
+    result.skipped.push(...plan.skipped);
 
     const settled = await Promise.all(
-      toScrape.map((target) => this.scrapeOne(target, dateFrom, dateTo)),
+      plan.toScrape.map((target) => this.scrapeOne(target, dateFrom, dateTo)),
     );
     for (const item of settled) {
       if (item.ok) result.refreshed.push(item.value);
