@@ -954,6 +954,9 @@ button {
   border-radius: var(--r-sm);
   color: var(--text-faint);
   background: transparent;
+  /* 브라우저 기본 탭 하이라이트(회색 사각형)가 24px 박스와 어긋나 보여
+     터치 시 정렬이 안 맞는 것처럼 보인다. 대신 아래 :active 스타일로만 반응한다. */
+  -webkit-tap-highlight-color: transparent;
 }
 
 .fav-button {
