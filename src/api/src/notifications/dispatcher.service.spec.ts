@@ -332,6 +332,64 @@ describeDb('NotificationDispatcher (integration)', () => {
       expect(d.rows[0].slot_start_time).toBe('19:00:00');
     });
 
+    it('구간이 윈도우보다 일찍 시작해도 윈도우 안 연속 가용이면 매칭된다', async () => {
+      const deviceId = await createDevice('tok-tw-early');
+      await createSubscription({
+        deviceId,
+        studioIds: [studioId],
+        dates: [futureDate],
+        timeWindows: [{ from: '19:00', to: '22:00' }],
+        minDuration: 2,
+      });
+      // 18:00 이 먼저 비어 있던 상태(이벤트 소비됨).
+      await insertAvailableSlot(roomId, futureDate, '18:00', '19:00');
+      const s1 = await dispatcher.dispatch();
+      expect(s1.candidates).toBe(0);
+
+      // 19:00·20:00 이 새로 열려 18:00~21:00 구간 완성. 구간 시작(18:00)은 윈도우 밖이지만
+      // 윈도우 안(19:00~21:00)에 2시간 연속 가용이 생겼으므로 알림이 가야 한다.
+      await insertAvailableSlot(roomId, futureDate, '19:00', '20:00');
+      await insertAvailableSlot(roomId, futureDate, '20:00', '21:00');
+      const s2 = await dispatcher.dispatch();
+      expect(s2.candidates).toBe(1);
+      const d = await db.query<{ slot_start_time: string }>(
+        `SELECT slot_start_time::text FROM notification_deliveries WHERE status = 'SENT'`,
+      );
+      // 딜리버리·알림 앵커는 구간 시작(18:00).
+      expect(d.rows.map((r) => r.slot_start_time)).toEqual(['18:00:00']);
+    });
+
+    it('윈도우 안 시작으로는 min_duration 이 구간 끝을 넘으면 매칭되지 않는다', async () => {
+      const deviceId = await createDevice('tok-tw-short');
+      await createSubscription({
+        deviceId,
+        studioIds: [studioId],
+        dates: [futureDate],
+        timeWindows: [{ from: '20:00', to: '22:00' }],
+        minDuration: 2,
+      });
+      // 19:00~21:00 구간(2시간)이지만 윈도우 안 시작점은 20:00 → 20:00+2h 는 구간 끝(21:00)을 넘는다.
+      await insertAvailableSlot(roomId, futureDate, '19:00', '20:00');
+      await insertAvailableSlot(roomId, futureDate, '20:00', '21:00');
+      const s = await dispatcher.dispatch();
+      expect(s.candidates).toBe(0);
+    });
+
+    it('24:00 상한 윈도우는 자정까지의 연속 가용을 인정한다', async () => {
+      const deviceId = await createDevice('tok-tw-midnight');
+      await createSubscription({
+        deviceId,
+        studioIds: [studioId],
+        dates: [futureDate],
+        timeWindows: [{ from: '22:00', to: '24:00' }],
+        minDuration: 2,
+      });
+      await insertAvailableSlot(roomId, futureDate, '22:00', '23:00');
+      await insertAvailableSlot(roomId, futureDate, '23:00', '24:00');
+      const s = await dispatcher.dispatch();
+      expect(s.candidates).toBe(1);
+    });
+
     it('min_capacity 가 방 capacity_max 보다 크면 제외', async () => {
       const deviceId = await createDevice('tok-cap');
       // roomId capacity_max=4, 6 이상 요구 → 제외

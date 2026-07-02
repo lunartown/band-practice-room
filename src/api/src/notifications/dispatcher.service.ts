@@ -197,6 +197,7 @@ export class NotificationDispatcher {
         SELECT DISTINCT
           ev.room_id, ev.slot_date,
           make_time(r.run_start_hour, 0, 0) AS slot_start_time,
+          r.run_start_hour,
           r.run_len,
           rm.studio_id, rm.name AS room_name, rm.capacity_max, st.name AS studio_name
         FROM ev
@@ -234,13 +235,31 @@ export class NotificationDispatcher {
         b.slot_date = ANY(ns.dates)
         -- 최소 연속 가능 시간: 이벤트 슬롯이 속한 구간 길이가 N 이상이어야 한다(시작 순서 무관).
         AND b.run_len >= ns.min_duration
-        -- 시간대 필터: 윈도우가 없으면 모든 시간, 있으면 구간 시작이 하나라도 들면 통과(24:00=상한 없음)
+        -- 시간대 필터: 윈도우가 없으면 모든 시간. 있으면 "윈도우 안에서 시작하는
+        -- min_duration 연속 가용"이 존재해야 한다. 구간이 윈도우보다 일찍 시작해도
+        -- (예: 18시부터 비어 있고 윈도우가 19시~) 시작점을 윈도우 안으로 당겨(GREATEST)
+        -- 판정하므로 놓치지 않는다. 윈도우가 분 단위면 시(時) 경계로 보수적으로 올림한다.
         AND (
           jsonb_array_length(ns.time_windows) = 0
           OR EXISTS (
-            SELECT 1 FROM jsonb_array_elements(ns.time_windows) AS w
-            WHERE b.slot_start_time >= (w->>'from')::time
-              AND ((w->>'to') = '24:00' OR b.slot_start_time < (w->>'to')::time)
+            SELECT 1
+            FROM jsonb_array_elements(ns.time_windows) AS w
+            CROSS JOIN LATERAL (
+              SELECT
+                EXTRACT(HOUR FROM (w->>'from')::time)::int
+                  + CASE WHEN EXTRACT(MINUTE FROM (w->>'from')::time) > 0 THEN 1 ELSE 0 END
+                  AS start_h,
+                CASE
+                  WHEN (w->>'to') = '24:00' THEN 24
+                  ELSE EXTRACT(HOUR FROM (w->>'to')::time)::int
+                    + CASE WHEN EXTRACT(MINUTE FROM (w->>'to')::time) > 0 THEN 1 ELSE 0 END
+                END AS end_h
+            ) AS win
+            -- 윈도우 안 시작점(구간 시작을 윈도우 시작으로 당긴 값)이 윈도우 안이고,
+            -- 그 시작점부터 min_duration 시간이 구간 끝을 넘지 않아야 한다.
+            WHERE GREATEST(b.run_start_hour, win.start_h) < win.end_h
+              AND GREATEST(b.run_start_hour, win.start_h) + ns.min_duration
+                  <= b.run_start_hour + b.run_len
           )
         )
         -- 인원 필터: capacity_max 가 없으면(미상) 통과
