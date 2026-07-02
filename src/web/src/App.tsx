@@ -23,10 +23,10 @@ import {
   onDeviceRegistered,
   replaceAlert,
 } from './lib/notificationsApi';
-import { ensurePushReady } from './lib/pushDevice';
+import { ensurePushReady, onForegroundNotification, onNotificationTap } from './lib/pushDevice';
 import { buildAvailability, sortDateAvailabilityGroups } from './lib/availability';
 import type { StudioSortOption } from './lib/availability';
-import { dateLabel } from './lib/date';
+import { dateLabel, todayKst } from './lib/date';
 import { loadFilters, saveFilters, markEntered } from './lib/prefs';
 import { loadRecentStudioIds, recordRecentStudioSelections } from './lib/recentStudios';
 import {
@@ -157,6 +157,26 @@ export function App() {
     // 디바이스 등록(부팅 시 토큰 수신 포함)이 끝나면 서버 구독 목록을 받아온다.
     return onDeviceRegistered(refreshAlerts);
   }, [refreshAlerts]);
+
+  useEffect(() => {
+    // 알림 탭 → 알림이 가리키는 날짜·합주실 결과 화면으로 이동한다(콜드스타트 포함).
+    return onNotificationTap((target) => {
+      setPopover(null);
+      setIsFilterOpen(false);
+      setIsMenuOpen(false);
+      setIsStudioSearchOpen(false);
+      setIsAlertsOpen(false);
+      setAlertDraft(null);
+      setFavOnly(false);
+      const date = target.date && target.date >= todayKst() ? target.date : null;
+      setFilters((f) => ({
+        ...f,
+        dates: date ? [date] : f.dates,
+        studioIds: target.studioId != null ? [target.studioId] : f.studioIds,
+      }));
+      setEntered(true);
+    });
+  }, []);
 
   useEffect(() => {
     if (!entered) return;
@@ -484,14 +504,8 @@ export function App() {
     return [...ids];
   }, [visibleGroups, selectedStudios]);
 
-  const handlePullRefresh = useCallback(async () => {
-    // 보이는 곳을 즉시 재수집한 뒤, 같은 조건으로 슬롯을 다시 불러온다.
-    // 재수집이 실패하거나 게이트에 막혀도 최신 슬롯 재조회는 시도한다.
-    try {
-      await refreshSlots(visibleStudioIds);
-    } catch {
-      // 무시: 아래에서 어차피 재조회한다.
-    }
+  // 현재 조건 그대로 슬롯만 다시 불러온다(재수집 요청 없음).
+  const reloadSlots = useCallback(async () => {
     try {
       const r = await getSlots(buildSlotsQuery(filters, { includeSelectedStudio: true }));
       setSlots(r.slots);
@@ -501,7 +515,27 @@ export function App() {
     } catch {
       setError('예약 가능 시간을 불러오지 못했습니다');
     }
-  }, [filters, visibleStudioIds]);
+  }, [filters]);
+
+  const handlePullRefresh = useCallback(async () => {
+    // 보이는 곳을 즉시 재수집한 뒤, 같은 조건으로 슬롯을 다시 불러온다.
+    // 재수집이 실패하거나 게이트에 막혀도 최신 슬롯 재조회는 시도한다.
+    try {
+      await refreshSlots(visibleStudioIds);
+    } catch {
+      // 무시: 아래에서 어차피 재조회한다.
+    }
+    await reloadSlots();
+  }, [reloadSlots, visibleStudioIds]);
+
+  useEffect(() => {
+    // 앱을 보는 중 알림이 오면(iOS 배너와 별개로) 새 빈자리가 바로 보이게 슬롯을 갱신한다.
+    // 방금 서버에서 변동이 감지된 것이므로 재수집 요청 없이 재조회만 한다.
+    if (!entered) return;
+    return onForegroundNotification(() => {
+      void reloadSlots();
+    });
+  }, [entered, reloadSlots]);
 
   useEffect(() => {
     if (!Capacitor.isNativePlatform() || Capacitor.getPlatform() !== 'android') return;

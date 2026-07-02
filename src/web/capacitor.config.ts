@@ -49,6 +49,12 @@ const config: CapacitorConfig = {
       backgroundColor: '#ffffff',
       showSpinner: false,
     },
+    // iOS 는 기본적으로 앱이 포그라운드일 때 알림을 표시하지 않는다.
+    // 빈자리 알림은 앱을 보는 중에도 배너로 떠야 의미가 있어 표시 옵션을 켠다.
+    // (네이티브 설정이라 cap sync + 스토어 릴리스에만 반영, OTA 로는 안 나간다.)
+    FirebaseMessaging: {
+      presentationOptions: ['badge', 'sound', 'alert'],
+    },
     // 상단바가 흰색(--surface)으로 이어지도록 상태표시줄은 흰 배경 + 어두운 아이콘.
     // (style LIGHT = 밝은 배경용 = 어두운 글자/아이콘.) Android overlay=false 일 때
     // 이 배경색이 칠해진다. 런타임(main.tsx)에서도 같은 값으로 덮어 깜빡임을 줄인다.
