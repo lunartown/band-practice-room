@@ -14,6 +14,40 @@ let initialized = false;
 
 export type PushReadiness = 'granted' | 'denied' | 'unavailable';
 
+// 알림 데이터(slot_available)에서 화면 이동에 필요한 값만 추린 대상.
+export interface SlotAlertTarget {
+  studioId: number | null;
+  date: string | null; // YYYY-MM-DD
+}
+
+type TapListener = (target: SlotAlertTarget) => void;
+const tapListeners = new Set<TapListener>();
+// 콜드스타트 직후 앱이 구독하기 전에 도착한 탭은 보관했다가 첫 구독자에게 넘긴다.
+let pendingTap: SlotAlertTarget | null = null;
+
+const foregroundListeners = new Set<() => void>();
+
+// 알림 탭 구독. 탭한 알림이 가리키는 날짜·합주실로 화면을 이동시키는 데 쓴다.
+export function onNotificationTap(listener: TapListener): () => void {
+  tapListeners.add(listener);
+  if (pendingTap) {
+    const target = pendingTap;
+    pendingTap = null;
+    listener(target);
+  }
+  return () => {
+    tapListeners.delete(listener);
+  };
+}
+
+// 앱을 보는 중(포그라운드) 알림 수신 구독. 슬롯 새로고침 트리거로 쓴다.
+export function onForegroundNotification(listener: () => void): () => void {
+  foregroundListeners.add(listener);
+  return () => {
+    foregroundListeners.delete(listener);
+  };
+}
+
 export async function initPushDevice(): Promise<void> {
   if (initialized) return;
   initialized = true;
@@ -26,6 +60,16 @@ export async function initPushDevice(): Promise<void> {
     // 디바이스가 설치 ID 기준이라 구독은 새 토큰으로 그대로 이어진다.
     await FirebaseMessaging.addListener('tokenReceived', (event) => {
       if (event.token) void registerToken(event.token);
+    });
+
+    // 알림 탭(백그라운드/콜드스타트 포함) → 해당 화면으로 라우팅할 수 있게 앱에 알린다.
+    await FirebaseMessaging.addListener('notificationActionPerformed', (event) => {
+      handleNotificationTap(event.notification?.data);
+    });
+
+    // 앱을 보는 중 수신 → 시스템 배너 대신 화면 데이터를 갱신하는 트리거로 쓴다.
+    await FirebaseMessaging.addListener('notificationReceived', () => {
+      for (const listener of foregroundListeners) listener();
     });
 
     const perm = await FirebaseMessaging.checkPermissions();
@@ -65,6 +109,31 @@ export async function ensurePushReady(): Promise<PushReadiness> {
 async function registerToken(token: string): Promise<void> {
   setDeviceToken(token);
   await registerDevice(Capacitor.getPlatform() as Platform, await appVersion());
+}
+
+function handleNotificationTap(data: unknown): void {
+  const target = parseSlotAlertTarget(data);
+  if (!target) return;
+  if (tapListeners.size === 0) {
+    pendingTap = target;
+    return;
+  }
+  for (const listener of tapListeners) listener(target);
+}
+
+// FCM data 는 모두 문자열이다. slot_available 알림만 라우팅 대상으로 삼는다.
+function parseSlotAlertTarget(data: unknown): SlotAlertTarget | null {
+  if (!data || typeof data !== 'object') return null;
+  const record = data as Record<string, unknown>;
+  if (record.type !== 'slot_available') return null;
+  const studioId =
+    typeof record.studioId === 'string' && /^\d+$/.test(record.studioId)
+      ? Number(record.studioId)
+      : null;
+  const date =
+    typeof record.date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(record.date) ? record.date : null;
+  if (studioId === null && date === null) return null;
+  return { studioId, date };
 }
 
 async function appVersion(): Promise<string | null> {
