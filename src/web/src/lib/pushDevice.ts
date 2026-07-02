@@ -72,6 +72,17 @@ export async function initPushDevice(): Promise<void> {
       for (const listener of foregroundListeners) listener();
     });
 
+    // 안드로이드: 빈자리 알림은 시간이 생명이라 헤드업 배너가 뜨는 HIGH 중요도
+    // 채널을 만든다. 서버 발송이 이 채널 id 를 지정한다(fcm.ts 의 channelId 와 동일).
+    if (Capacitor.getPlatform() === 'android') {
+      await FirebaseMessaging.createChannel({
+        id: 'slot-alerts',
+        name: '빈자리 알림',
+        description: '등록한 조건에 빈 시간이 생기면 알려드려요',
+        importance: 4, // IMPORTANCE_HIGH
+      }).catch((err) => console.warn('[push] 알림 채널 생성 실패', err));
+    }
+
     const perm = await FirebaseMessaging.checkPermissions();
     if (perm.receive !== 'granted') return; // 권한 요청은 ensurePushReady 가 한다.
 
