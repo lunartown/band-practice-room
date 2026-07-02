@@ -95,7 +95,7 @@ export function App() {
   const [studioSearchQuery, setStudioSearchQuery] = useState('');
   const [recentStudioIds, setRecentStudioIds] = useState<number[]>(() => loadRecentStudioIds());
   const [popover, setPopover] = useState<PopoverState | null>(null);
-  const favorites = useFavorites();
+  const favorites = useFavorites({ enabled: favOnly || isStudioSearchOpen });
   const [error, setError] = useState<string | null>(null);
   const [areasError, setAreasError] = useState(false);
   const [updatedAt, setUpdatedAt] = useState<Date | null>(null);
@@ -739,7 +739,7 @@ export function App() {
                     visibleGroups.map((group) => {
                       const isCollapsed = collapsedDates.has(group.date);
                       const bodyId = `date-section-${group.date}`;
-                      const selectedEmptyItems = studioActive
+                      const selectedEmptyItems = !isCollapsed && studioActive
                         ? buildSelectedStudioEmptyItems({
                             selectedStudios,
                             visibleGroups: [group],
@@ -747,7 +747,8 @@ export function App() {
                             preferredAreaIds: filters.areaIds,
                           })
                         : [];
-                      const hasBodyRows = group.studios.length > 0 || selectedEmptyItems.length > 0;
+                      const hasBodyRows =
+                        !isCollapsed && (group.studios.length > 0 || selectedEmptyItems.length > 0);
 
                       return (
                         <section className="date-section" key={group.date}>
@@ -769,32 +770,36 @@ export function App() {
                             </span>
                           </button>
                           <div id={bodyId} className="date-section-body" hidden={isCollapsed}>
-                            {group.studios.map((studio) => (
-                              <StudioRow key={studio.studio.id} studio={studio} />
-                            ))}
-                            {selectedEmptyItems.map((item) => (
-                              <SelectedStudioEmptyRow
-                                key={item.studio.id}
-                                studio={item.studio}
-                                areaName={item.areaName}
-                                onCreateAlert={(studio) => openStudioAlert(studio, group.date)}
-                                onRemove={removeStudioSelection}
-                              />
-                            ))}
-                            {!hasBodyRows && favFilterActive ? (
-                              <EmptyDay
-                                message="이 날은 즐겨찾기한 곳이 비어 있어요"
-                                minDuration={filters.minDuration}
-                                setFilters={setFilters}
-                                onCreateAlert={() => openCurrentConditionAlert(group.date)}
-                              />
-                            ) : !hasBodyRows ? (
-                              <EmptyDay
-                                minDuration={filters.minDuration}
-                                setFilters={setFilters}
-                                onCreateAlert={() => openCurrentConditionAlert(group.date)}
-                              />
-                            ) : null}
+                            {!isCollapsed && (
+                              <>
+                                {group.studios.map((studio) => (
+                                  <StudioRow key={studio.studio.id} studio={studio} />
+                                ))}
+                                {selectedEmptyItems.map((item) => (
+                                  <SelectedStudioEmptyRow
+                                    key={item.studio.id}
+                                    studio={item.studio}
+                                    areaName={item.areaName}
+                                    onCreateAlert={(studio) => openStudioAlert(studio, group.date)}
+                                    onRemove={removeStudioSelection}
+                                  />
+                                ))}
+                                {!hasBodyRows && favFilterActive ? (
+                                  <EmptyDay
+                                    message="이 날은 즐겨찾기한 곳이 비어 있어요"
+                                    minDuration={filters.minDuration}
+                                    setFilters={setFilters}
+                                    onCreateAlert={() => openCurrentConditionAlert(group.date)}
+                                  />
+                                ) : !hasBodyRows ? (
+                                  <EmptyDay
+                                    minDuration={filters.minDuration}
+                                    setFilters={setFilters}
+                                    onCreateAlert={() => openCurrentConditionAlert(group.date)}
+                                  />
+                                ) : null}
+                              </>
+                            )}
                           </div>
                         </section>
                       );

@@ -50,7 +50,7 @@ export function isFavoritesLoaded(): boolean {
 }
 
 /** 즐겨찾기 토글. 햅틱으로 네이티브 촉감 피드백을 준다. */
-export async function toggleFavorite(id: number): Promise<void> {
+export function toggleFavorite(id: number): void {
   const next = new Set(ids);
   const willAdd = !next.has(id);
   if (willAdd) next.add(id);
@@ -59,13 +59,9 @@ export async function toggleFavorite(id: number): Promise<void> {
   emit();
 
   // 추가는 또렷하게(Medium), 해제는 가볍게(Light). 웹에선 무음으로 떨어진다.
-  try {
-    await Haptics.impact({ style: willAdd ? ImpactStyle.Medium : ImpactStyle.Light });
-  } catch {
-    /* 햅틱 미지원 환경 무시 */
-  }
+  void Haptics.impact({ style: willAdd ? ImpactStyle.Medium : ImpactStyle.Light }).catch(() => {});
 
-  await persist();
+  void persist();
 }
 
 // --- React 바인딩 (useSyncExternalStore) ---
@@ -79,4 +75,8 @@ export function subscribeFavorites(fn: () => void): () => void {
 
 export function getFavoritesSnapshot(): ReadonlySet<number> {
   return ids;
+}
+
+export function isFavorite(id: number): boolean {
+  return ids.has(id);
 }

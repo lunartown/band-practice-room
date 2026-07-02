@@ -1,9 +1,9 @@
-import { useEffect, useState } from 'react';
+import { memo, useEffect, useState } from 'react';
 import type { Studio } from '../api/types';
 import type { AvailabilityChip, RoomAvailability, StudioAvailability } from '../lib/availability';
 import { toReviewBadges } from '../lib/reviewKeywords';
 import { STUDIO_FALLBACK_IMAGE_URL, galleryImageUrl, thumbnailUrl } from '../lib/imageUrl';
-import { useFavorites } from '../lib/useFavorites';
+import { useFavorite } from '../lib/useFavorites';
 import { toggleFavorite } from '../lib/favorites';
 import { shareStudio } from '../lib/share';
 
@@ -236,8 +236,7 @@ export function SelectedStudioEmptyRow({
 }) {
   const { id, name, reviewCount, reviewKeywords } = studio;
   const badges = toReviewBadges(reviewKeywords, reviewCount);
-  const favorites = useFavorites();
-  const isFav = favorites.has(id);
+  const isFav = useFavorite(id);
   // 온라인 예약 소스가 없는 합주실: "빈 시간 없음"이 아니라 "전화예약"으로 안내.
   const phoneOnly = studio.hasOnlineBooking === false;
 
@@ -343,11 +342,10 @@ function BellIcon() {
   );
 }
 
-export function StudioRow({ studio }: StudioRowProps) {
+export const StudioRow = memo(function StudioRow({ studio }: StudioRowProps) {
   const { id, name, reviewCount, reviewKeywords } = studio.studio;
   const badges = toReviewBadges(reviewKeywords, reviewCount);
-  const favorites = useFavorites();
-  const isFav = favorites.has(id);
+  const isFav = useFavorite(id);
   const [expanded, setExpanded] = useState(false);
 
   return (
@@ -441,4 +439,4 @@ export function StudioRow({ studio }: StudioRowProps) {
       )}
     </div>
   );
-}
+});
