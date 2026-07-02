@@ -102,7 +102,6 @@ UPDATE studios SET image_url_manual = '/studios/pang-studio.webp' WHERE slug = '
 UPDATE studios SET image_url_manual = '/studios/hwiparan-music.webp' WHERE slug = 'studio-신도림/영등포구청-휘파란-뮤직-스튜디오';
 UPDATE studios SET image_url_manual = '/studios/ground.webp' WHERE slug = 'studio-신촌-그라운드-신촌';
 UPDATE studios SET image_url_manual = '/studios/dream-studio.webp' WHERE slug = 'studio-신촌-드림';
-UPDATE studios SET image_url_manual = '/studios/ground.webp' WHERE slug = 'studio-신촌-신촌-그라운드';
 UPDATE studios SET image_url_manual = '/studios/jahab-studio.webp' WHERE slug = 'studio-신촌-자하브-합주실';
 UPDATE studios SET image_url_manual = '/studios/ground.webp' WHERE slug = 'studio-합정/홍대-그라운드-본점';
 UPDATE studios SET image_url_manual = '/studios/ground.webp' WHERE slug = 'studio-합정/홍대-그라운드-합정1호점';
