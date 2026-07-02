@@ -119,6 +119,27 @@ describeDb('NotificationsRepository devices (integration)', () => {
     expect(old.rows[0].is_active).toBe(false);
   });
 
+  it('모든 날짜가 지난 구독은 목록에서 제외된다', async () => {
+    const device = await repo.upsertDeviceByInstallId({
+      installId: 'install-list',
+      deviceToken: 'tok-list',
+      platform: 'ios',
+      appVersion: null,
+    });
+    await db.query(
+      `INSERT INTO notification_subscriptions (device_id, dates) VALUES ($1, '{2000-01-01}')`,
+      [device.id],
+    );
+    await db.query(
+      `INSERT INTO notification_subscriptions (device_id, dates) VALUES ($1, '{2000-01-01,2099-01-01}')`,
+      [device.id],
+    );
+
+    const rows = await repo.listSubscriptionsByDevice(device.id);
+    expect(rows).toHaveLength(1);
+    expect(rows[0].dates).toEqual(['2000-01-01', '2099-01-01']);
+  });
+
   it('구버전 등록(토큰만)은 기존 행을 갱신한다', async () => {
     const first = await repo.upsertDevice({
       deviceToken: 'tok-old-app',
