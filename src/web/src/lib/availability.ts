@@ -48,6 +48,12 @@ function toHour(time: string): number {
   return Number(time.slice(0, 2));
 }
 
+function endHour(startTime: string, endTime: string): number {
+  const start = toHour(startTime);
+  const end = toHour(endTime);
+  return end === 0 && start > 0 ? 24 : end;
+}
+
 function hourLabel(hour: number): string {
   return `${String(hour).padStart(2, '0')}:00`;
 }
@@ -73,8 +79,8 @@ function contiguousRuns(slots: Slot[]): Slot[][] {
 /** 연속 구간에서 minDuration이 들어가는 시작 시각(시 단위) 목록. */
 function validStartHours(run: Slot[], minDuration: number): number[] {
   const startHour = toHour(run[0].startTime);
-  const endHour = toHour(run[run.length - 1].endTime); // 마지막 슬롯 종료
-  const lastStart = endHour - minDuration;
+  const lastSlot = run[run.length - 1];
+  const lastStart = endHour(lastSlot.startTime, lastSlot.endTime) - minDuration;
   const starts: number[] = [];
   for (let h = startHour; h <= lastStart; h += 1) starts.push(h);
   return starts;

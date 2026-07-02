@@ -174,7 +174,11 @@ export class SlotsRepository {
       SELECT
         date::text                                                       AS date,
         start_time::text                                                 AS start_time,
-        (start_time + (${durationParam} * interval '1 hour'))::text      AS end_time,
+        CASE
+          WHEN EXTRACT(EPOCH FROM start_time) + (${durationParam} * 3600) >= 86400
+            THEN '24:00:00'
+          ELSE (start_time + (${durationParam} * interval '1 hour'))::text
+        END                                                             AS end_time,
         status,
         price * ${durationParam}                                         AS price,
         price_source,
