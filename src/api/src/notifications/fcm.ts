@@ -75,6 +75,12 @@ export async function sendPush(messages: PushMessage[]): Promise<SendResult[]> {
       token: m.token,
       notification: { title: m.title, body: m.body },
       data: m.data ?? {},
+      // 빈자리는 금방 나가므로 지연 없이 배달하고, 안드로이드는 헤드업이 뜨는
+      // 전용 채널로 보낸다(채널을 아직 안 만든 구버전 앱은 FCM 기본 채널로 폴백).
+      android: {
+        priority: 'high' as const,
+        notification: { channelId: 'slot-alerts' },
+      },
     }));
     const response = await messaging.sendEach(payload);
     response.responses.forEach((r: any, idx: number) => {

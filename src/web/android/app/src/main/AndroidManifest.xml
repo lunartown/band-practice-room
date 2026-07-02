@@ -20,6 +20,15 @@
             </intent-filter>
         </activity>
 
+        <!-- FCM 알림 기본값: 상태바 스몰 아이콘(흰색 규격)과 기본 채널.
+             메시지에 채널이 없어도 slot-alerts(HIGH, 앱에서 생성)로 들어가게 한다. -->
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_icon"
+            android:resource="@drawable/ic_stat_notification" />
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_channel_id"
+            android:value="slot-alerts" />
+
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.fileprovider"
