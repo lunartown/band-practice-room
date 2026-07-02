@@ -2,8 +2,15 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 import { DatabaseService } from '../database/database.service.js';
 import { PushMessage, SendResult, isConfigured, sendPush } from './fcm.js';
 
-// 한 번 실행에서 소비할 최대 이벤트 수(폭주 방지).
-const EVENT_BATCH = Number(process.env.NOTIFY_EVENT_BATCH ?? 500);
+// 한 배치에서 소비할 이벤트 수. 큐가 빌 때까지 배치를 반복한다(아래 MAX_ROUNDS 참고).
+// 테스트에서 배치 크기를 바꿀 수 있게 호출 시점에 읽는다.
+function eventBatchSize(): number {
+  return Number(process.env.NOTIFY_EVENT_BATCH ?? 500);
+}
+
+// 한 실행이 소진할 최대 배치 수(폭주 백스톱). 자정에 새 날짜가 열리며 이벤트가
+// 수천 건 쏟아져도 기본 500 × 40 = 2만 건까지 한 번에 처리한다.
+const MAX_ROUNDS = Number(process.env.NOTIFY_MAX_ROUNDS ?? 40);
 
 interface ClaimedEvent {
   id: string;
@@ -41,6 +48,7 @@ export interface DispatchSummary {
   sent: number;
   failed: number;
   deactivatedDevices: number;
+  expiredSubscriptions: number;
   dryRun: boolean;
 }
 
@@ -53,84 +61,115 @@ export class NotificationDispatcher {
   async dispatch(): Promise<DispatchSummary> {
     const dryRun = !(await isConfigured());
 
-    // 1) 미처리 이벤트를 클레임(processed_at 표시). 매칭 여부와 무관하게 다시 처리되지 않는다.
-    const events = await this.claimEvents(EVENT_BATCH);
-    if (events.length === 0) {
-      return { claimedEvents: 0, candidates: 0, sent: 0, failed: 0, deactivatedDevices: 0, dryRun };
-    }
+    // 0) 지난 날짜만 남은 구독은 더 매칭될 수 없으므로 비활성화한다(내 알림 목록에서도 사라진다).
+    const expiredSubscriptions = await this.deactivateExpiredSubscriptions();
 
-    // 2) 클레임한 이벤트를 구독과 매칭.
-    const candidates = await this.matchCandidates(events);
-    if (candidates.length === 0) {
-      return {
-        claimedEvents: events.length,
-        candidates: 0,
-        sent: 0,
-        failed: 0,
-        deactivatedDevices: 0,
-        dryRun,
-      };
-    }
+    const summary: DispatchSummary = {
+      claimedEvents: 0,
+      candidates: 0,
+      sent: 0,
+      failed: 0,
+      deactivatedDevices: 0,
+      expiredSubscriptions,
+      dryRun,
+    };
 
-    // 3) 같은 디바이스에 매칭된 후보는 푸시 1건으로 묶는다.
-    const { pushCandidates, skippedCandidates } = coalesceDeviceCandidates(candidates);
-
-    // 4) FCM 메시지 구성 + 전송.
-    const messages: PushMessage[] = pushCandidates.map(({ candidate: c, slotCount }) => ({
-      token: c.device_token,
-      title: slotCount === 1 ? `${c.studio_name} 빈자리` : `빈자리 ${slotCount}개`,
-      body:
-        slotCount === 1
-          ? `${c.room_name} · ${formatDate(c.slot_date)} ${c.slot_start_time.slice(0, 5)} 예약 가능`
-          : `${c.studio_name} ${c.room_name} · ${formatDate(c.slot_date)} ${c.slot_start_time.slice(0, 5)} 외 ${slotCount - 1}건`,
-      data: {
-        type: 'slot_available',
-        studioId: String(c.studio_id),
-        roomId: String(c.room_id),
-        date: c.slot_date,
-        startTime: c.slot_start_time.slice(0, 5),
-        slotCount: String(slotCount),
-      },
-    }));
-
-    const results = await sendPush(messages);
-
-    // 5) 발송 로그 기록 + 무효 토큰 디바이스 비활성화.
-    let sent = 0;
-    let failed = 0;
+    // 이벤트 큐가 빌 때까지 배치 단위로 소진한다. 새 날짜가 수집 범위에 들어오며
+    // 이벤트가 한꺼번에 쌓여도 이번 실행에서 처리해, 뒤에 온 실시간 변동이 다음
+    // 실행(최대 1시간 뒤)으로 밀리지 않게 한다.
     const invalidDeviceIds = new Set<string>();
-    for (let i = 0; i < pushCandidates.length; i++) {
-      const c = pushCandidates[i].candidate;
-      const r: SendResult = results[i];
-      if (r.success) sent++;
-      else failed++;
-      if (r.invalidToken) invalidDeviceIds.add(c.device_id);
-      await this.recordDelivery(c, r.success ? 'SENT' : 'FAILED', r.error ?? null);
+    let skippedTotal = 0;
+    for (let round = 0; round < MAX_ROUNDS; round++) {
+      // 1) 미처리 이벤트를 클레임(processed_at 표시). 매칭 여부와 무관하게 다시 처리되지 않는다.
+      const events = await this.claimEvents(eventBatchSize());
+      if (events.length === 0) break;
+      summary.claimedEvents += events.length;
+
+      // 2) 클레임한 이벤트를 구독과 매칭.
+      const candidates = await this.matchCandidates(events);
+      if (candidates.length === 0) continue;
+
+      // 3) 같은 디바이스에 매칭된 후보는 푸시 1건으로 묶는다.
+      const { pushCandidates, skippedCandidates } = coalesceDeviceCandidates(candidates);
+      summary.candidates += pushCandidates.length;
+      skippedTotal += skippedCandidates.length;
+
+      // 4) FCM 메시지 구성 + 전송.
+      const messages: PushMessage[] = pushCandidates.map(({ candidate: c, slotCount }) => ({
+        token: c.device_token,
+        title: slotCount === 1 ? `${c.studio_name} 빈자리` : `빈자리 ${slotCount}개`,
+        body:
+          slotCount === 1
+            ? `${c.room_name} · ${formatDate(c.slot_date)} ${c.slot_start_time.slice(0, 5)} 예약 가능`
+            : `${c.studio_name} ${c.room_name} · ${formatDate(c.slot_date)} ${c.slot_start_time.slice(0, 5)} 외 ${slotCount - 1}건`,
+        data: {
+          type: 'slot_available',
+          studioId: String(c.studio_id),
+          roomId: String(c.room_id),
+          date: c.slot_date,
+          startTime: c.slot_start_time.slice(0, 5),
+          slotCount: String(slotCount),
+        },
+      }));
+
+      const results = await sendPush(messages);
+
+      // 5) 발송 로그 기록 + 무효 토큰 수집.
+      for (let i = 0; i < pushCandidates.length; i++) {
+        const c = pushCandidates[i].candidate;
+        const r: SendResult = results[i];
+        if (r.success) summary.sent++;
+        else summary.failed++;
+        if (r.invalidToken) invalidDeviceIds.add(c.device_id);
+        await this.recordDelivery(c, r.success ? 'SENT' : 'FAILED', r.error ?? null);
+      }
+
+      for (const c of skippedCandidates) {
+        await this.recordDelivery(c, 'SKIPPED', 'bundled into device notification');
+      }
     }
 
-    for (const c of skippedCandidates) {
-      await this.recordDelivery(c, 'SKIPPED', 'bundled into device notification');
-    }
-
+    // 6) 무효 토큰 디바이스 비활성화.
     for (const deviceId of invalidDeviceIds) {
       await this.database.query(`UPDATE devices SET is_active = false WHERE id = $1`, [deviceId]);
     }
+    summary.deactivatedDevices = invalidDeviceIds.size;
 
-    const summary: DispatchSummary = {
-      claimedEvents: events.length,
-      candidates: pushCandidates.length,
-      sent,
-      failed,
-      deactivatedDevices: invalidDeviceIds.size,
-      dryRun,
-    };
+    const remaining = await this.countUnprocessedEvents();
+    if (remaining > 0) {
+      this.logger.warn(`이벤트 ${remaining}건이 남았습니다(라운드 상한 ${MAX_ROUNDS} 도달). 다음 실행에서 이어집니다.`);
+    }
     this.logger.log(
-      `dispatch 완료: 이벤트 ${events.length} / 발송 후보 ${pushCandidates.length}` +
-        (skippedCandidates.length ? ` / 묶음 제외 ${skippedCandidates.length}` : '') +
-        ` / 발송 ${sent} / 실패 ${failed}` +
+      `dispatch 완료: 이벤트 ${summary.claimedEvents} / 발송 후보 ${summary.candidates}` +
+        (skippedTotal ? ` / 묶음 제외 ${skippedTotal}` : '') +
+        ` / 발송 ${summary.sent} / 실패 ${summary.failed}` +
+        (expiredSubscriptions ? ` / 만료 구독 ${expiredSubscriptions}` : '') +
         (dryRun ? ' (dry-run: FCM 미설정)' : ''),
     );
     return summary;
+  }
+
+  // 모든 날짜가 지난(KST) 구독을 비활성화한다. 매시 dispatch 앞에서 정리된다.
+  private async deactivateExpiredSubscriptions(): Promise<number> {
+    const result = await this.database.query(
+      `
+      UPDATE notification_subscriptions ns
+      SET is_active = false
+      WHERE ns.is_active = true
+        AND NOT EXISTS (
+          SELECT 1 FROM unnest(ns.dates) AS d(date)
+          WHERE d.date >= (NOW() AT TIME ZONE 'Asia/Seoul')::date
+        )
+      `,
+    );
+    return result.rowCount ?? 0;
+  }
+
+  private async countUnprocessedEvents(): Promise<number> {
+    const result = await this.database.query<{ count: string }>(
+      `SELECT count(*) AS count FROM slot_available_events WHERE processed_at IS NULL`,
+    );
+    return Number(result.rows[0].count);
   }
 
   private async claimEvents(limit: number): Promise<ClaimedEvent[]> {

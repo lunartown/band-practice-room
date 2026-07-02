@@ -184,8 +184,13 @@ export class NotificationsRepository {
   }
 
   async listSubscriptionsByDevice(deviceId: string): Promise<SubscriptionRow[]> {
+    // 모든 날짜가 지난 구독은 목록에서 제외한다(비활성화는 dispatcher 가 매시 수행).
     const result = await this.database.query<SubscriptionRow>(
       `${SUBSCRIPTION_SELECT} WHERE ns.device_id = $1 AND ns.is_active = true
+       AND EXISTS (
+         SELECT 1 FROM unnest(ns.dates) AS d(date)
+         WHERE d.date >= (NOW() AT TIME ZONE 'Asia/Seoul')::date
+       )
        ORDER BY ns.created_at DESC`,
       [deviceId],
     );

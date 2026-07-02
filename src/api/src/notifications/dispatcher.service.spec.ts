@@ -457,6 +457,54 @@ describeDb('NotificationDispatcher (integration)', () => {
       expect(d.rows.map((r) => r.slot_start_time)).toEqual(['19:00:00']);
     });
 
+    it('모든 날짜가 지난 구독은 dispatch 때 비활성화된다', async () => {
+      const deviceId = await createDevice('tok-expired');
+      const pd = await db.query<{ d: string }>(
+        `SELECT ((NOW() AT TIME ZONE 'Asia/Seoul')::date - 1)::text AS d`,
+      );
+      const pastDate = pd.rows[0].d;
+      const expiredId = await createSubscription({ deviceId, studioIds: [studioId], dates: [pastDate] });
+      // 미래 날짜가 하나라도 남아 있으면 유지된다.
+      const activeId = await createSubscription({
+        deviceId,
+        studioIds: [studioId],
+        dates: [pastDate, futureDate],
+      });
+
+      const s = await dispatcher.dispatch();
+      expect(s.expiredSubscriptions).toBe(1);
+
+      const rows = await db.query<{ id: string; is_active: boolean }>(
+        `SELECT id, is_active FROM notification_subscriptions ORDER BY id`,
+      );
+      expect(rows.rows.find((r) => Number(r.id) === expiredId)?.is_active).toBe(false);
+      expect(rows.rows.find((r) => Number(r.id) === activeId)?.is_active).toBe(true);
+    });
+
+    it('이벤트가 배치 크기를 넘어도 한 실행에서 모두 소진한다', async () => {
+      const prev = process.env.NOTIFY_EVENT_BATCH;
+      process.env.NOTIFY_EVENT_BATCH = '2';
+      try {
+        const deviceId = await createDevice('tok-burst');
+        await createSubscription({ deviceId, studioIds: [studioId], dates: [futureDate] });
+        for (let h = 10; h < 15; h++) {
+          await insertAvailableSlot(roomId, futureDate, `${h}:00`, `${h + 1}:00`);
+        }
+
+        const s = await dispatcher.dispatch();
+        expect(s.claimedEvents).toBe(5); // 배치 2건씩 3라운드에 걸쳐 전부 소비
+        expect(s.candidates).toBe(1); // 같은 연속 블록이라 알림은 1건
+
+        const remaining = await db.query<{ c: string }>(
+          `SELECT count(*) c FROM slot_available_events WHERE processed_at IS NULL`,
+        );
+        expect(Number(remaining.rows[0].c)).toBe(0);
+      } finally {
+        if (prev === undefined) delete process.env.NOTIFY_EVENT_BATCH;
+        else process.env.NOTIFY_EVENT_BATCH = prev;
+      }
+    });
+
     it('다른 스튜디오만 구독하면 매칭되지 않는다', async () => {
       const deviceId = await createDevice('tok-scope');
       await createSubscription({ deviceId, studioIds: [otherStudioId], dates: [futureDate] });
