@@ -22,7 +22,7 @@
 ## 확정된 설계 결정
 
 - MVP는 30일 전체 available 슬롯을 한 응답으로 내려준다
-- 응답은 `status = AVAILABLE` 슬롯의 flat 배열로 내려주고 `studio`/`room`은 각 슬롯에 임베드한다. 중복이 응답 크기 문제를 만들면 normalized 구조로 전환한다 (사용자 대상 `freshness` 노출은 제외 — 의사결정 로그 2026-06-21)
+- 응답은 `status = AVAILABLE` 슬롯의 flat 배열로 내려준다. 슬롯에는 `studioId`·`roomId` 참조만 두고, 합주실/방 메타데이터는 `GET /studios`에서 받아 클라이언트가 조인한다 (사용자 대상 `freshness` 노출은 제외 — 의사결정 로그 2026-06-21)
 - 프론트엔드는 Vite SPA + React로 시작한다 (이후 Capacitor로 iOS·Android 패키징)
 - 스케줄러는 API 내부 cron이 아니라 GitHub Actions cron(원샷)으로 둔다
 - 작업 큐는 PostgreSQL job table(`scrape_jobs`)로 구현한다
@@ -31,10 +31,12 @@
 - 지역 필터는 행정구가 아니라 지역 기준으로 한다
 - 슬롯 시간은 날짜와 하루 안의 분 단위 범위로 표현한다
 - 관리자 운영 콘솔은 사용자 화면과 분리하고, 보안 경계는 `/api/v1/admin/**` API 인증으로 둔다
+- 빈자리 알림은 `/api/v1/notifications/**` API, `devices`/`notification_subscriptions`/`slot_available_events`/`notification_deliveries` 테이블, FCM dispatcher로 구성한다
 
 ## 현재 논의가 필요한 지점
 
-- 재수집 주기를 어떻게 둘지 (사용자가 신선도를 신경 쓸 필요 없을 만큼 자주 갱신하는 내부 운영 기준)
+- 당겨서 새로고침을 동기 수집에서 refresh job/polling 구조로 바꿀지
+- 알림 만료·발송 후 소진 정책을 어떻게 가져갈지
 - 지역 경계가 애매한 합주실을 여러 지역에 중복 노출할지
 - 이미지 파일 업로드용 영구 스토리지를 무엇으로 둘지
 
