@@ -5,6 +5,7 @@ import { getAreas, getSlots, getStudios, refreshSlots } from './api/client';
 import type { Area, RawSlot, SlotsQuery, Studio } from './api/types';
 import { buildCatalogIndex, hydrateSlots } from './lib/slotHydration';
 import { SelectedStudioEmptyRow, StudioRow } from './components/StudioRow';
+import type { StudioBookEvent } from './components/StudioRow';
 import { FilterSheet, defaultFilters } from './components/FilterSheet';
 import type { FilterState } from './components/FilterSheet';
 import { CalendarPicker } from './components/CalendarPicker';
@@ -43,6 +44,19 @@ import {
 } from './lib/studioSearch';
 import { useFavorites } from './lib/useFavorites';
 import { usePullToRefresh } from './lib/usePullToRefresh';
+import {
+  alertAnalyticsProperties,
+  searchResultViewKey,
+  trackAlertCtaClicked,
+  trackAlertRegistration,
+  trackBookingClicked,
+  trackEmptySuggestionClicked,
+  trackEvent,
+  trackFilterChanged,
+  trackOpenAreaPicked,
+  trackSearchResultsViewed,
+  trackStudioSelectionChanged,
+} from './lib/analytics';
 
 type PopoverKind = 'time' | 'date' | 'area' | 'sort';
 const POP_WIDTH: Record<PopoverKind, number> = { time: 320, date: 340, area: 220, sort: 180 };
@@ -100,6 +114,8 @@ export function App() {
   const [loading, setLoading] = useState(true);
   const [searchLoading, setSearchLoading] = useState(false);
   const phoneRef = useRef<HTMLElement>(null);
+  const previousFiltersRef = useRef<FilterState | null>(null);
+  const resultViewKeyRef = useRef<string | null>(null);
   const nativeBackStateRef = useRef<NativeBackState>({
     alertDraftOpen: false,
     isMenuOpen: false,
@@ -161,6 +177,11 @@ export function App() {
   useEffect(() => {
     // 알림 탭 → 알림이 가리키는 날짜·합주실 결과 화면으로 이동한다(콜드스타트 포함).
     return onNotificationTap((target) => {
+      trackEvent('Alert Notification Opened', {
+        has_studio: target.studioId != null,
+        has_date: Boolean(target.date),
+        date_is_past: Boolean(target.date && target.date < todayKst()),
+      });
       setPopover(null);
       setIsFilterOpen(false);
       setIsMenuOpen(false);
@@ -207,6 +228,16 @@ export function App() {
   }, [filters, entered]);
 
   useEffect(() => {
+    if (!entered) {
+      previousFiltersRef.current = filters;
+      return;
+    }
+    const previous = previousFiltersRef.current;
+    if (previous) trackFilterChanged(previous, filters);
+    previousFiltersRef.current = filters;
+  }, [entered, filters]);
+
+  useEffect(() => {
     if (!entered || !isStudioSearchOpen) return;
     let canceled = false;
     setSearchLoading(true);
@@ -247,11 +278,17 @@ export function App() {
   }, [entered, filters.studioIds, isStudioSearchOpen, recentStudioIds, rememberRecentStudioSelections]);
 
   function enterWithAreas(areaIds: number[]) {
+    trackOpenAreaPicked(areaIds);
     setFilters((f) => ({ ...f, areaIds }));
     setEntered(true);
   }
 
   function openStudioSearch() {
+    trackEvent('Studio Search Opened', {
+      area_count: filters.areaIds.length,
+      selected_studio_count: filters.studioIds.length,
+      favorite_filter: favOnly,
+    });
     setPopover(null);
     setIsFilterOpen(false);
     setIsMenuOpen(false);
@@ -262,6 +299,9 @@ export function App() {
   }
 
   function openAlertsScreen() {
+    trackEvent('Alerts Screen Opened', {
+      alert_count: alerts.length,
+    });
     setPopover(null);
     setIsFilterOpen(false);
     setIsMenuOpen(false);
@@ -273,11 +313,25 @@ export function App() {
   async function confirmAlertDraft() {
     if (!alertDraft) return;
     const conditions = buildAlertConditions(alertDraft, filters);
+    const analyticsProps = alertAnalyticsProperties({
+      scope: conditions.scope,
+      studioCount: conditions.studios.length,
+      areaCount: conditions.areaIds.length,
+      dateCount: conditions.dates.length,
+      timeWindowCount: conditions.timeWindows.length,
+      minDuration: conditions.minDuration,
+      people: conditions.people,
+    });
+    trackAlertRegistration('attempted', analyticsProps);
     setAlertDraft(null);
 
     // 권한·토큰은 알림을 원한 이 시점에 확보한다. 못 받는 상태면 정직하게 알리고 만들지 않는다.
     const readiness = await ensurePushReady();
     if (readiness !== 'granted') {
+      trackAlertRegistration('blocked', {
+        ...analyticsProps,
+        reason: readiness,
+      });
       window.alert(
         readiness === 'unavailable'
           ? '빈자리 알림은 합주실 앱에서 받을 수 있어요.'
@@ -288,13 +342,18 @@ export function App() {
 
     // 같은 조건의 알림이 이미 있으면 그대로 둔다(중복 구독 방지).
     const key = alertConditionKey(conditions);
-    if (alerts.some((item) => alertConditionKey(item) === key)) return;
+    if (alerts.some((item) => alertConditionKey(item) === key)) {
+      trackAlertRegistration('duplicate', analyticsProps);
+      return;
+    }
 
     try {
       const created = await createAlert(conditions);
       setAlerts((current) => [created, ...current.filter((item) => item.id !== created.id)]);
+      trackAlertRegistration('completed', analyticsProps);
     } catch (err) {
       console.warn('[notify] 알림 등록 실패', err);
+      trackAlertRegistration('failed', analyticsProps);
       window.alert('알림 등록에 실패했어요. 잠시 후 다시 시도해 주세요.');
     }
   }
@@ -332,9 +391,15 @@ export function App() {
   }, [filters.studioIds, rememberRecentStudioSelections]);
 
   function toggleStudioSelection(studioId: number) {
+    const selected = filters.studioIds.includes(studioId);
+    trackStudioSelectionChanged({
+      action: selected ? 'remove' : 'add',
+      source: 'search',
+      studioId,
+      selectedStudioCount: selected ? filters.studioIds.length - 1 : filters.studioIds.length + 1,
+    });
     setFavOnly(false);
     setFilters((f) => {
-      const selected = f.studioIds.includes(studioId);
       return {
         ...f,
         studioIds: selected
@@ -344,7 +409,13 @@ export function App() {
     });
   }
 
-  function removeStudioSelection(studioId: number) {
+  function removeStudioSelection(studioId: number, source: 'chip' | 'empty_row' = 'chip') {
+    trackStudioSelectionChanged({
+      action: 'remove',
+      source,
+      studioId,
+      selectedStudioCount: Math.max(0, filters.studioIds.length - 1),
+    });
     setFilters((f) => ({
       ...f,
       studioIds: f.studioIds.filter((id) => id !== studioId),
@@ -352,12 +423,22 @@ export function App() {
   }
 
   function showAllStudios() {
+    trackStudioSelectionChanged({
+      action: 'clear',
+      source: 'show_all',
+      selectedStudioCount: 0,
+    });
     setFavOnly(false);
     setFilters((f) => (f.studioIds.length > 0 ? { ...f, studioIds: [] } : f));
     closeStudioSearch({ rememberSelection: false });
   }
 
   function toggleFavoritesFilter() {
+    trackEvent('Favorite Filter Toggled', {
+      enabled: !favOnly,
+      favorite_count: favorites.size,
+      selected_studio_count: filters.studioIds.length,
+    });
     if (favOnly) {
       setFavOnly(false);
       return;
@@ -367,6 +448,10 @@ export function App() {
   }
 
   function toggleDateSection(date: string) {
+    trackEvent('Date Section Toggled', {
+      date_offset_bucket: date < todayKst() ? 'past' : date === todayKst() ? 'today' : 'future',
+      collapsing: !collapsedDates.has(date),
+    });
     setCollapsedDates((prev) => {
       const next = new Set(prev);
       if (next.has(date)) next.delete(date);
@@ -375,7 +460,13 @@ export function App() {
     });
   }
 
-  function openAlertDraft(draft: AlertDraft) {
+  function openAlertDraft(draft: AlertDraft, source: 'selected_empty_row' | 'empty_day') {
+    trackAlertCtaClicked({
+      source,
+      scope: draft.scope,
+      studioCount: draft.scope === 'studios' ? draft.studios.length : 0,
+      dateCount: draft.dates.length,
+    });
     setPopover(null);
     setIsFilterOpen(false);
     setIsMenuOpen(false);
@@ -383,15 +474,15 @@ export function App() {
   }
 
   function openStudioAlert(studio: Studio, date: string) {
-    openAlertDraft({ scope: 'studios', studios: [studio], dates: [date] });
+    openAlertDraft({ scope: 'studios', studios: [studio], dates: [date] }, 'selected_empty_row');
   }
 
   function openCurrentConditionAlert(date: string) {
     if (filters.studioIds.length > 0 && selectedStudios.length > 0) {
-      openAlertDraft({ scope: 'studios', studios: selectedStudios, dates: [date] });
+      openAlertDraft({ scope: 'studios', studios: selectedStudios, dates: [date] }, 'empty_day');
       return;
     }
-    openAlertDraft({ scope: 'search', dates: [date] });
+    openAlertDraft({ scope: 'search', dates: [date] }, 'empty_day');
   }
 
   // 슬롯 응답은 studio·room 메타를 슬롯마다 중복 전송하지 않도록 분리 중이라,
@@ -520,19 +611,69 @@ export function App() {
   const handlePullRefresh = useCallback(async () => {
     // 보이는 곳을 즉시 재수집한 뒤, 같은 조건으로 슬롯을 다시 불러온다.
     // 재수집이 실패하거나 게이트에 막혀도 최신 슬롯 재조회는 시도한다.
+    trackEvent('Pull Refresh Started', {
+      visible_studio_count: visibleStudioIds.length,
+      selected_studio_count: filters.studioIds.length,
+    });
     try {
       await refreshSlots(visibleStudioIds);
     } catch {
       // 무시: 아래에서 어차피 재조회한다.
     }
     await reloadSlots();
-  }, [reloadSlots, visibleStudioIds]);
+  }, [filters.studioIds.length, reloadSlots, visibleStudioIds]);
+
+  const handleBookingClick = useCallback((event: StudioBookEvent, date: string) => {
+    trackBookingClicked({
+      source: event.source,
+      studioId: event.studioId,
+      roomId: event.source === 'room_row' ? event.roomId : undefined,
+      roomCount: event.source === 'studio_row' ? event.roomCount : undefined,
+      date,
+    });
+  }, []);
+
+  useEffect(() => {
+    if (!entered || loading) return;
+    const key = searchResultViewKey({
+      filters,
+      dateGroupCount: visibleGroups.length,
+      resultStudioCount: totalStudios,
+      rawSlotCount: slots.length,
+      responseDateCount: responseDates.length,
+      favOnly,
+      sortOption,
+    });
+    if (resultViewKeyRef.current === key) return;
+    resultViewKeyRef.current = key;
+
+    trackSearchResultsViewed({
+      filters,
+      dateGroupCount: visibleGroups.length,
+      resultStudioCount: totalStudios,
+      rawSlotCount: slots.length,
+      responseDateCount: responseDates.length,
+      favOnly,
+      sortOption,
+    });
+  }, [
+    entered,
+    favOnly,
+    filters,
+    loading,
+    responseDates.length,
+    slots.length,
+    sortOption,
+    totalStudios,
+    visibleGroups.length,
+  ]);
 
   useEffect(() => {
     // 앱을 보는 중 알림이 오면(iOS 배너와 별개로) 새 빈자리가 바로 보이게 슬롯을 갱신한다.
     // 방금 서버에서 변동이 감지된 것이므로 재수집 요청 없이 재조회만 한다.
     if (!entered) return;
     return onForegroundNotification(() => {
+      trackEvent('Alert Foreground Received');
       void reloadSlots();
     });
   }, [entered, reloadSlots]);
@@ -808,6 +949,7 @@ export function App() {
                       filters={filters}
                       selectedStudios={selectedStudios}
                       setFilters={setFilters}
+                      onSuggestion={trackEmptySuggestionClicked}
                     />
                   ) : (
                     visibleGroups.map((group) => {
@@ -847,7 +989,11 @@ export function App() {
                             {!isCollapsed && (
                               <>
                                 {group.studios.map((studio) => (
-                                  <StudioRow key={studio.studio.id} studio={studio} />
+                                  <StudioRow
+                                    key={studio.studio.id}
+                                    studio={studio}
+                                    onBook={(event) => handleBookingClick(event, group.date)}
+                                  />
                                 ))}
                                 {selectedEmptyItems.map((item) => (
                                   <SelectedStudioEmptyRow
@@ -855,7 +1001,7 @@ export function App() {
                                     studio={item.studio}
                                     areaName={item.areaName}
                                     onCreateAlert={(studio) => openStudioAlert(studio, group.date)}
-                                    onRemove={removeStudioSelection}
+                                    onRemove={(studioId) => removeStudioSelection(studioId, 'empty_row')}
                                   />
                                 ))}
                                 {!hasBodyRows && favFilterActive ? (
@@ -863,12 +1009,14 @@ export function App() {
                                     message="이 날은 즐겨찾기한 곳이 비어 있어요"
                                     minDuration={filters.minDuration}
                                     setFilters={setFilters}
+                                    onRelaxDuration={() => trackEmptySuggestionClicked('duration_relax_day')}
                                     onCreateAlert={() => openCurrentConditionAlert(group.date)}
                                   />
                                 ) : !hasBodyRows ? (
                                   <EmptyDay
                                     minDuration={filters.minDuration}
                                     setFilters={setFilters}
+                                    onRelaxDuration={() => trackEmptySuggestionClicked('duration_relax_day')}
                                     onCreateAlert={() => openCurrentConditionAlert(group.date)}
                                   />
                                 ) : null}
@@ -950,6 +1098,10 @@ export function App() {
                     aria-checked={sortOption === option.value}
                     className={`popover-option${sortOption === option.value ? ' selected' : ''}`}
                     onClick={() => {
+                      trackEvent('Sort Changed', {
+                        from: sortOption,
+                        to: option.value,
+                      });
                       setSortOption(option.value);
                       setPopover(null);
                     }}
@@ -1029,11 +1181,13 @@ function EmptyDay({
   message,
   minDuration,
   setFilters,
+  onRelaxDuration,
   onCreateAlert,
 }: {
   message?: string;
   minDuration: number;
   setFilters: React.Dispatch<React.SetStateAction<FilterState>>;
+  onRelaxDuration: () => void;
   onCreateAlert: () => void;
 }) {
   return (
@@ -1043,7 +1197,10 @@ function EmptyDay({
         {minDuration > 1 && (
           <button
             className="empty-day-secondary"
-            onClick={() => setFilters((f) => ({ ...f, minDuration: (minDuration - 1) as FilterState['minDuration'] }))}
+            onClick={() => {
+              onRelaxDuration();
+              setFilters((f) => ({ ...f, minDuration: (minDuration - 1) as FilterState['minDuration'] }));
+            }}
           >
             {minDuration - 1}시간으로 보기
           </button>
@@ -1061,10 +1218,12 @@ function EmptyState({
   filters,
   selectedStudios,
   setFilters,
+  onSuggestion,
 }: {
   filters: FilterState;
   selectedStudios: Studio[];
   setFilters: React.Dispatch<React.SetStateAction<FilterState>>;
+  onSuggestion: (label: string) => void;
 }) {
   const suggestions: { label: string; apply: () => void }[] = [
     { label: '합주실 해제', apply: () => setFilters((f) => ({ ...f, studioIds: [] })) },
@@ -1104,7 +1263,15 @@ function EmptyState({
       {suggestions.length > 0 && (
         <div className="empty-actions">
           {suggestions.map((s) => (
-            <button key={s.label} onClick={s.apply}>{s.label}</button>
+            <button
+              key={s.label}
+              onClick={() => {
+                onSuggestion(s.label);
+                s.apply();
+              }}
+            >
+              {s.label}
+            </button>
           ))}
         </div>
       )}

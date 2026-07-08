@@ -1,9 +1,15 @@
 import { Share } from '@capacitor/share';
+import { trackEvent } from './analytics';
 
 // 네이티브 공유 시트로 합주실을 공유한다(카톡·메시지 등으로 친구에게 바로 전달).
 // 웹뷰가 아닌 OS 공유 UI를 띄우는 전형적 네이티브 동작이다.
 // 미지원 환경(일부 데스크톱 브라우저)에서는 조용히 무시한다.
 export async function shareStudio(name: string, url: string | null): Promise<void> {
+  trackEvent('Share Clicked', {
+    target: 'studio',
+    has_url: Boolean(url),
+  });
+
   try {
     await Share.share({
       title: name,
@@ -18,6 +24,11 @@ export async function shareStudio(name: string, url: string | null): Promise<voi
 
 // 앱 자체를 공유한다(메뉴의 "앱 공유"). 특정 합주실이 아니라 서비스 홈을 알린다.
 export async function shareApp(): Promise<void> {
+  trackEvent('Share Clicked', {
+    target: 'app',
+    has_url: true,
+  });
+
   try {
     await Share.share({
       title: '합주실닷컴',

@@ -9,7 +9,12 @@ import { shareStudio } from '../lib/share';
 
 interface StudioRowProps {
   studio: StudioAvailability;
+  onBook?: (event: StudioBookEvent) => void;
 }
+
+export type StudioBookEvent =
+  | { source: 'studio_row'; studioId: number; roomCount: number }
+  | { source: 'room_row'; studioId: number; roomId: number };
 
 function chipLabel(chip: AvailabilityChip): string {
   return chip.kind === 'single' ? chip.start : `${chip.start}~${chip.end}`;
@@ -198,7 +203,15 @@ function ShareIcon() {
 }
 
 // 방행 전체가 예약 링크. 우측 셰브론으로 행이 통째로 탭 대상임을 알린다.
-function RoomRow({ room }: { room: RoomAvailability }) {
+function RoomRow({
+  room,
+  studioId,
+  onBook,
+}: {
+  room: RoomAvailability;
+  studioId: number;
+  onBook?: (event: StudioBookEvent) => void;
+}) {
   return (
     <a
       className="room-row"
@@ -206,6 +219,9 @@ function RoomRow({ room }: { room: RoomAvailability }) {
       target="_blank"
       rel="noreferrer"
       aria-label={`${room.room.name} 예약`}
+      onClick={() => {
+        if (room.bookingUrl) onBook?.({ source: 'room_row', studioId, roomId: room.room.id });
+      }}
     >
       <div className="room-info">
         <span className="room-name">{room.room.name}</span>
@@ -342,7 +358,7 @@ function BellIcon() {
   );
 }
 
-export const StudioRow = memo(function StudioRow({ studio }: StudioRowProps) {
+export const StudioRow = memo(function StudioRow({ studio, onBook }: StudioRowProps) {
   const { id, name, reviewCount, reviewKeywords } = studio.studio;
   const badges = toReviewBadges(reviewKeywords, reviewCount);
   const isFav = useFavorite(id);
@@ -358,6 +374,9 @@ export const StudioRow = memo(function StudioRow({ studio }: StudioRowProps) {
         target="_blank"
         rel="noreferrer"
         aria-label={`${name} 예약`}
+        onClick={() => {
+          if (studio.bookingUrl) onBook?.({ source: 'studio_row', studioId: id, roomCount: studio.rooms.length });
+        }}
       >
         <div className="studio-head">
           <StudioAvatar studio={studio.studio} />
@@ -433,7 +452,7 @@ export const StudioRow = memo(function StudioRow({ studio }: StudioRowProps) {
       {expanded && (
         <div className="room-list">
           {studio.rooms.map((room) => (
-            <RoomRow key={room.room.id} room={room} />
+            <RoomRow key={room.room.id} room={room} studioId={id} onBook={onBook} />
           ))}
         </div>
       )}
