@@ -29,6 +29,11 @@ export async function initAnalytics(): Promise<void> {
     api_host: HOST,
     // SPA 라 페이지 전환이 없다. 자동 pageview 대신 아래 심은 이벤트만 본다.
     capture_pageview: false,
+    // 아래 둘은 PostHog 기본값이 켜짐이다. 명시적으로 끈다.
+    // 수집 범위가 개인정보처리방침(public/privacy.html)에 적은 내용과 어긋나면 안 되고,
+    // 우리가 필요한 건 아래 track() 으로 직접 심은 이벤트뿐이다.
+    autocapture: false,
+    disable_session_recording: true,
   });
   client = posthog;
 
