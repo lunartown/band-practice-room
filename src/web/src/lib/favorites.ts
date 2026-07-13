@@ -1,5 +1,6 @@
 import { Preferences } from '@capacitor/preferences';
 import { Haptics, ImpactStyle } from '@capacitor/haptics';
+import { track } from './analytics';
 
 // 즐겨찾는 합주실(지점) ID 집합을 기기에 영구 저장한다.
 //
@@ -57,6 +58,12 @@ export function toggleFavorite(id: number): void {
   else next.delete(id);
   ids = next;
   emit();
+
+  track('favorite_toggle', {
+    action: willAdd ? 'add' : 'remove',
+    studio_id: id,
+    favorite_count: ids.size,
+  });
 
   // 추가는 또렷하게(Medium), 해제는 가볍게(Light). 웹에선 무음으로 떨어진다.
   void Haptics.impact({ style: willAdd ? ImpactStyle.Medium : ImpactStyle.Light }).catch(() => {});
