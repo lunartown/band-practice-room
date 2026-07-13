@@ -24,6 +24,7 @@ import {
   replaceAlert,
 } from './lib/notificationsApi';
 import { ensurePushReady, onForegroundNotification, onNotificationTap } from './lib/pushDevice';
+import { track } from './lib/analytics';
 import { buildAvailability, sortDateAvailabilityGroups } from './lib/availability';
 import type { StudioSortOption } from './lib/availability';
 import { dateLabel, todayKst } from './lib/date';
@@ -246,7 +247,43 @@ export function App() {
     }
   }, [entered, filters.studioIds, isStudioSearchOpen, recentStudioIds, rememberRecentStudioSelections]);
 
+  // 세션 시작. 이 시각이 ms_since_open 의 기준점이 된다(lib/analytics.ts).
+  const openTracked = useRef(false);
+  useEffect(() => {
+    if (openTracked.current) return;
+    openTracked.current = true;
+    track('app_open', {
+      // 조건이 복원돼 오픈 화면을 건너뛴 재방문인지. 첫 진입과 탐색 시간을 같이 놓고 보면 안 된다.
+      restored: savedPrefs?.fresh ?? false,
+    });
+  }, [savedPrefs]);
+
+  // 조건 변경은 칩·팝오버·필터 시트·빠른 액션 등 호출 지점이 여럿이라 각각에 심으면 빠뜨리기 쉽다.
+  // filters 상태 하나만 감시해 무엇이 바뀌었는지 기록한다.
+  const prevFilters = useRef(filters);
+  useEffect(() => {
+    const before = prevFilters.current;
+    if (before === filters) return;
+    prevFilters.current = filters;
+
+    const changed = (Object.keys(filters) as (keyof FilterState)[]).filter(
+      (k) => JSON.stringify(before[k]) !== JSON.stringify(filters[k]),
+    );
+    if (changed.length === 0) return;
+
+    track('filter_change', {
+      changed,
+      area_count: filters.areaIds.length,
+      studio_count: filters.studioIds.length,
+      date_count: filters.dates.length,
+      time_window_count: filters.timeWindows.length,
+      min_duration: filters.minDuration,
+      people: filters.people,
+    });
+  }, [filters]);
+
   function enterWithAreas(areaIds: number[]) {
+    track('area_select', { area_count: areaIds.length, all_areas: areaIds.length === 0 });
     setFilters((f) => ({ ...f, areaIds }));
     setEntered(true);
   }
@@ -293,6 +330,8 @@ export function App() {
     try {
       const created = await createAlert(conditions);
       setAlerts((current) => [created, ...current.filter((item) => item.id !== created.id)]);
+      // 결과가 없을 때 알림 구독이 대안으로 기능하는지 보려면, 구독 성공만 세면 된다.
+      track('alert_subscribe', { studio_count: totalStudios, from_empty: totalStudios === 0 });
     } catch (err) {
       console.warn('[notify] 알림 등록 실패', err);
       window.alert('알림 등록에 실패했어요. 잠시 후 다시 시도해 주세요.');
@@ -425,6 +464,24 @@ export function App() {
 
   const totalStudios = visibleGroups.reduce((sum, g) => sum + g.studios.length, 0);
   const hasFavorites = favorites.size > 0;
+
+  // 결과 노출. empty=true 비율이 곧 "결과 없음 도달률"이고, 조건 완화 유도 설계가
+  // 작동하는지 판단하는 근거가 된다. 로딩 중 깜빡임은 세지 않고, 같은 결과 반복도 접는다.
+  const lastResult = useRef<string | null>(null);
+  useEffect(() => {
+    if (!entered || loading) return;
+
+    const signature = `${totalStudios}:${visibleGroups.length}:${favOnly}`;
+    if (lastResult.current === signature) return;
+    lastResult.current = signature;
+
+    track('results_shown', {
+      studio_count: totalStudios,
+      date_group_count: visibleGroups.length,
+      empty: totalStudios === 0,
+      fav_only: favOnly,
+    });
+  }, [entered, loading, totalStudios, visibleGroups.length, favOnly]);
 
   const areaChipLabel = buildAreaChipLabel(areas, filters.areaIds);
   const areaNameById = useMemo(
