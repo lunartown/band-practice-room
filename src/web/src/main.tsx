@@ -5,6 +5,7 @@ import { StatusBar, Style } from '@capacitor/status-bar';
 import { Analytics } from '@vercel/analytics/react';
 import { AdminApp } from './AdminApp';
 import { App } from './App';
+import { initAnalytics } from './lib/analytics';
 import { initFavorites } from './lib/favorites';
 import { notifyLiveUpdateReady } from './lib/liveUpdate';
 import { initPushDevice } from './lib/pushDevice';
@@ -29,6 +30,12 @@ if (Capacitor.isNativePlatform()) {
     StatusBar.setBackgroundColor({ color: '#ffffff' }).catch(() => {});
     StatusBar.setStyle({ style: Style.Light }).catch(() => {});
   }
+}
+
+// 이벤트 계측(PostHog). 키가 없으면 무동작이라 로컬 개발에는 영향이 없다.
+// 관리자 화면(/admin)은 운영자용이라 계측하지 않는다.
+if (!window.location.pathname.startsWith('/admin')) {
+  void initAnalytics();
 }
 
 // 저장된 즐겨찾기를 기기에서 미리 불러온다(렌더 전에 시작, 완료되면 구독자에 반영).

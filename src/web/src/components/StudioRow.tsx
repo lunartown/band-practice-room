@@ -6,6 +6,7 @@ import { STUDIO_FALLBACK_IMAGE_URL, galleryImageUrl, thumbnailUrl } from '../lib
 import { useFavorite } from '../lib/useFavorites';
 import { toggleFavorite } from '../lib/favorites';
 import { shareStudio } from '../lib/share';
+import { track } from '../lib/analytics';
 
 interface StudioRowProps {
   studio: StudioAvailability;
@@ -198,7 +199,7 @@ function ShareIcon() {
 }
 
 // 방행 전체가 예약 링크. 우측 셰브론으로 행이 통째로 탭 대상임을 알린다.
-function RoomRow({ room }: { room: RoomAvailability }) {
+function RoomRow({ room, studioId, studioName }: { room: RoomAvailability; studioId: number; studioName: string }) {
   return (
     <a
       className="room-row"
@@ -206,6 +207,15 @@ function RoomRow({ room }: { room: RoomAvailability }) {
       target="_blank"
       rel="noreferrer"
       aria-label={`${room.room.name} 예약`}
+      onClick={() =>
+        track('booking_click', {
+          source: 'room',
+          studio_id: studioId,
+          studio_name: studioName,
+          room_id: room.room.id,
+          has_url: room.bookingUrl != null,
+        })
+      }
     >
       <div className="room-info">
         <span className="room-name">{room.room.name}</span>
@@ -358,6 +368,14 @@ export const StudioRow = memo(function StudioRow({ studio }: StudioRowProps) {
         target="_blank"
         rel="noreferrer"
         aria-label={`${name} 예약`}
+        onClick={() =>
+          track('booking_click', {
+            source: 'studio',
+            studio_id: id,
+            studio_name: name,
+            has_url: studio.bookingUrl != null,
+          })
+        }
       >
         <div className="studio-head">
           <StudioAvatar studio={studio.studio} />
@@ -433,7 +451,7 @@ export const StudioRow = memo(function StudioRow({ studio }: StudioRowProps) {
       {expanded && (
         <div className="room-list">
           {studio.rooms.map((room) => (
-            <RoomRow key={room.room.id} room={room} />
+            <RoomRow key={room.room.id} room={room} studioId={id} studioName={name} />
           ))}
         </div>
       )}
