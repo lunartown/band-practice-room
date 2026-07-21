@@ -30,8 +30,8 @@
     "app:ios:run:dev": "CAPACITOR_APP_VARIANT=dev npm run build:app && CAPACITOR_APP_VARIANT=dev cap run ios --scheme \"Hapjusil Dev\" --configuration \"Debug Dev\"",
     "app:ios:run:local": "CAPACITOR_APP_VARIANT=local npm run build:app && CAPACITOR_APP_VARIANT=local cap run ios --scheme \"Hapjusil Local\" --configuration Debug",
     "app:ota": "npm run app:ota:dev",
-    "app:ota:prod": "CAPACITOR_APP_VARIANT=prod npm run build:app && CAPACITOR_APP_VARIANT=prod npx @capgo/cli bundle upload --channel production",
-    "app:ota:dev": "CAPACITOR_APP_VARIANT=dev npm run build:app && CAPACITOR_APP_VARIANT=dev npx @capgo/cli bundle upload --channel dev"
+    "app:ota:prod": "CAPACITOR_APP_VARIANT=prod npm run build:app && CAPACITOR_APP_VARIANT=prod npx --yes --package @capgo/cli@8.28.2 capgo bundle upload com.hapjusil.app --channel production --bundle 1.0.$(date +%s) --ignore-metadata-check --version-exists-ok",
+    "app:ota:dev": "CAPACITOR_APP_VARIANT=dev npm run build:app && CAPACITOR_APP_VARIANT=dev npx --yes --package @capgo/cli@8.28.2 capgo bundle upload com.hapjusil.app.dev --channel dev --bundle 1.0.$(date +%s) --ignore-metadata-check --version-exists-ok"
   },
   "dependencies": {
     "@capacitor-firebase/messaging": "^8.3.0",
