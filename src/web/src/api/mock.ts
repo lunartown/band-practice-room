@@ -1,4 +1,14 @@
-import type { Area, EquipmentResponse, Slot, SlotsQuery, SlotsResponse, StudiosResponse } from './types';
+import type {
+  Area,
+  EquipmentAssignment,
+  EquipmentResponse,
+  Room,
+  Slot,
+  Studio,
+  SlotsQuery,
+  SlotsResponse,
+  StudiosResponse,
+} from './types';
 
 export const areas: Area[] = [
   { id: 1, slug: 'hongdae', name: '홍대' },
@@ -8,13 +18,49 @@ export const areas: Area[] = [
   { id: 5, slug: 'gangnam', name: '강남' },
 ];
 
-const studioList = [
+type MockStudio = Omit<Studio, 'primaryAreaId' | 'primaryAreaName'> & {
+  areaId: number;
+  areaName: string;
+  rooms: Room[];
+};
+
+const studioList: MockStudio[] = [
   { id: 1, name: '그라운드 합주실 홍대 본점', areaId: 1, areaName: '홍대', imageUrl: 'https://picsum.photos/seed/ground-hongdae/120', images: ['https://picsum.photos/seed/ground-hongdae-1/600/400', 'https://picsum.photos/seed/ground-hongdae-2/600/400', 'https://picsum.photos/seed/ground-hongdae-3/600/400', 'https://picsum.photos/seed/ground-hongdae-4/600/400'], rating: 4.7, reviewCount: 213, reviewKeywords: [{ keyword: '시설이 깔끔해요', count: 69 }, { keyword: '가성비가 좋아요', count: 47 }, { keyword: '방음이 잘돼요', count: 40 }], equipment: [{ id: 9, slug: 'microphone', name: '마이크', quantity: 4 }], rooms: [{ id: 1, name: 'A룸', pricePerHour: 16000, capacityMin: 2, capacityMax: 6, equipment: [{ id: 1, slug: 'drum-kit', name: '드럼 세트', quantity: 1 }, { id: 4, slug: 'guitar-amp', name: '기타 앰프', quantity: 2 }, { id: 5, slug: 'bass-amp', name: '베이스 앰프', quantity: 1 }] }, { id: 2, name: '라이브룸', pricePerHour: 20000, capacityMin: 2, capacityMax: 10, equipment: [{ id: 1, slug: 'drum-kit', name: '드럼 세트', quantity: 1 }, { id: 4, slug: 'guitar-amp', name: '기타 앰프', quantity: 2 }, { id: 5, slug: 'bass-amp', name: '베이스 앰프', quantity: 1 }, { id: 6, slug: 'keyboard', name: '키보드', quantity: 1 }] }] },
   { id: 2, name: '그라운드 합주실 합정 1호점', areaId: 2, areaName: '합정', imageUrl: null, rating: 4.5, reviewCount: 88, reviewKeywords: [{ keyword: '친절해요', count: 22 }, { keyword: '스피커 성능이 좋아요', count: 18 }], equipment: [{ id: 9, slug: 'microphone', name: '마이크', quantity: 3 }], rooms: [{ id: 5, name: '1관', pricePerHour: 14000, capacityMin: 2, capacityMax: 8, equipment: [{ id: 1, slug: 'drum-kit', name: '드럼 세트', quantity: 1 }, { id: 4, slug: 'guitar-amp', name: '기타 앰프', quantity: 1 }] }, { id: 8, name: '2관', pricePerHour: 14000, capacityMin: 2, capacityMax: 6, equipment: [{ id: 1, slug: 'drum-kit', name: '드럼 세트', quantity: 1 }] }] },
   { id: 3, name: '그루브 합주실', areaId: 3, areaName: '신촌', imageUrl: 'https://picsum.photos/seed/groove/120', images: ['https://picsum.photos/seed/groove-1/600/400', 'https://picsum.photos/seed/groove-2/600/400', 'https://picsum.photos/seed/groove-3/600/400', 'https://picsum.photos/seed/groove-4/600/400', 'https://picsum.photos/seed/groove-5/600/400'], rating: 4.2, reviewCount: 41, reviewKeywords: [{ keyword: '인테리어가 멋져요', count: 12 }], equipment: [{ id: 9, slug: 'microphone', name: '마이크', quantity: 2 }], rooms: [{ id: 3, name: '스튜디오 A', pricePerHour: 18000, capacityMin: 2, capacityMax: 4, equipment: [{ id: 1, slug: 'drum-kit', name: '드럼 세트', quantity: 1 }, { id: 5, slug: 'bass-amp', name: '베이스 앰프', quantity: 1 }] }, { id: 4, name: '스튜디오 B', pricePerHour: 18000, capacityMin: 2, capacityMax: 4, equipment: [{ id: 6, slug: 'keyboard', name: '키보드', quantity: 1 }] }] },
   { id: 4, name: '사운딕트', areaId: 1, areaName: '홍대', imageUrl: null, rating: null, reviewCount: null, reviewKeywords: [], equipment: [], rooms: [{ id: 6, name: '룸1', pricePerHour: 12000, capacityMin: 2, capacityMax: 4, equipment: [{ id: 4, slug: 'guitar-amp', name: '기타 앰프', quantity: 1 }] }] },
   { id: 5, name: '웨이브랩', areaId: 2, areaName: '합정', imageUrl: null, rating: 4.9, reviewCount: 7, reviewKeywords: [], equipment: [], rooms: [{ id: 7, name: 'Room A', pricePerHour: 15000, capacityMin: 2, capacityMax: 6, equipment: [{ id: 7, slug: 'digital-piano', name: '디지털 피아노', quantity: 1 }] }] },
 ];
+
+// 장비 UI를 먼저 검토할 수 있도록 로컬 mock에만 실제 카탈로그 형태의 모델명을 넣는다.
+// 운영 API가 room.equipment.note를 내려주기 시작하면 같은 컴포넌트가 그대로 표시한다.
+const equipmentPreviewByRoomId: Record<number, EquipmentAssignment[]> = {
+  1: [
+    { id: 1, slug: 'drum-kit', name: '드럼', note: 'Pearl Masters Studio · Zildjian K Custom' },
+    { id: 4, slug: 'guitar-amp', name: '기타 앰프', note: 'Marshall JCM2000 TSL100 · 1960A Cabinet' },
+    { id: 5, slug: 'bass-amp', name: '베이스 앰프', note: 'Ampeg SVT-2 Pro · SVT-410HLF' },
+    { id: 6, slug: 'keyboard', name: '건반', note: 'Yamaha S90XS · Yamaha MOTIF 6' },
+  ],
+  2: [
+    { id: 1, slug: 'drum-kit', name: '드럼', note: 'Tama Starclassic' },
+    { id: 4, slug: 'guitar-amp', name: '기타 앰프', note: 'Marshall DSL100H · Fender Twin Reverb' },
+    { id: 5, slug: 'bass-amp', name: '베이스 앰프', note: 'Ampeg SVT-4 Pro · SVT-810E' },
+    { id: 6, slug: 'keyboard', name: '건반', note: 'Yamaha MODX8+ · Yamaha MODX7+' },
+  ],
+  3: [
+    { id: 1, slug: 'drum-kit', name: '드럼', note: 'Gretsch Renown RN1' },
+    { id: 5, slug: 'bass-amp', name: '베이스 앰프', note: 'Markbass TTE 500' },
+  ],
+  4: [
+    { id: 6, slug: 'keyboard', name: '건반', note: 'Yamaha CP88 Stage Piano · Nord Stage 3' },
+  ],
+};
+
+for (const studio of studioList) {
+  for (const room of studio.rooms) {
+    room.equipment = equipmentPreviewByRoomId[room.id] ?? room.equipment;
+  }
+}
 
 const equipmentCategories: EquipmentResponse['categories'] = [
   {
