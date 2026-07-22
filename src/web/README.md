@@ -34,7 +34,7 @@ VITE_DEV_API_PROXY_TARGET=http://127.0.0.1:3000 \
 npm run dev
 ```
 
-Render dev API(`https://hapjusil-api-dev.onrender.com`)와 Render Postgres dev DB를 확인할 때도 proxy 타깃만 바꾼다.
+Render dev API(`https://hapjusil-api-dev.onrender.com`)와 Neon dev DB를 확인할 때도 proxy 타깃만 바꾼다.
 
 ```bash
 VITE_USE_MOCK_API=false VITE_API_BASE_URL=/api/v1 \
