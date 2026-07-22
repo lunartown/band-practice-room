@@ -59,7 +59,7 @@ CREATE TEMP TABLE manual_soundcity_backline_placement (
   equipment_slug TEXT NOT NULL,
   model_slug TEXT,
   quantity SMALLINT NOT NULL,
-  position_label TEXT NOT NULL,
+  position_label TEXT,
   is_optional BOOLEAN NOT NULL,
   details JSONB NOT NULL,
   evidence_key TEXT NOT NULL,
@@ -87,48 +87,48 @@ INSERT INTO manual_soundcity_backline_placement (
   confidence
 )
 VALUES
-  ('studio-합정/홍대-사운드시티', 'Live Room', 'speaker', NULL, 1, '스피커', false, '{"brand":"Soundking","bluetooth":true}'::jsonb, 'naver:1033058:5933800:speaker:soundking', 'https://m.booking.naver.com/booking/10/bizes/1033058/items/5933800', '사운드시티 Live Room 네이버 예약 상세', '스피커: 사운드킹 (블루투스 연결 가능)', 'Soundking speaker', 'HIGH'),
-  ('studio-합정/홍대-사운드시티', 'Live Room', 'mixer', 'behringer-x2442usb', 1, '믹서', false, '{}'::jsonb, 'naver:1033058:5933800:mixer:behringer-x2442usb', 'https://m.booking.naver.com/booking/10/bizes/1033058/items/5933800', '사운드시티 Live Room 네이버 예약 상세', '믹서: 베링거 X2442USB', 'Behringer X2442USB', 'HIGH'),
-  ('studio-합정/홍대-사운드시티', 'Live Room', 'drum-kit', 'tama-starclassic-birch', 1, '드럼', false, '{}'::jsonb, 'naver:1033058:5933800:drum-kit:tama-starclassic-birch', 'https://m.booking.naver.com/booking/10/bizes/1033058/items/5933800', '사운드시티 Live Room 네이버 예약 상세', '드럼: 타마 스타클래식 버찌', 'Tama Starclassic Birch', 'HIGH'),
-  ('studio-합정/홍대-사운드시티', 'Live Room', 'bass-amp', 'ampeg-svt-4pro', 1, '베이스 앰프', false, '{}'::jsonb, 'naver:1033058:5933800:bass-amp:ampeg-svt-4pro', 'https://m.booking.naver.com/booking/10/bizes/1033058/items/5933800', '사운드시티 Live Room 네이버 예약 상세', '베이스엠프: 암팩 svt 4 pro', 'Ampeg SVT-4PRO', 'HIGH'),
-  ('studio-합정/홍대-사운드시티', 'Live Room', 'guitar-amp', 'marshall-dsl100h', 1, '기타 앰프 I', false, '{}'::jsonb, 'naver:1033058:5933800:guitar-amp-i:marshall-dsl100h', 'https://m.booking.naver.com/booking/10/bizes/1033058/items/5933800', '사운드시티 Live Room 네이버 예약 상세', '기타 엠프 I: 마샬 DSL 100H', 'Marshall DSL100H', 'HIGH'),
-  ('studio-합정/홍대-사운드시티', 'Live Room', 'guitar-amp', 'marshall-dsl100h', 1, '기타 앰프 II', false, '{}'::jsonb, 'naver:1033058:5933800:guitar-amp-ii:marshall-dsl100h', 'https://m.booking.naver.com/booking/10/bizes/1033058/items/5933800', '사운드시티 Live Room 네이버 예약 상세', '기타 엠프 II: 마샬 DSL 100H', 'Marshall DSL100H', 'HIGH'),
-  ('studio-합정/홍대-사운드시티', 'Live Room', 'microphone', NULL, 4, '무선 마이크', false, '{"type":"wireless"}'::jsonb, 'naver:1033058:5933800:microphone:wireless-4', 'https://m.booking.naver.com/booking/10/bizes/1033058/items/5933800', '사운드시티 Live Room 네이버 예약 상세', '무선 마이크 4개', 'Wireless microphone', 'HIGH'),
-  ('studio-합정/홍대-사운드시티', 'Room A', 'drum-kit', 'dw-collectors-series', 1, '드럼', false, '{}'::jsonb, 'naver:1033058:5486389:drum-kit:dw-collectors-series', 'https://m.booking.naver.com/booking/10/bizes/1033058/items/5486389', '사운드시티 Room A 네이버 예약 상세', '드럼: DW 콜렉터', 'DW Collector''s Series', 'HIGH'),
-  ('studio-합정/홍대-사운드시티', 'Room A', 'bass-amp', 'ampeg-svt-4pro', 1, '베이스 앰프', false, '{}'::jsonb, 'naver:1033058:5486389:bass-amp:ampeg-svt-4pro', 'https://m.booking.naver.com/booking/10/bizes/1033058/items/5486389', '사운드시티 Room A 네이버 예약 상세', '베이스 엠프: 암팩 SVT-4PRO', 'Ampeg SVT-4PRO', 'HIGH'),
-  ('studio-합정/홍대-사운드시티', 'Room A', 'guitar-amp', 'marshall-jcm2000', 1, '기타 앰프 I', false, '{}'::jsonb, 'naver:1033058:5486389:guitar-amp-i:marshall-jcm2000', 'https://m.booking.naver.com/booking/10/bizes/1033058/items/5486389', '사운드시티 Room A 네이버 예약 상세', '기타 엠프 I: 마샬 JCM 2000', 'Marshall JCM2000', 'HIGH'),
-  ('studio-합정/홍대-사운드시티', 'Room A', 'guitar-amp', 'mesa-boogie-dual-rectifier-100w-head', 1, '기타 앰프 II', false, '{"watts":100,"head":true}'::jsonb, 'naver:1033058:5486389:guitar-amp-ii:mesa-dual-rectifier-100w-head', 'https://m.booking.naver.com/booking/10/bizes/1033058/items/5486389', '사운드시티 Room A 네이버 예약 상세', '기타 엠프 II: 메사부기 듀얼렉티어 100W Head', 'Mesa/Boogie Dual Rectifier 100W Head', 'HIGH'),
-  ('studio-합정/홍대-사운드시티', 'Room A', 'speaker', 'yamaha-c115v', 1, '스피커', false, '{}'::jsonb, 'naver:1033058:5486389:speaker:yamaha-c115v', 'https://m.booking.naver.com/booking/10/bizes/1033058/items/5486389', '사운드시티 Room A 네이버 예약 상세', '스피커: 야마하 C115V', 'Yamaha C115V', 'HIGH'),
-  ('studio-합정/홍대-사운드시티', 'Room A', 'mixer', 'yamaha-emx5014c', 1, '믹서', false, '{}'::jsonb, 'naver:1033058:5486389:mixer:yamaha-emx5014c', 'https://m.booking.naver.com/booking/10/bizes/1033058/items/5486389', '사운드시티 Room A 네이버 예약 상세', '믹서: 야마하 EMX 5014C', 'Yamaha EMX5014C', 'HIGH'),
-  ('studio-합정/홍대-사운드시티', 'Room A', 'microphone', 'd-com-dmk-951-nc', 4, '무선 마이크', false, '{"type":"wireless"}'::jsonb, 'naver:1033058:5486389:microphone:d-com-dmk-951-nc', 'https://m.booking.naver.com/booking/10/bizes/1033058/items/5486389', '사운드시티 Room A 네이버 예약 상세', '무선 마이크: D COM DMK 951 NC 4개', 'D COM DMK 951 NC', 'HIGH'),
-  ('studio-합정/홍대-사운드시티', 'Room B', 'drum-kit', 'tama-bubinga', 1, '드럼', false, '{}'::jsonb, 'naver:1033058:5486506:drum-kit:tama-bubinga', 'https://m.booking.naver.com/booking/10/bizes/1033058/items/5486506', '사운드시티 Room B 네이버 예약 상세', '드럼: TAMA 부빙가', 'Tama Bubinga', 'HIGH'),
-  ('studio-합정/홍대-사운드시티', 'Room B', 'bass-amp', 'ampeg-svt-4pro', 1, '베이스 앰프', false, '{}'::jsonb, 'naver:1033058:5486506:bass-amp:ampeg-svt-4pro', 'https://m.booking.naver.com/booking/10/bizes/1033058/items/5486506', '사운드시티 Room B 네이버 예약 상세', '베이스엠프: 암팩 SVT-4PRO', 'Ampeg SVT-4PRO', 'HIGH'),
-  ('studio-합정/홍대-사운드시티', 'Room B', 'guitar-amp', 'marshall-jcm2000', 1, '기타 앰프 I', false, '{}'::jsonb, 'naver:1033058:5486506:guitar-amp-i:marshall-jcm2000', 'https://m.booking.naver.com/booking/10/bizes/1033058/items/5486506', '사운드시티 Room B 네이버 예약 상세', '기타엠프 I: 마샬 JCM 2000', 'Marshall JCM2000', 'HIGH'),
-  ('studio-합정/홍대-사운드시티', 'Room B', 'guitar-amp', 'marshall-ma100h', 1, '기타 앰프 II', false, '{}'::jsonb, 'naver:1033058:5486506:guitar-amp-ii:marshall-ma100h', 'https://m.booking.naver.com/booking/10/bizes/1033058/items/5486506', '사운드시티 Room B 네이버 예약 상세', '기타엠프 II: 마샬 MA 100H', 'Marshall MA100H', 'HIGH'),
-  ('studio-합정/홍대-사운드시티', 'Room B', 'speaker', 'yamaha-c115v', 1, '스피커', false, '{}'::jsonb, 'naver:1033058:5486506:speaker:yamaha-c115v', 'https://m.booking.naver.com/booking/10/bizes/1033058/items/5486506', '사운드시티 Room B 네이버 예약 상세', '스피커: 야마하 C115V', 'Yamaha C115V', 'HIGH'),
-  ('studio-합정/홍대-사운드시티', 'Room B', 'mixer', 'yamaha-emx5014c', 1, '믹서', false, '{}'::jsonb, 'naver:1033058:5486506:mixer:yamaha-emx5014c', 'https://m.booking.naver.com/booking/10/bizes/1033058/items/5486506', '사운드시티 Room B 네이버 예약 상세', '믹서: 야마하 EMX 5014C', 'Yamaha EMX5014C', 'HIGH'),
-  ('studio-합정/홍대-사운드시티', 'Room B', 'microphone', 'd-com-dmk-951-nc', 4, '무선 마이크', false, '{"type":"wireless"}'::jsonb, 'naver:1033058:5486506:microphone:d-com-dmk-951-nc', 'https://m.booking.naver.com/booking/10/bizes/1033058/items/5486506', '사운드시티 Room B 네이버 예약 상세', '무선 마이크: D COM DMK 951NC 4개', 'D COM DMK 951 NC', 'HIGH'),
-  ('studio-합정/홍대-사운드시티', 'Room C', 'drum-kit', 'pearl-vision', 1, '드럼', false, '{"pieces":5}'::jsonb, 'naver:1033058:5486549:drum-kit:pearl-vision', 'https://m.booking.naver.com/booking/10/bizes/1033058/items/5486549', '사운드시티 Room C 네이버 예약 상세', '드럼: 펄 비젼 5기통', 'Pearl Vision', 'HIGH'),
-  ('studio-합정/홍대-사운드시티', 'Room C', 'bass-amp', 'ampeg-svt-4pro', 1, '베이스 앰프', false, '{"head":true,"cabinet":true}'::jsonb, 'naver:1033058:5486549:bass-amp:ampeg-svt-4pro', 'https://m.booking.naver.com/booking/10/bizes/1033058/items/5486549', '사운드시티 Room C 네이버 예약 상세', '베이스엠프: 암팩 4pro 해드&케비넷', 'Ampeg SVT-4PRO', 'MEDIUM'),
-  ('studio-합정/홍대-사운드시티', 'Room C', 'guitar-amp', 'marshall-jcm2000', 1, '기타 앰프 I', false, '{}'::jsonb, 'naver:1033058:5486549:guitar-amp-i:marshall-jcm2000', 'https://m.booking.naver.com/booking/10/bizes/1033058/items/5486549', '사운드시티 Room C 네이버 예약 상세', '기타엠프 I: 마샬 JCM 2000', 'Marshall JCM2000', 'HIGH'),
-  ('studio-합정/홍대-사운드시티', 'Room C', 'guitar-amp', 'marshall-origin-50', 1, '기타 앰프 II', false, '{}'::jsonb, 'naver:1033058:5486549:guitar-amp-ii:marshall-origin-50', 'https://m.booking.naver.com/booking/10/bizes/1033058/items/5486549', '사운드시티 Room C 네이버 예약 상세', '기타엠프 II: 마샬 오리진 50', 'Marshall Origin 50', 'HIGH'),
-  ('studio-합정/홍대-사운드시티', 'Room C', 'speaker', NULL, 1, '스피커', false, '{"brand":"JBL"}'::jsonb, 'naver:1033058:5486549:speaker:jbl', 'https://m.booking.naver.com/booking/10/bizes/1033058/items/5486549', '사운드시티 Room C 네이버 예약 상세', '스피커: JBL', 'JBL speaker', 'HIGH'),
-  ('studio-합정/홍대-사운드시티', 'Room C', 'mixer', 'yamaha-emx5014c', 1, '믹서', false, '{}'::jsonb, 'naver:1033058:5486549:mixer:yamaha-emx5014c', 'https://m.booking.naver.com/booking/10/bizes/1033058/items/5486549', '사운드시티 Room C 네이버 예약 상세', '믹서: 야마하 EMX 5014C', 'Yamaha EMX5014C', 'HIGH'),
-  ('studio-합정/홍대-사운드시티', 'Room C', 'microphone', 'd-com-dmk-951-nc', 4, '무선 마이크', false, '{"type":"wireless"}'::jsonb, 'naver:1033058:5486549:microphone:d-com-dmk-951-nc', 'https://m.booking.naver.com/booking/10/bizes/1033058/items/5486549', '사운드시티 Room C 네이버 예약 상세', '무선 마이크: D COM DMK 951 NC 4개', 'D COM DMK 951 NC', 'HIGH'),
-  ('studio-합정/홍대-사운드시티', 'Room D', 'drum-kit', NULL, 1, '드럼', false, '{"brand":"Yamaha","model_text":"Stage Custom"}'::jsonb, 'naver:1033058:5486609:drum-kit:yamaha-stage-custom', 'https://m.booking.naver.com/booking/10/bizes/1033058/items/5486609', '사운드시티 Room D 네이버 예약 상세', '드럼: 야마하 스테이지 커스텀', 'Yamaha Stage Custom', 'HIGH'),
-  ('studio-합정/홍대-사운드시티', 'Room D', 'bass-amp', NULL, 1, '베이스 앰프', false, '{"brand":"Trace Elliot"}'::jsonb, 'naver:1033058:5486609:bass-amp:trace-elliot', 'https://m.booking.naver.com/booking/10/bizes/1033058/items/5486609', '사운드시티 Room D 네이버 예약 상세', '베이스 엠프: 트레이스 엘리엇', 'Trace Elliot bass amp', 'HIGH'),
-  ('studio-합정/홍대-사운드시티', 'Room D', 'guitar-amp', 'marshall-mg100fx', 1, '기타 앰프 I', false, '{}'::jsonb, 'naver:1033058:5486609:guitar-amp-i:marshall-mg100fx', 'https://m.booking.naver.com/booking/10/bizes/1033058/items/5486609', '사운드시티 Room D 네이버 예약 상세', '기타 엠프 I: 마샬 MG100FX', 'Marshall MG100FX', 'HIGH'),
-  ('studio-합정/홍대-사운드시티', 'Room D', 'guitar-amp', 'marshall-valvestate-stage-2000', 1, '기타 앰프 II', false, '{}'::jsonb, 'naver:1033058:5486609:guitar-amp-ii:marshall-valvestate-stage-2000', 'https://m.booking.naver.com/booking/10/bizes/1033058/items/5486609', '사운드시티 Room D 네이버 예약 상세', '기타 엠프 II: 마샬 벨브스테이트 stage2000', 'Marshall Valvestate Stage 2000', 'HIGH'),
-  ('studio-합정/홍대-사운드시티', 'Room D', 'speaker', 'jbl-eon-515-xt', 1, '스피커', false, '{}'::jsonb, 'naver:1033058:5486609:speaker:jbl-eon-515-xt', 'https://m.booking.naver.com/booking/10/bizes/1033058/items/5486609', '사운드시티 Room D 네이버 예약 상세', '스피커: JBL EON 515 XT', 'JBL EON 515 XT', 'HIGH'),
-  ('studio-합정/홍대-사운드시티', 'Room D', 'mixer', 'profx12', 1, '믹서', false, '{}'::jsonb, 'naver:1033058:5486609:mixer:profx12', 'https://m.booking.naver.com/booking/10/bizes/1033058/items/5486609', '사운드시티 Room D 네이버 예약 상세', '믹서: PRO FX12', 'ProFX12', 'HIGH'),
-  ('studio-합정/홍대-사운드시티', 'Room D', 'microphone', 'd-com-dmk-951-nc', 4, '무선 마이크', false, '{"type":"wireless"}'::jsonb, 'naver:1033058:5486609:microphone:d-com-dmk-951-nc', 'https://m.booking.naver.com/booking/10/bizes/1033058/items/5486609', '사운드시티 Room D 네이버 예약 상세', '무선 마이크: D COM DMK 951 NC 4개', 'D COM DMK 951 NC', 'HIGH'),
-  ('studio-합정/홍대-사운드시티', 'Room E', 'drum-kit', NULL, 1, '드럼', false, '{"brand":"Yamaha","model_text":"Stage Custom"}'::jsonb, 'naver:1033058:5486623:drum-kit:yamaha-stage-custom', 'https://m.booking.naver.com/booking/10/bizes/1033058/items/5486623', '사운드시티 Room E 네이버 예약 상세', '드럼: 야마하 스테이지 커스텀', 'Yamaha Stage Custom', 'HIGH'),
-  ('studio-합정/홍대-사운드시티', 'Room E', 'bass-amp', 'fender-rumble-200', 1, '베이스 앰프', false, '{}'::jsonb, 'naver:1033058:5486623:bass-amp:fender-rumble-200', 'https://m.booking.naver.com/booking/10/bizes/1033058/items/5486623', '사운드시티 Room E 네이버 예약 상세', '베이스 엠프: 펜더 럼블 200', 'Fender Rumble 200', 'HIGH'),
-  ('studio-합정/홍대-사운드시티', 'Room E', 'guitar-amp', 'marshall-valvestate-2000', 1, '기타 앰프 I', false, '{}'::jsonb, 'naver:1033058:5486623:guitar-amp-i:marshall-valvestate-2000', 'https://m.booking.naver.com/booking/10/bizes/1033058/items/5486623', '사운드시티 Room E 네이버 예약 상세', '기타 엠프 I: 마샬 벨브스테이트 2000', 'Marshall Valvestate 2000', 'HIGH'),
-  ('studio-합정/홍대-사운드시티', 'Room E', 'guitar-amp', 'marshall-mg100fx', 1, '기타 앰프 II', false, '{}'::jsonb, 'naver:1033058:5486623:guitar-amp-ii:marshall-mg100fx', 'https://m.booking.naver.com/booking/10/bizes/1033058/items/5486623', '사운드시티 Room E 네이버 예약 상세', '기타 엠프 II: 마샬 MG100fx', 'Marshall MG100FX', 'HIGH'),
-  ('studio-합정/홍대-사운드시티', 'Room E', 'speaker', NULL, 1, '스피커', false, '{"brand":"Behringer"}'::jsonb, 'naver:1033058:5486623:speaker:behringer', 'https://m.booking.naver.com/booking/10/bizes/1033058/items/5486623', '사운드시티 Room E 네이버 예약 상세', '스피커: 베링거', 'Behringer speaker', 'HIGH'),
-  ('studio-합정/홍대-사운드시티', 'Room E', 'mixer', 'profx12', 1, '믹서', false, '{}'::jsonb, 'naver:1033058:5486623:mixer:profx12', 'https://m.booking.naver.com/booking/10/bizes/1033058/items/5486623', '사운드시티 Room E 네이버 예약 상세', '믹서: PRO FX12', 'ProFX12', 'HIGH'),
-  ('studio-합정/홍대-사운드시티', 'Room E', 'microphone', 'd-com-dmk-951-nc', 4, '무선 마이크', false, '{"type":"wireless"}'::jsonb, 'naver:1033058:5486623:microphone:d-com-dmk-951-nc', 'https://m.booking.naver.com/booking/10/bizes/1033058/items/5486623', '사운드시티 Room E 네이버 예약 상세', '무선 마이크: D COM DMK 951 NC 4개', 'D COM DMK 951 NC', 'HIGH');
+  ('studio-합정/홍대-사운드시티', 'Live Room', 'speaker', NULL, 1, NULL, false, '{"brand":"Soundking","bluetooth":true}'::jsonb, 'naver:1033058:5933800:speaker:soundking', 'https://m.booking.naver.com/booking/10/bizes/1033058/items/5933800', '사운드시티 Live Room 네이버 예약 상세', '스피커: 사운드킹 (블루투스 연결 가능)', 'Soundking speaker', 'HIGH'),
+  ('studio-합정/홍대-사운드시티', 'Live Room', 'mixer', 'behringer-x2442usb', 1, NULL, false, '{}'::jsonb, 'naver:1033058:5933800:mixer:behringer-x2442usb', 'https://m.booking.naver.com/booking/10/bizes/1033058/items/5933800', '사운드시티 Live Room 네이버 예약 상세', '믹서: 베링거 X2442USB', 'Behringer X2442USB', 'HIGH'),
+  ('studio-합정/홍대-사운드시티', 'Live Room', 'drum-kit', 'tama-starclassic-birch', 1, NULL, false, '{}'::jsonb, 'naver:1033058:5933800:drum-kit:tama-starclassic-birch', 'https://m.booking.naver.com/booking/10/bizes/1033058/items/5933800', '사운드시티 Live Room 네이버 예약 상세', '드럼: 타마 스타클래식 버찌', 'Tama Starclassic Birch', 'HIGH'),
+  ('studio-합정/홍대-사운드시티', 'Live Room', 'bass-amp', 'ampeg-svt-4pro', 1, NULL, false, '{}'::jsonb, 'naver:1033058:5933800:bass-amp:ampeg-svt-4pro', 'https://m.booking.naver.com/booking/10/bizes/1033058/items/5933800', '사운드시티 Live Room 네이버 예약 상세', '베이스엠프: 암팩 svt 4 pro', 'Ampeg SVT-4PRO', 'HIGH'),
+  ('studio-합정/홍대-사운드시티', 'Live Room', 'guitar-amp', 'marshall-dsl100h', 1, NULL, false, '{}'::jsonb, 'naver:1033058:5933800:guitar-amp-i:marshall-dsl100h', 'https://m.booking.naver.com/booking/10/bizes/1033058/items/5933800', '사운드시티 Live Room 네이버 예약 상세', '기타 엠프 I: 마샬 DSL 100H', 'Marshall DSL100H', 'HIGH'),
+  ('studio-합정/홍대-사운드시티', 'Live Room', 'guitar-amp', 'marshall-dsl100h', 1, NULL, false, '{}'::jsonb, 'naver:1033058:5933800:guitar-amp-ii:marshall-dsl100h', 'https://m.booking.naver.com/booking/10/bizes/1033058/items/5933800', '사운드시티 Live Room 네이버 예약 상세', '기타 엠프 II: 마샬 DSL 100H', 'Marshall DSL100H', 'HIGH'),
+  ('studio-합정/홍대-사운드시티', 'Live Room', 'microphone', NULL, 4, NULL, false, '{"type":"wireless"}'::jsonb, 'naver:1033058:5933800:microphone:wireless-4', 'https://m.booking.naver.com/booking/10/bizes/1033058/items/5933800', '사운드시티 Live Room 네이버 예약 상세', '무선 마이크 4개', 'Wireless microphone', 'HIGH'),
+  ('studio-합정/홍대-사운드시티', 'Room A', 'drum-kit', 'dw-collectors-series', 1, NULL, false, '{}'::jsonb, 'naver:1033058:5486389:drum-kit:dw-collectors-series', 'https://m.booking.naver.com/booking/10/bizes/1033058/items/5486389', '사운드시티 Room A 네이버 예약 상세', '드럼: DW 콜렉터', 'DW Collector''s Series', 'HIGH'),
+  ('studio-합정/홍대-사운드시티', 'Room A', 'bass-amp', 'ampeg-svt-4pro', 1, NULL, false, '{}'::jsonb, 'naver:1033058:5486389:bass-amp:ampeg-svt-4pro', 'https://m.booking.naver.com/booking/10/bizes/1033058/items/5486389', '사운드시티 Room A 네이버 예약 상세', '베이스 엠프: 암팩 SVT-4PRO', 'Ampeg SVT-4PRO', 'HIGH'),
+  ('studio-합정/홍대-사운드시티', 'Room A', 'guitar-amp', 'marshall-jcm2000', 1, NULL, false, '{}'::jsonb, 'naver:1033058:5486389:guitar-amp-i:marshall-jcm2000', 'https://m.booking.naver.com/booking/10/bizes/1033058/items/5486389', '사운드시티 Room A 네이버 예약 상세', '기타 엠프 I: 마샬 JCM 2000', 'Marshall JCM2000', 'HIGH'),
+  ('studio-합정/홍대-사운드시티', 'Room A', 'guitar-amp', 'mesa-boogie-dual-rectifier-100w-head', 1, NULL, false, '{"watts":100,"head":true}'::jsonb, 'naver:1033058:5486389:guitar-amp-ii:mesa-dual-rectifier-100w-head', 'https://m.booking.naver.com/booking/10/bizes/1033058/items/5486389', '사운드시티 Room A 네이버 예약 상세', '기타 엠프 II: 메사부기 듀얼렉티어 100W Head', 'Mesa/Boogie Dual Rectifier 100W Head', 'HIGH'),
+  ('studio-합정/홍대-사운드시티', 'Room A', 'speaker', 'yamaha-c115v', 1, NULL, false, '{}'::jsonb, 'naver:1033058:5486389:speaker:yamaha-c115v', 'https://m.booking.naver.com/booking/10/bizes/1033058/items/5486389', '사운드시티 Room A 네이버 예약 상세', '스피커: 야마하 C115V', 'Yamaha C115V', 'HIGH'),
+  ('studio-합정/홍대-사운드시티', 'Room A', 'mixer', 'yamaha-emx5014c', 1, NULL, false, '{}'::jsonb, 'naver:1033058:5486389:mixer:yamaha-emx5014c', 'https://m.booking.naver.com/booking/10/bizes/1033058/items/5486389', '사운드시티 Room A 네이버 예약 상세', '믹서: 야마하 EMX 5014C', 'Yamaha EMX5014C', 'HIGH'),
+  ('studio-합정/홍대-사운드시티', 'Room A', 'microphone', 'd-com-dmk-951-nc', 4, NULL, false, '{"type":"wireless"}'::jsonb, 'naver:1033058:5486389:microphone:d-com-dmk-951-nc', 'https://m.booking.naver.com/booking/10/bizes/1033058/items/5486389', '사운드시티 Room A 네이버 예약 상세', '무선 마이크: D COM DMK 951 NC 4개', 'D COM DMK 951 NC', 'HIGH'),
+  ('studio-합정/홍대-사운드시티', 'Room B', 'drum-kit', 'tama-bubinga', 1, NULL, false, '{}'::jsonb, 'naver:1033058:5486506:drum-kit:tama-bubinga', 'https://m.booking.naver.com/booking/10/bizes/1033058/items/5486506', '사운드시티 Room B 네이버 예약 상세', '드럼: TAMA 부빙가', 'Tama Bubinga', 'HIGH'),
+  ('studio-합정/홍대-사운드시티', 'Room B', 'bass-amp', 'ampeg-svt-4pro', 1, NULL, false, '{}'::jsonb, 'naver:1033058:5486506:bass-amp:ampeg-svt-4pro', 'https://m.booking.naver.com/booking/10/bizes/1033058/items/5486506', '사운드시티 Room B 네이버 예약 상세', '베이스엠프: 암팩 SVT-4PRO', 'Ampeg SVT-4PRO', 'HIGH'),
+  ('studio-합정/홍대-사운드시티', 'Room B', 'guitar-amp', 'marshall-jcm2000', 1, NULL, false, '{}'::jsonb, 'naver:1033058:5486506:guitar-amp-i:marshall-jcm2000', 'https://m.booking.naver.com/booking/10/bizes/1033058/items/5486506', '사운드시티 Room B 네이버 예약 상세', '기타엠프 I: 마샬 JCM 2000', 'Marshall JCM2000', 'HIGH'),
+  ('studio-합정/홍대-사운드시티', 'Room B', 'guitar-amp', 'marshall-ma100h', 1, NULL, false, '{}'::jsonb, 'naver:1033058:5486506:guitar-amp-ii:marshall-ma100h', 'https://m.booking.naver.com/booking/10/bizes/1033058/items/5486506', '사운드시티 Room B 네이버 예약 상세', '기타엠프 II: 마샬 MA 100H', 'Marshall MA100H', 'HIGH'),
+  ('studio-합정/홍대-사운드시티', 'Room B', 'speaker', 'yamaha-c115v', 1, NULL, false, '{}'::jsonb, 'naver:1033058:5486506:speaker:yamaha-c115v', 'https://m.booking.naver.com/booking/10/bizes/1033058/items/5486506', '사운드시티 Room B 네이버 예약 상세', '스피커: 야마하 C115V', 'Yamaha C115V', 'HIGH'),
+  ('studio-합정/홍대-사운드시티', 'Room B', 'mixer', 'yamaha-emx5014c', 1, NULL, false, '{}'::jsonb, 'naver:1033058:5486506:mixer:yamaha-emx5014c', 'https://m.booking.naver.com/booking/10/bizes/1033058/items/5486506', '사운드시티 Room B 네이버 예약 상세', '믹서: 야마하 EMX 5014C', 'Yamaha EMX5014C', 'HIGH'),
+  ('studio-합정/홍대-사운드시티', 'Room B', 'microphone', 'd-com-dmk-951-nc', 4, NULL, false, '{"type":"wireless"}'::jsonb, 'naver:1033058:5486506:microphone:d-com-dmk-951-nc', 'https://m.booking.naver.com/booking/10/bizes/1033058/items/5486506', '사운드시티 Room B 네이버 예약 상세', '무선 마이크: D COM DMK 951NC 4개', 'D COM DMK 951 NC', 'HIGH'),
+  ('studio-합정/홍대-사운드시티', 'Room C', 'drum-kit', 'pearl-vision', 1, NULL, false, '{"pieces":5}'::jsonb, 'naver:1033058:5486549:drum-kit:pearl-vision', 'https://m.booking.naver.com/booking/10/bizes/1033058/items/5486549', '사운드시티 Room C 네이버 예약 상세', '드럼: 펄 비젼 5기통', 'Pearl Vision', 'HIGH'),
+  ('studio-합정/홍대-사운드시티', 'Room C', 'bass-amp', 'ampeg-svt-4pro', 1, NULL, false, '{"head":true,"cabinet":true}'::jsonb, 'naver:1033058:5486549:bass-amp:ampeg-svt-4pro', 'https://m.booking.naver.com/booking/10/bizes/1033058/items/5486549', '사운드시티 Room C 네이버 예약 상세', '베이스엠프: 암팩 4pro 해드&케비넷', 'Ampeg SVT-4PRO', 'MEDIUM'),
+  ('studio-합정/홍대-사운드시티', 'Room C', 'guitar-amp', 'marshall-jcm2000', 1, NULL, false, '{}'::jsonb, 'naver:1033058:5486549:guitar-amp-i:marshall-jcm2000', 'https://m.booking.naver.com/booking/10/bizes/1033058/items/5486549', '사운드시티 Room C 네이버 예약 상세', '기타엠프 I: 마샬 JCM 2000', 'Marshall JCM2000', 'HIGH'),
+  ('studio-합정/홍대-사운드시티', 'Room C', 'guitar-amp', 'marshall-origin-50', 1, NULL, false, '{}'::jsonb, 'naver:1033058:5486549:guitar-amp-ii:marshall-origin-50', 'https://m.booking.naver.com/booking/10/bizes/1033058/items/5486549', '사운드시티 Room C 네이버 예약 상세', '기타엠프 II: 마샬 오리진 50', 'Marshall Origin 50', 'HIGH'),
+  ('studio-합정/홍대-사운드시티', 'Room C', 'speaker', NULL, 1, NULL, false, '{"brand":"JBL"}'::jsonb, 'naver:1033058:5486549:speaker:jbl', 'https://m.booking.naver.com/booking/10/bizes/1033058/items/5486549', '사운드시티 Room C 네이버 예약 상세', '스피커: JBL', 'JBL speaker', 'HIGH'),
+  ('studio-합정/홍대-사운드시티', 'Room C', 'mixer', 'yamaha-emx5014c', 1, NULL, false, '{}'::jsonb, 'naver:1033058:5486549:mixer:yamaha-emx5014c', 'https://m.booking.naver.com/booking/10/bizes/1033058/items/5486549', '사운드시티 Room C 네이버 예약 상세', '믹서: 야마하 EMX 5014C', 'Yamaha EMX5014C', 'HIGH'),
+  ('studio-합정/홍대-사운드시티', 'Room C', 'microphone', 'd-com-dmk-951-nc', 4, NULL, false, '{"type":"wireless"}'::jsonb, 'naver:1033058:5486549:microphone:d-com-dmk-951-nc', 'https://m.booking.naver.com/booking/10/bizes/1033058/items/5486549', '사운드시티 Room C 네이버 예약 상세', '무선 마이크: D COM DMK 951 NC 4개', 'D COM DMK 951 NC', 'HIGH'),
+  ('studio-합정/홍대-사운드시티', 'Room D', 'drum-kit', NULL, 1, NULL, false, '{"brand":"Yamaha","model_text":"Stage Custom"}'::jsonb, 'naver:1033058:5486609:drum-kit:yamaha-stage-custom', 'https://m.booking.naver.com/booking/10/bizes/1033058/items/5486609', '사운드시티 Room D 네이버 예약 상세', '드럼: 야마하 스테이지 커스텀', 'Yamaha Stage Custom', 'HIGH'),
+  ('studio-합정/홍대-사운드시티', 'Room D', 'bass-amp', NULL, 1, NULL, false, '{"brand":"Trace Elliot"}'::jsonb, 'naver:1033058:5486609:bass-amp:trace-elliot', 'https://m.booking.naver.com/booking/10/bizes/1033058/items/5486609', '사운드시티 Room D 네이버 예약 상세', '베이스 엠프: 트레이스 엘리엇', 'Trace Elliot bass amp', 'HIGH'),
+  ('studio-합정/홍대-사운드시티', 'Room D', 'guitar-amp', 'marshall-mg100fx', 1, NULL, false, '{}'::jsonb, 'naver:1033058:5486609:guitar-amp-i:marshall-mg100fx', 'https://m.booking.naver.com/booking/10/bizes/1033058/items/5486609', '사운드시티 Room D 네이버 예약 상세', '기타 엠프 I: 마샬 MG100FX', 'Marshall MG100FX', 'HIGH'),
+  ('studio-합정/홍대-사운드시티', 'Room D', 'guitar-amp', 'marshall-valvestate-stage-2000', 1, NULL, false, '{}'::jsonb, 'naver:1033058:5486609:guitar-amp-ii:marshall-valvestate-stage-2000', 'https://m.booking.naver.com/booking/10/bizes/1033058/items/5486609', '사운드시티 Room D 네이버 예약 상세', '기타 엠프 II: 마샬 벨브스테이트 stage2000', 'Marshall Valvestate Stage 2000', 'HIGH'),
+  ('studio-합정/홍대-사운드시티', 'Room D', 'speaker', 'jbl-eon-515-xt', 1, NULL, false, '{}'::jsonb, 'naver:1033058:5486609:speaker:jbl-eon-515-xt', 'https://m.booking.naver.com/booking/10/bizes/1033058/items/5486609', '사운드시티 Room D 네이버 예약 상세', '스피커: JBL EON 515 XT', 'JBL EON 515 XT', 'HIGH'),
+  ('studio-합정/홍대-사운드시티', 'Room D', 'mixer', 'profx12', 1, NULL, false, '{}'::jsonb, 'naver:1033058:5486609:mixer:profx12', 'https://m.booking.naver.com/booking/10/bizes/1033058/items/5486609', '사운드시티 Room D 네이버 예약 상세', '믹서: PRO FX12', 'ProFX12', 'HIGH'),
+  ('studio-합정/홍대-사운드시티', 'Room D', 'microphone', 'd-com-dmk-951-nc', 4, NULL, false, '{"type":"wireless"}'::jsonb, 'naver:1033058:5486609:microphone:d-com-dmk-951-nc', 'https://m.booking.naver.com/booking/10/bizes/1033058/items/5486609', '사운드시티 Room D 네이버 예약 상세', '무선 마이크: D COM DMK 951 NC 4개', 'D COM DMK 951 NC', 'HIGH'),
+  ('studio-합정/홍대-사운드시티', 'Room E', 'drum-kit', NULL, 1, NULL, false, '{"brand":"Yamaha","model_text":"Stage Custom"}'::jsonb, 'naver:1033058:5486623:drum-kit:yamaha-stage-custom', 'https://m.booking.naver.com/booking/10/bizes/1033058/items/5486623', '사운드시티 Room E 네이버 예약 상세', '드럼: 야마하 스테이지 커스텀', 'Yamaha Stage Custom', 'HIGH'),
+  ('studio-합정/홍대-사운드시티', 'Room E', 'bass-amp', 'fender-rumble-200', 1, NULL, false, '{}'::jsonb, 'naver:1033058:5486623:bass-amp:fender-rumble-200', 'https://m.booking.naver.com/booking/10/bizes/1033058/items/5486623', '사운드시티 Room E 네이버 예약 상세', '베이스 엠프: 펜더 럼블 200', 'Fender Rumble 200', 'HIGH'),
+  ('studio-합정/홍대-사운드시티', 'Room E', 'guitar-amp', 'marshall-valvestate-2000', 1, NULL, false, '{}'::jsonb, 'naver:1033058:5486623:guitar-amp-i:marshall-valvestate-2000', 'https://m.booking.naver.com/booking/10/bizes/1033058/items/5486623', '사운드시티 Room E 네이버 예약 상세', '기타 엠프 I: 마샬 벨브스테이트 2000', 'Marshall Valvestate 2000', 'HIGH'),
+  ('studio-합정/홍대-사운드시티', 'Room E', 'guitar-amp', 'marshall-mg100fx', 1, NULL, false, '{}'::jsonb, 'naver:1033058:5486623:guitar-amp-ii:marshall-mg100fx', 'https://m.booking.naver.com/booking/10/bizes/1033058/items/5486623', '사운드시티 Room E 네이버 예약 상세', '기타 엠프 II: 마샬 MG100fx', 'Marshall MG100FX', 'HIGH'),
+  ('studio-합정/홍대-사운드시티', 'Room E', 'speaker', NULL, 1, NULL, false, '{"brand":"Behringer"}'::jsonb, 'naver:1033058:5486623:speaker:behringer', 'https://m.booking.naver.com/booking/10/bizes/1033058/items/5486623', '사운드시티 Room E 네이버 예약 상세', '스피커: 베링거', 'Behringer speaker', 'HIGH'),
+  ('studio-합정/홍대-사운드시티', 'Room E', 'mixer', 'profx12', 1, NULL, false, '{}'::jsonb, 'naver:1033058:5486623:mixer:profx12', 'https://m.booking.naver.com/booking/10/bizes/1033058/items/5486623', '사운드시티 Room E 네이버 예약 상세', '믹서: PRO FX12', 'ProFX12', 'HIGH'),
+  ('studio-합정/홍대-사운드시티', 'Room E', 'microphone', 'd-com-dmk-951-nc', 4, NULL, false, '{"type":"wireless"}'::jsonb, 'naver:1033058:5486623:microphone:d-com-dmk-951-nc', 'https://m.booking.naver.com/booking/10/bizes/1033058/items/5486623', '사운드시티 Room E 네이버 예약 상세', '무선 마이크: D COM DMK 951 NC 4개', 'D COM DMK 951 NC', 'HIGH');
 
 DELETE FROM room_equipment re
 USING manual_soundcity_backline_placement placement
@@ -142,7 +142,7 @@ WHERE re.room_id = r.id
     (placement.model_slug IS NULL AND re.equipment_model_id IS NULL)
     OR re.equipment_model_id = em.id
   )
-  AND re.position_label = placement.position_label;
+  AND re.position_label IS NOT DISTINCT FROM placement.position_label;
 
 INSERT INTO room_equipment (
   room_id,
@@ -159,17 +159,18 @@ SELECT
   r.id,
   ei.id,
   em.id,
-  placement.quantity,
+  SUM(placement.quantity)::smallint,
   NULL,
   'MANUAL',
-  placement.position_label,
+  NULL,
   placement.is_optional,
   placement.details
 FROM manual_soundcity_backline_placement placement
 JOIN studios s ON s.slug = placement.studio_slug
 JOIN rooms r ON r.studio_id = s.id AND r.name = placement.room_name
 JOIN equipment_items ei ON ei.slug = placement.equipment_slug
-LEFT JOIN equipment_models em ON em.slug = placement.model_slug;
+LEFT JOIN equipment_models em ON em.slug = placement.model_slug
+GROUP BY r.id, ei.id, em.id, placement.is_optional, placement.details;
 
 INSERT INTO equipment_evidence (
   evidence_key,
@@ -220,7 +221,7 @@ JOIN room_equipment re
     (placement.model_slug IS NULL AND re.equipment_model_id IS NULL)
     OR re.equipment_model_id = em.id
   )
-  AND re.position_label = placement.position_label
+  AND re.position_label IS NOT DISTINCT FROM placement.position_label
 ON CONFLICT (evidence_key) DO UPDATE SET
   room_id = EXCLUDED.room_id,
   equipment_id = EXCLUDED.equipment_id,
