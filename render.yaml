@@ -6,18 +6,21 @@ services:
     name: hapjusil-api
     runtime: docker
     repo: https://github.com/lunartown/band-practice-room
-    region: singapore # 한국에서 가장 가까운 무료 리전
-    plan: free
+    region: singapore # API와 DB를 같은 리전에 두어 내부망으로 연결한다.
+    plan: starter
     dockerfilePath: ./src/api/Dockerfile
     # 컨텍스트는 레포 루트. API 이미지가 공유 모듈 src/scrape-core 를 함께 담아야 하므로
     # src/api 만으로는 부족하다(수동 갱신 온디맨드 스크랩이 scrape-core 를 import).
     dockerContext: .
     # DB를 건드리지 않는 라이브니스 엔드포인트로 헬스체크한다.
-    # 기존 /api/v1/areas 는 매 헬스체크마다 DB를 조회해 Neon egress 를 24시간 소모했다.
+    # 기존 /api/v1/areas 는 매 헬스체크마다 DB를 조회하므로 라이브니스 경로로 쓰지 않는다.
     healthCheckPath: /api/v1/health
     envVars:
       - key: NODE_ENV
         value: production
-      # Neon 등 외부 Postgres 연결 문자열 (Render 대시보드에서 직접 입력)
+      # 같은 리전 Render Postgres의 내부 연결 문자열 (Render 대시보드에서 직접 입력)
       - key: DATABASE_URL
         sync: false
+      # Render 내부 연결은 사설망을 사용하므로 애플리케이션 TLS를 끈다.
+      - key: DATABASE_SSL
+        value: "false"

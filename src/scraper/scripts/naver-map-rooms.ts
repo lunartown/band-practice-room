@@ -10,9 +10,9 @@
  *
  * 사용:
  *   cd src/scraper
- *   DATABASE_URL='<neon>' npx tsx scripts/naver-map-rooms.ts            # 미리보기
- *   DATABASE_URL='<neon>' npx tsx scripts/naver-map-rooms.ts --apply    # 실제 기입
- *   DATABASE_URL='<neon>' npx tsx scripts/naver-map-rooms.ts --studios 34,35,41
+ *   DATABASE_URL='<postgres>' npx tsx scripts/naver-map-rooms.ts            # 미리보기
+ *   DATABASE_URL='<postgres>' npx tsx scripts/naver-map-rooms.ts --apply    # 실제 기입
+ *   DATABASE_URL='<postgres>' npx tsx scripts/naver-map-rooms.ts --studios 34,35,41
  */
 import { query, end } from '../src/db.js';
 import { fetchBizItems, fetchHourlySchedule, type NaverBizItem } from '../../scrape-core/naver/client.js';
