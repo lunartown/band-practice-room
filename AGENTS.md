@@ -15,7 +15,7 @@
 합주실 예약 가능 시간대를 한곳에서 조회하는 서비스(도메인: hapjusil.com). 자세한 현황·문서 네비게이션은 [README.md](README.md) 참고.
 
 - `src/scraper` — 네이버/스페이스클라우드 예약 가능 시간 수집 (GitHub Actions cron)
-- `src/api` — Nest/Nest 풍 백엔드, ORM 없이 SQL 직접 작성 (Render + Neon Postgres)
+- `src/api` — Nest/Nest 풍 백엔드, ORM 없이 SQL 직접 작성 (Render Postgres 운영, Neon 원본 임시 보존)
 - `src/web` — Vite + React 프런트엔드 (Vercel), Capacitor로 iOS·Android 패키징
 
 ## 토큰 비용이 큰 작업
@@ -33,6 +33,14 @@
 - 폰에서 로컬 웹을 볼 때 브라우저의 `localhost`는 Mac이 아니라 폰 자신이다. 실제 데이터를 볼 때는 프론트 `VITE_API_BASE_URL`을 상대경로(`/api/v1`)로 두고, Vite proxy가 Render API로 넘기게 한다(CORS 회피).
 - 로컬에서 프론트만 prod 데이터로 확인할 때는 기본 proxy(Render prod API)를 쓴다. 백엔드/dev DB까지 확인할 때만 `VITE_DEV_API_PROXY_TARGET=https://hapjusil-api-dev.onrender.com` 또는 `http://127.0.0.1:3000`으로 덮어쓴다. `localhost`는 Node에서 IPv6 `::1`로 해석될 수 있으므로 로컬 API 타깃에는 `127.0.0.1`을 쓴다.
 - 배포 환경은 `main=prod 프론트→prod API/DB`, `dev=dev 프론트→dev API/DB`, `stg=stg 프론트→prod API/DB`로 둔다. Vercel 무료 플랜 rate limit 때문에 기능 브랜치는 Vercel에 올리지 말고 로컬에서 확인한 뒤 `dev`로 PR한다. 설정 근거는 [docs/04_개발/03_배포_전략.md](docs/04_개발/03_배포_전략.md) "프리뷰 배포 필터" 참고.
+
+## Render DB 로컬 접속
+
+- Render prod/dev 접속 정보는 Git 공용 디렉터리의 `$(git rev-parse --git-common-dir)/render-db.env`에 로컬로 저장한다. 이 파일은 저장소에 커밋하지 않으며 권한은 `600`으로 유지한다.
+- 각 worktree 루트의 `.env.render`는 위 공용 파일을 가리키는 gitignore 대상 심볼릭 링크다. 링크가 없으면 공용 파일을 직접 불러온다.
+- 셸에서 사용할 때는 `set -a; source .env.render; set +a`를 실행한다. 링크가 없는 새 worktree에서는 `set -a; source "$(git rev-parse --git-common-dir)/render-db.env"; set +a`를 실행한다.
+- 로컬 도구와 GitHub Actions에는 외부 연결 문자열인 `DATABASE_URL`, `DATABASE_URL_PROD`, `DATABASE_URL_DEV`를 사용한다. `RENDER_DATABASE_URL_*_INTERNAL`은 Render 서비스 내부에서만 사용한다.
+- 접속 문자열을 로그나 응답에 출력하지 않는다. Neon 원본은 후속 차분 반영과 검증이 끝날 때까지 삭제하지 않는다.
 
 ## 커밋 규칙
 
