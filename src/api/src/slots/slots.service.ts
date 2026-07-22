@@ -17,6 +17,10 @@ export class SlotsService {
       await this.catalogService.assertActiveStudio(filters.studioId);
     }
 
+    if (filters.equipmentIds?.length) {
+      await this.catalogService.assertActiveEquipmentIds(filters.equipmentIds);
+    }
+
     const slots = await this.slotsRepository.findSlots(filters);
 
     return {

@@ -37,6 +37,7 @@ export interface SlotFilters {
   timeWindows?: TimeWindow[];
   minCapacity?: number;
   minDuration?: number;
+  equipmentIds?: number[];
 }
 
 @Injectable()
@@ -100,6 +101,28 @@ export class SlotsRepository {
     if (filters.minCapacity !== undefined) {
       params.push(filters.minCapacity);
       baseConditions.push(`(r.capacity_max IS NULL OR r.capacity_max >= $${params.length})`);
+    }
+
+    if (filters.equipmentIds?.length) {
+      params.push(filters.equipmentIds);
+      baseConditions.push(`
+        NOT EXISTS (
+          SELECT 1
+          FROM unnest($${params.length}::bigint[]) wanted(equipment_id)
+          WHERE NOT (
+            EXISTS (
+              SELECT 1
+              FROM room_equipment re
+              WHERE re.room_id = r.id AND re.equipment_id = wanted.equipment_id
+            )
+            OR EXISTS (
+              SELECT 1
+              FROM studio_equipment se
+              WHERE se.studio_id = s.id AND se.equipment_id = wanted.equipment_id
+            )
+          )
+        )
+      `);
     }
 
     params.push(minDuration);

@@ -47,4 +47,22 @@ describe('SlotsService', () => {
     expect(assertActiveStudio).toHaveBeenCalledWith(1);
     expect(findSlots).toHaveBeenCalledWith({ dates, studioId: 1 });
   });
+
+  it('validates equipment filters before slot lookup', async () => {
+    const findSlots = jest.fn().mockResolvedValue([]);
+    const assertActiveEquipmentIds = jest.fn().mockResolvedValue(undefined);
+    const service = new SlotsService(
+      { findSlots } as never,
+      { assertActiveEquipmentIds } as never,
+    );
+
+    const dates = ['2026-06-15'];
+    await expect(service.getSlots({ dates, equipmentIds: [1, 4] })).resolves.toEqual({
+      dates,
+      slots: [],
+    });
+
+    expect(assertActiveEquipmentIds).toHaveBeenCalledWith([1, 4]);
+    expect(findSlots).toHaveBeenCalledWith({ dates, equipmentIds: [1, 4] });
+  });
 });

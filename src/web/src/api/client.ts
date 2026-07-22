@@ -1,7 +1,8 @@
 import { computeFreshness } from '../lib/date';
-import { getMockAreas, getMockSlots, getMockStudios } from './mock';
+import { getMockAreas, getMockEquipment, getMockSlots, getMockStudios } from './mock';
 import type {
   AreasResponse,
+  EquipmentResponse,
   RawSlot,
   RefreshResponse,
   SlotsQuery,
@@ -24,6 +25,11 @@ export async function getStudios(areaIds?: number[]): Promise<StudiosResponse> {
   return fetchJson(`${API_BASE_URL}/studios?${params.toString()}`);
 }
 
+export async function getEquipment(): Promise<EquipmentResponse> {
+  if (USE_MOCK_API) return getMockEquipment();
+  return fetchJson(`${API_BASE_URL}/equipment`);
+}
+
 export async function getSlots(query: SlotsQuery): Promise<SlotsResponse> {
   if (USE_MOCK_API) return getMockSlots(query);
 
@@ -34,6 +40,7 @@ export async function getSlots(query: SlotsQuery): Promise<SlotsResponse> {
   query.timeWindows?.forEach((w) => params.append('timeWindows', `${w.from}-${w.to}`));
   if (query.minCapacity) params.set('minCapacity', String(query.minCapacity));
   if (query.minDuration && query.minDuration > 1) params.set('minDuration', String(query.minDuration));
+  query.equipmentIds?.forEach((id) => params.append('equipmentIds', String(id)));
 
   const response = await fetchJson<SlotsResponse>(`${API_BASE_URL}/slots?${params.toString()}`);
   return { ...response, slots: response.slots.map(withFreshness) };

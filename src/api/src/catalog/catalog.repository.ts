@@ -7,6 +7,29 @@ export interface AreaRow {
   name: string;
 }
 
+export interface EquipmentItemRow {
+  id: number | string;
+  slug: string;
+  name: string;
+  normalized_name: string;
+  aliases: string[];
+}
+
+export interface EquipmentCategoryRow {
+  id: string;
+  slug: string;
+  name: string;
+  items: EquipmentItemRow[];
+}
+
+export interface EquipmentAssignmentRow {
+  id: number | string;
+  slug: string;
+  name: string;
+  quantity: number | null;
+  note: string | null;
+}
+
 export interface StudioRow {
   id: string;
   slug: string | null;
@@ -20,12 +43,14 @@ export interface StudioRow {
   rating: string | null;
   review_count: number | null;
   review_keywords: Array<{ keyword: string; count: number }> | null;
+  equipment: EquipmentAssignmentRow[];
   rooms: Array<{
     id: number | string;
     name: string;
     price_per_hour: number | string | null;
     capacity_min: number | null;
     capacity_max: number | null;
+    equipment: EquipmentAssignmentRow[];
   }>;
   has_online_booking: boolean;
 }
@@ -73,6 +98,57 @@ export class CatalogRepository {
     );
 
     return result.rows[0]?.exists ?? false;
+  }
+
+  async countActiveEquipmentByIds(equipmentIds: number[]) {
+    const result = await this.database.query<{ count: string }>(
+      `
+        SELECT COUNT(*) AS count
+        FROM equipment_items
+        WHERE is_active = true AND id = ANY($1::bigint[])
+      `,
+      [equipmentIds],
+    );
+
+    return Number(result.rows[0]?.count ?? 0);
+  }
+
+  async findActiveEquipment() {
+    const result = await this.database.query<EquipmentCategoryRow>(`
+      SELECT
+        ec.id,
+        ec.slug,
+        ec.name,
+        COALESCE(
+          (
+            SELECT json_agg(
+              json_build_object(
+                'id', ei.id,
+                'slug', ei.slug,
+                'name', ei.name,
+                'normalized_name', ei.normalized_name,
+                'aliases', COALESCE(
+                  (
+                    SELECT json_agg(ea.alias ORDER BY ea.alias ASC)
+                    FROM equipment_aliases ea
+                    WHERE ea.equipment_id = ei.id
+                  ),
+                  '[]'
+                )
+              )
+              ORDER BY ei.name ASC, ei.id ASC
+            )
+            FROM equipment_items ei
+            WHERE ei.category_id = ec.id AND ei.is_active = true
+          ),
+          '[]'
+        ) AS items
+      FROM equipment_categories ec
+      WHERE ec.is_active = true
+      ORDER BY ec."order" ASC, ec.id ASC
+    `);
+
+    return result.rows;
   }
 
   async findActiveStudios(filters: { areaId?: number }) {
@@ -125,6 +201,25 @@ export class CatalogRepository {
           s.rating,
           s.review_count,
           s.review_keywords,
+          COALESCE(
+            (
+              SELECT json_agg(
+                json_build_object(
+                  'id', ei.id,
+                  'slug', ei.slug,
+                  'name', ei.name,
+                  'quantity', se.quantity,
+                  'note', se.note
+                )
+                ORDER BY ec."order" ASC, ei.name ASC, ei.id ASC
+              )
+              FROM studio_equipment se
+              JOIN equipment_items ei ON ei.id = se.equipment_id AND ei.is_active = true
+              JOIN equipment_categories ec ON ec.id = ei.category_id
+              WHERE se.studio_id = s.id
+            ),
+            '[]'
+          ) AS equipment,
           -- 활성 방 메타를 합주실에 nest 한다. 슬롯마다 방 정보를 중복 전송하지 않고
           -- 프론트가 roomId 로 참조하게 하기 위함(egress 절감). 슬롯 쿼리와 동일하게
           -- is_active = true 인 방만 담는다.
@@ -136,7 +231,26 @@ export class CatalogRepository {
                   'name', r.name,
                   'price_per_hour', r.price_per_hour,
                   'capacity_min', r.capacity_min,
-                  'capacity_max', r.capacity_max
+                  'capacity_max', r.capacity_max,
+                  'equipment', COALESCE(
+                    (
+                      SELECT json_agg(
+                        json_build_object(
+                          'id', ei.id,
+                          'slug', ei.slug,
+                          'name', ei.name,
+                          'quantity', re.quantity,
+                          'note', re.note
+                        )
+                        ORDER BY ec."order" ASC, ei.name ASC, ei.id ASC
+                      )
+                      FROM room_equipment re
+                      JOIN equipment_items ei ON ei.id = re.equipment_id AND ei.is_active = true
+                      JOIN equipment_categories ec ON ec.id = ei.category_id
+                      WHERE re.room_id = r.id
+                    ),
+                    '[]'
+                  )
                 ) ORDER BY r.name ASC, r.id ASC
               )
               FROM rooms r
