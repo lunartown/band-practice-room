@@ -1,5 +1,5 @@
 import { memo, useEffect, useState } from 'react';
-import type { Studio } from '../api/types';
+import type { EquipmentAssignment, Studio } from '../api/types';
 import type { AvailabilityChip, RoomAvailability, StudioAvailability } from '../lib/availability';
 import { toReviewBadges } from '../lib/reviewKeywords';
 import { STUDIO_FALLBACK_IMAGE_URL, galleryImageUrl, thumbnailUrl } from '../lib/imageUrl';
@@ -198,8 +198,47 @@ function ShareIcon() {
   );
 }
 
+function mergeEquipment(
+  sharedEquipment: EquipmentAssignment[],
+  roomEquipment: EquipmentAssignment[],
+): EquipmentAssignment[] {
+  const merged = new Map(sharedEquipment.map((equipment) => [equipment.id, equipment]));
+  roomEquipment.forEach((equipment) => merged.set(equipment.id, equipment));
+  return [...merged.values()];
+}
+
+function EquipmentDetails({ equipment }: { equipment: EquipmentAssignment[] }) {
+  if (equipment.length === 0) return null;
+
+  return (
+    <div className="room-equipment" aria-label="장비 정보">
+      <div className="room-equipment-title">장비</div>
+      <dl>
+        {equipment.map((item) => (
+          <div className="room-equipment-item" key={item.id}>
+            <dt>{item.name}</dt>
+            <dd>{item.note || (item.quantity ? `${item.quantity}대` : '보유')}</dd>
+          </div>
+        ))}
+      </dl>
+    </div>
+  );
+}
+
 // 방행 전체가 예약 링크. 우측 셰브론으로 행이 통째로 탭 대상임을 알린다.
-function RoomRow({ room, studioId, studioName }: { room: RoomAvailability; studioId: number; studioName: string }) {
+function RoomRow({
+  room,
+  sharedEquipment,
+  studioId,
+  studioName,
+}: {
+  room: RoomAvailability;
+  sharedEquipment: EquipmentAssignment[];
+  studioId: number;
+  studioName: string;
+}) {
+  const equipment = mergeEquipment(sharedEquipment, room.room.equipment ?? []);
+
   return (
     <a
       className="room-row"
@@ -228,6 +267,7 @@ function RoomRow({ room, studioId, studioName }: { room: RoomAvailability; studi
         <span className="room-price">{room.priceLabel}</span>
         <BookChevron />
       </div>
+      <EquipmentDetails equipment={equipment} />
       <TimeSlots chips={room.chips} />
     </a>
   );
@@ -451,7 +491,13 @@ export const StudioRow = memo(function StudioRow({ studio }: StudioRowProps) {
       {expanded && (
         <div className="room-list">
           {studio.rooms.map((room) => (
-            <RoomRow key={room.room.id} room={room} studioId={id} studioName={name} />
+            <RoomRow
+              key={room.room.id}
+              room={room}
+              sharedEquipment={studio.studio.equipment ?? []}
+              studioId={id}
+              studioName={name}
+            />
           ))}
         </div>
       )}
