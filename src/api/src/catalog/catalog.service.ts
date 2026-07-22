@@ -1,6 +1,12 @@
 import { HttpStatus, Inject, Injectable } from '@nestjs/common';
 import { ApiError } from '../shared/api-error.js';
-import { CatalogRepository, StudioRow } from './catalog.repository.js';
+import {
+  CatalogRepository,
+  EquipmentAssignmentRow,
+  EquipmentCategoryRow,
+  EquipmentItemRow,
+  StudioRow,
+} from './catalog.repository.js';
 
 @Injectable()
 export class CatalogService {
@@ -36,6 +42,14 @@ export class CatalogService {
     };
   }
 
+  async getEquipment() {
+    const categories = await this.catalogRepository.findActiveEquipment();
+
+    return {
+      categories: categories.map((category) => this.toEquipmentCategoryResponse(category)),
+    };
+  }
+
   async assertActiveArea(areaId: number) {
     if (!(await this.catalogRepository.existsActiveArea(areaId))) {
       throw new ApiError('AREA_NOT_FOUND', 'Area not found', HttpStatus.NOT_FOUND);
@@ -45,6 +59,16 @@ export class CatalogService {
   async assertActiveStudio(studioId: number) {
     if (!(await this.catalogRepository.existsActiveStudio(studioId))) {
       throw new ApiError('STUDIO_NOT_FOUND', 'Studio not found', HttpStatus.NOT_FOUND);
+    }
+  }
+
+  async assertActiveEquipmentIds(equipmentIds: number[]) {
+    const uniqueEquipmentIds = [...new Set(equipmentIds)];
+    if (uniqueEquipmentIds.length === 0) return;
+
+    const activeCount = await this.catalogRepository.countActiveEquipmentByIds(uniqueEquipmentIds);
+    if (activeCount !== uniqueEquipmentIds.length) {
+      throw new ApiError('EQUIPMENT_NOT_FOUND', 'Equipment not found', HttpStatus.NOT_FOUND);
     }
   }
 
@@ -63,14 +87,49 @@ export class CatalogService {
       rating: studio.rating == null ? null : Number(studio.rating),
       reviewCount: studio.review_count ?? null,
       reviewKeywords: studio.review_keywords ?? [],
+      equipment: (studio.equipment ?? []).map((equipment) =>
+        this.toEquipmentAssignmentResponse(equipment),
+      ),
       rooms: (studio.rooms ?? []).map((room) => ({
         id: Number(room.id),
         name: room.name,
         pricePerHour: room.price_per_hour == null ? null : Number(room.price_per_hour),
         capacityMin: room.capacity_min ?? null,
         capacityMax: room.capacity_max ?? null,
+        equipment: (room.equipment ?? []).map((equipment) =>
+          this.toEquipmentAssignmentResponse(equipment),
+        ),
       })),
       hasOnlineBooking: studio.has_online_booking,
+    };
+  }
+
+  private toEquipmentCategoryResponse(category: EquipmentCategoryRow) {
+    return {
+      id: Number(category.id),
+      slug: category.slug,
+      name: category.name,
+      items: (category.items ?? []).map((item) => this.toEquipmentItemResponse(item)),
+    };
+  }
+
+  private toEquipmentItemResponse(item: EquipmentItemRow) {
+    return {
+      id: Number(item.id),
+      slug: item.slug,
+      name: item.name,
+      normalizedName: item.normalized_name,
+      aliases: item.aliases ?? [],
+    };
+  }
+
+  private toEquipmentAssignmentResponse(equipment: EquipmentAssignmentRow) {
+    return {
+      id: Number(equipment.id),
+      slug: equipment.slug,
+      name: equipment.name,
+      quantity: equipment.quantity ?? null,
+      note: equipment.note ?? null,
     };
   }
 }

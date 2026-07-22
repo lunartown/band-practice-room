@@ -16,4 +16,9 @@ export class CatalogController {
     const areaId = parseOptionalPositiveInteger(areaIdQuery, 'areaId');
     return this.catalogService.getStudios({ areaId });
   }
+
+  @Get('equipment')
+  getEquipment() {
+    return this.catalogService.getEquipment();
+  }
 }

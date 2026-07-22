@@ -18,6 +18,7 @@
 | ------ | -------- | ------------------ |
 | GET    | /areas   | 지역 목록 조회     |
 | GET    | /studios | 합주실 목록 조회   |
+| GET    | /equipment | 장비 카탈로그 조회 |
 | GET    | /slots   | 날짜 범위 슬롯 조회 |
 
 ## 3. GET /areas
@@ -62,13 +63,19 @@
       "rating": 4.8,
       "reviewCount": 123,
       "reviewKeywords": [{ "keyword": "방음", "count": 30 }],
+      "equipment": [
+        { "id": 9, "slug": "microphone", "name": "마이크", "quantity": 4, "note": "유선" }
+      ],
       "rooms": [
         {
           "id": 10,
           "name": "A룸",
           "pricePerHour": 22000,
           "capacityMin": 2,
-          "capacityMax": 8
+          "capacityMax": 8,
+          "equipment": [
+            { "id": 1, "slug": "drum-kit", "name": "드럼 세트", "quantity": 1, "note": null }
+          ]
         }
       ],
       "hasOnlineBooking": true
@@ -77,9 +84,36 @@
 }
 ```
 
-`imageUrl`은 수기 입력값(`image_url_manual`)을 우선하고 없으면 수집값(`image_url_scraped`)을 사용한다. `rating`, `reviewCount`는 값이 없으면 `null`이고, `reviewKeywords`는 없으면 `[]`다. `primaryAreaName`·`reviewKeywords`·`rooms`는 slots 응답의 studio·room 메타를 슬롯마다 중복 전송하지 않도록, 합주실/방 정보를 이 엔드포인트로 모으기 위해 포함한다. `rooms`는 `is_active = true`인 방만 담으며 없으면 `[]`다. 슬롯은 추후 `studioId`·`roomId` 참조만 두고, 프론트가 이 응답으로 `Map<studioId>`·`Map<roomId>`를 구성해 조인한다.
+`imageUrl`은 수기 입력값(`image_url_manual`)을 우선하고 없으면 수집값(`image_url_scraped`)을 사용한다. `rating`, `reviewCount`는 값이 없으면 `null`이고, `reviewKeywords`는 없으면 `[]`다. `primaryAreaName`·`reviewKeywords`·`rooms`는 slots 응답의 studio·room 메타를 슬롯마다 중복 전송하지 않도록, 합주실/방 정보를 이 엔드포인트로 모으기 위해 포함한다. `equipment`는 합주실 공용 장비이고, `rooms[].equipment`는 해당 방 전용 장비다. `rooms`는 `is_active = true`인 방만 담으며 없으면 `[]`다. 슬롯은 추후 `studioId`·`roomId` 참조만 두고, 프론트가 이 응답으로 `Map<studioId>`·`Map<roomId>`를 구성해 조인한다.
 
-## 5. GET /slots
+## 5. GET /equipment
+
+장비 검색 필터를 구성하기 위한 활성 장비 카탈로그를 반환한다. `aliases`는 "기타앰프", "guitar amp"처럼 같은 장비를 가리키는 검색어 보조 데이터다.
+
+**Response 200**
+
+```json
+{
+  "categories": [
+    {
+      "id": 1,
+      "slug": "drums",
+      "name": "드럼",
+      "items": [
+        {
+          "id": 1,
+          "slug": "drum-kit",
+          "name": "드럼 세트",
+          "normalizedName": "drum kit",
+          "aliases": ["드럼", "드럼셋"]
+        }
+      ]
+    }
+  ]
+}
+```
+
+## 6. GET /slots
 
 날짜 범위와 선택적 지역/합주실 조건으로 슬롯을 반환한다.
 
@@ -97,12 +131,14 @@
 | timeTo      | string          | (레거시) 단일 종료 시각                                               |
 | minCapacity | number          | 최소 수용 인원                                                        |
 | minDuration | number          | 최소 연속 가능 시간(시간 단위, 1–4)                                   |
+| equipmentIds | number[]      | 장비 ID 필터. 반복 또는 콤마 구분. 선택한 장비를 모두 갖춘 방만 반환   |
 
 **제약**
 
 - `minDuration`은 1 이상 4 이하다. 벗어나면 `400 INVALID_PARAMETER`.
 - `areaIds`는 `studio_areas.area_id` 기준으로 필터링한다.
 - `studioId`와 `areaIds`를 함께 보내면 두 조건을 모두 만족하는 슬롯만 반환한다.
+- `equipmentIds`는 `room_equipment`와 `studio_equipment`를 함께 본다. 선택한 장비가 모두 방 전용 또는 합주실 공용 장비로 등록되어 있어야 통과한다.
 - 날짜 범위 정책(양끝 포함 최대 30일, 과거 불가)은 `dates` 파싱 단계에서 검증한다.
 
 **Response 200**
@@ -151,8 +187,9 @@
 | 400  | INVALID_PARAMETER | query parameter 값이 정책에 맞지 않음 |
 | 404  | AREA_NOT_FOUND    | 존재하지 않거나 비활성 지역 ID   |
 | 404  | STUDIO_NOT_FOUND  | 존재하지 않거나 비활성 합주실 ID |
+| 404  | EQUIPMENT_NOT_FOUND | 존재하지 않거나 비활성 장비 ID |
 
-## 6. 설계 메모
+## 7. 설계 메모
 
 - `slots`는 검색 결과용 read model이므로 flat 배열로 반환한다.
 - flat 구조는 클라이언트가 날짜, 시간, 지역, 합주실 기준으로 자유롭게 그룹핑하기 쉽다.
