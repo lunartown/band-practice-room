@@ -238,38 +238,53 @@ function RoomRow({
   studioName: string;
 }) {
   const equipment = mergeEquipment(sharedEquipment, room.room.equipment ?? []);
+  const [equipmentOpen, setEquipmentOpen] = useState(false);
 
   return (
-    <a
-      className="room-row"
-      href={room.bookingUrl ?? '#'}
-      target="_blank"
-      rel="noreferrer"
-      aria-label={`${room.room.name} 예약`}
-      onClick={() =>
-        track('booking_click', {
-          source: 'room',
-          studio_id: studioId,
-          studio_name: studioName,
-          room_id: room.room.id,
-          has_url: room.bookingUrl != null,
-        })
-      }
-    >
-      <div className="room-info">
-        <span className="room-name">{room.room.name}</span>
-        {room.capacityLabel && (
-          <span className="room-cap">
-            <PersonIcon />
-            {room.capacityLabel}
-          </span>
-        )}
-        <span className="room-price">{room.priceLabel}</span>
-        <BookChevron />
-      </div>
-      <EquipmentDetails equipment={equipment} />
-      <TimeSlots chips={room.chips} />
-    </a>
+    <div className="room-row">
+      <a
+        className="room-booking-link"
+        href={room.bookingUrl ?? '#'}
+        target="_blank"
+        rel="noreferrer"
+        aria-label={`${room.room.name} 예약`}
+        onClick={() =>
+          track('booking_click', {
+            source: 'room',
+            studio_id: studioId,
+            studio_name: studioName,
+            room_id: room.room.id,
+            has_url: room.bookingUrl != null,
+          })
+        }
+      >
+        <div className="room-info">
+          <span className="room-name">{room.room.name}</span>
+          {room.capacityLabel && (
+            <span className="room-cap">
+              <PersonIcon />
+              {room.capacityLabel}
+            </span>
+          )}
+          <span className="room-price">{room.priceLabel}</span>
+          <BookChevron />
+        </div>
+        <TimeSlots chips={room.chips} />
+      </a>
+
+      {equipment.length > 0 && (
+        <button
+          type="button"
+          className={`room-equipment-toggle${equipmentOpen ? ' open' : ''}`}
+          aria-expanded={equipmentOpen}
+          onClick={() => setEquipmentOpen((open) => !open)}
+        >
+          {equipmentOpen ? '장비 접기' : `장비 ${equipment.length}종 보기`}
+          <span aria-hidden>▾</span>
+        </button>
+      )}
+      {equipmentOpen && <EquipmentDetails equipment={equipment} />}
+    </div>
   );
 }
 
