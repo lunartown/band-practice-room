@@ -13,7 +13,7 @@
 **MVP 구현·배포 완료 · 네이티브 앱 출시 · 운영/다듬기 단계**
 
 - 스크래퍼(네이버·스페이스클라우드 예약 가능 시간 수집), API(NestJS), 웹(Vite + React)이 모두 구현되어 있다.
-- 스크래퍼는 GitHub Actions cron으로 주기 수집하고(`/.github/workflows/scrape.yml`), API와 PostgreSQL은 Render, 웹은 Vercel에 배포한다.
+- 스크래퍼는 GitHub Actions cron으로 주기 수집하고(`/.github/workflows/scrape.yml`), API는 Render + 외부 Postgres(Neon), 웹은 Vercel에 배포한다.
 - 웹앱을 Capacitor로 감싸 iOS·Android 네이티브 앱으로 패키징하고(`src/web/ios`, `src/web/android`), 웹 변경은 Capgo OTA로 재심사 없이 반영한다([앱 스토어 출시](docs/04_개발/04_앱_스토어_출시.md)).
 - 설계·개발 문서는 실제 구현 기준으로 정리했고, 기획·디자인 문서는 초기 의사결정을 남긴 기록으로 유지한다.
 
