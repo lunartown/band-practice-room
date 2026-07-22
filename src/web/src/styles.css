@@ -1381,23 +1381,31 @@ button {
   border-radius: 0 var(--r-md) var(--r-md) 0;
 }
 
-/* 방행 전체가 예약 링크. sunken 레일 안이라 호버 시 흰 surface로 살짝 떠오른다. */
+/* 방행 안에서 예약 링크와 장비 펼침은 서로 다른 액션이다. 바깥 행은 목록 구분만 맡고,
+   예약 링크가 기존처럼 방 이름·가격·빈 시간을 넓게 감싼다. */
 .room-row {
   display: block;
-  padding: var(--sp-3) var(--sp-2);
+  padding: 0;
   margin: 0 calc(-1 * var(--sp-2));
   border-bottom: 1px solid var(--border);
+  color: inherit;
+  border-radius: var(--r-sm);
+}
+
+.room-booking-link {
+  display: block;
+  padding: var(--sp-3) var(--sp-2) var(--sp-2);
   color: inherit;
   text-decoration: none;
   border-radius: var(--r-sm);
   transition: background-color 0.12s ease;
 }
 
-.room-row:hover {
+.room-booking-link:hover {
   background: var(--surface);
 }
 
-.room-row:active {
+.room-booking-link:active {
   background: var(--accent-soft);
 }
 
@@ -1450,9 +1458,33 @@ button {
   display: grid;
   grid-template-columns: 34px minmax(0, 1fr);
   gap: var(--sp-2);
-  margin-top: var(--sp-3);
-  padding-top: var(--sp-3);
+  margin: 0 var(--sp-2) var(--sp-3);
+  padding-top: var(--sp-2);
   border-top: 1px solid var(--border-subtle);
+}
+
+.room-equipment-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-1);
+  margin: 0 var(--sp-2) var(--sp-3);
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--text-3);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-semibold);
+  cursor: pointer;
+}
+
+.room-equipment-toggle span {
+  color: var(--text-faint);
+  font-size: var(--fs-2xs);
+  transition: transform 0.15s ease;
+}
+
+.room-equipment-toggle.open span {
+  transform: rotate(180deg);
 }
 
 .room-equipment-title {
