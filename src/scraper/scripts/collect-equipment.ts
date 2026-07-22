@@ -437,12 +437,19 @@ function valueTuple(values: Array<string | number | null>): string {
 }
 
 function generateSql(assignments: Assignment[], evidences: Evidence[], observedAt: string): string {
+  const uniqueEvidence = new Map<string, Evidence>();
+  for (const evidence of evidences) {
+    uniqueEvidence.set(evidence.evidenceKey, evidence);
+  }
+
   const sortedAssignments = [...assignments].sort((a, b) =>
     [a.targetKind, a.studioSlug, a.roomName ?? '', a.equipmentSlug].join('\u0000').localeCompare(
       [b.targetKind, b.studioSlug, b.roomName ?? '', b.equipmentSlug].join('\u0000'),
     ),
   );
-  const sortedEvidence = [...evidences].sort((a, b) => a.evidenceKey.localeCompare(b.evidenceKey));
+  const sortedEvidence = [...uniqueEvidence.values()].sort((a, b) =>
+    a.evidenceKey.localeCompare(b.evidenceKey),
+  );
 
   const assignmentValues = sortedAssignments.map((assignment) =>
     valueTuple([
