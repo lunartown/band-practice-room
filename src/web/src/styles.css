@@ -1444,6 +1444,52 @@ button {
   white-space: nowrap;
 }
 
+/* 장비는 방 선택을 돕는 보조 정보다. 시간 칩보다 먼저 읽히되 예약 액션처럼
+   보이지 않도록 배경이나 pill 없이 종류와 모델을 작은 명세표로 정렬한다. */
+.room-equipment {
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr);
+  gap: var(--sp-2);
+  margin-top: var(--sp-3);
+  padding-top: var(--sp-3);
+  border-top: 1px solid var(--border-subtle);
+}
+
+.room-equipment-title {
+  color: var(--text-faint);
+  font-size: var(--fs-2xs);
+  font-weight: var(--fw-bold);
+  line-height: 1.5;
+}
+
+.room-equipment dl {
+  display: grid;
+  gap: var(--sp-1);
+  min-width: 0;
+  margin: 0;
+}
+
+.room-equipment-item {
+  display: grid;
+  grid-template-columns: 60px minmax(0, 1fr);
+  gap: var(--sp-2);
+  font-size: var(--fs-xs);
+  line-height: 1.45;
+}
+
+.room-equipment-item dt {
+  color: var(--text-3);
+  font-weight: var(--fw-semibold);
+}
+
+.room-equipment-item dd {
+  min-width: 0;
+  margin: 0;
+  color: var(--text-1);
+  font-weight: var(--fw-medium);
+  overflow-wrap: anywhere;
+}
+
 /* 방행 셰브론은 지점 카드보다 한 단계 작게 — sunken 레일 안의 종속 액션 */
 .room-row .book-chevron {
   width: 16px;
