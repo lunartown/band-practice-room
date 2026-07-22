@@ -15,7 +15,7 @@
 합주실 예약 가능 시간대를 한곳에서 조회하는 서비스(도메인: hapjusil.com). 자세한 현황·문서 네비게이션은 [README.md](README.md) 참고.
 
 - `src/scraper` — 네이버/스페이스클라우드 예약 가능 시간 수집 (GitHub Actions cron)
-- `src/api` — Nest/Nest 풍 백엔드, ORM 없이 SQL 직접 작성 (Render Postgres 운영, Neon 원본 임시 보존)
+- `src/api` — Nest/Nest 풍 백엔드, ORM 없이 SQL 직접 작성 (Render Postgres)
 - `src/web` — Vite + React 프런트엔드 (Vercel), Capacitor로 iOS·Android 패키징
 
 ## 토큰 비용이 큰 작업
@@ -40,7 +40,7 @@
 - 각 worktree 루트의 `.env.render`는 위 공용 파일을 가리키는 gitignore 대상 심볼릭 링크다. 링크가 없으면 공용 파일을 직접 불러온다.
 - 셸에서 사용할 때는 `set -a; source .env.render; set +a`를 실행한다. 링크가 없는 새 worktree에서는 `set -a; source "$(git rev-parse --git-common-dir)/render-db.env"; set +a`를 실행한다.
 - 로컬 도구와 GitHub Actions에는 외부 연결 문자열인 `DATABASE_URL`, `DATABASE_URL_PROD`, `DATABASE_URL_DEV`를 사용한다. `RENDER_DATABASE_URL_*_INTERNAL`은 Render 서비스 내부에서만 사용한다.
-- 접속 문자열을 로그나 응답에 출력하지 않는다. Neon 원본은 후속 차분 반영과 검증이 끝날 때까지 삭제하지 않는다.
+- 접속 문자열을 로그나 응답에 출력하지 않는다. 폐기된 Neon 접속 문자열은 다시 사용하지 않는다.
 
 ## 커밋 규칙
 
