@@ -61,6 +61,7 @@ BEGIN
     FROM pg_constraint
     WHERE conname = 'room_equipment_pkey'
       AND conrelid = 'room_equipment'::regclass
+      AND pg_get_constraintdef(oid) <> 'PRIMARY KEY (id)'
   ) THEN
     ALTER TABLE room_equipment DROP CONSTRAINT room_equipment_pkey;
   END IF;
@@ -79,6 +80,7 @@ BEGIN
     FROM pg_constraint
     WHERE conname = 'studio_equipment_pkey'
       AND conrelid = 'studio_equipment'::regclass
+      AND pg_get_constraintdef(oid) <> 'PRIMARY KEY (id)'
   ) THEN
     ALTER TABLE studio_equipment DROP CONSTRAINT studio_equipment_pkey;
   END IF;
