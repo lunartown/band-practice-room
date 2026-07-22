@@ -5,8 +5,8 @@ name: Scrape availability
 # - 정기 실행(schedule): 스크랩만 → slots 갱신 (시드는 slots 를 TRUNCATE 하므로 제외)
 #
 # 사전 준비: 저장소 Settings → Secrets and variables → Actions 에
-#   DATABASE_URL = Neon 연결 문자열(?sslmode=require) 등록
-#   DATABASE_URL_DEV = Neon dev branch 연결 문자열(?sslmode=require) 등록
+#   DATABASE_URL = Render Postgres prod 외부 연결 문자열 등록
+#   DATABASE_URL_DEV = Render Postgres dev 외부 연결 문자열 등록
 
 on:
   workflow_dispatch:
