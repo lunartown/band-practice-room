@@ -68,20 +68,6 @@ const BUSINESS_IMAGES_QUERY = `query business($input: BusinessParams) {
   business(input: $input) { businessResources { order resourceUrl } }
 }`;
 
-const BUSINESS_DETAIL_QUERY = `query business($input: BusinessParams) {
-  business(input: $input) { businessId businessDisplayName name desc businessAmenityJson }
-}`;
-
-const BIZ_ITEM_DETAIL_QUERY = `query bizItem($input: BizItemParams) {
-  bizItem(input: $input) {
-    bizItemId
-    name
-    desc
-    extraDescJson
-    bookingPrecautionJson { title desc }
-  }
-}`;
-
 export type ReviewKeyword = { keyword: string; count: number };
 
 export type NaverReviewStats = {
@@ -150,70 +136,6 @@ export async function fetchBusinessImages(params: {
 }
 
 export type NaverBizItem = { bizItemId: string; name: string; bookingTimeUnitCode: string };
-
-export type NaverBusinessDetail = {
-  businessId: string;
-  businessDisplayName: string | null;
-  name: string | null;
-  desc: string | null;
-  businessAmenityJson: unknown;
-};
-
-/** 비즈니스 소개 텍스트. 장비가 공용 안내로 쓰인 경우 여기서 추출한다. */
-export async function fetchBusinessDetail(params: {
-  businessId: string;
-  businessTypeId: number;
-}): Promise<NaverBusinessDetail | null> {
-  const data = await naverGraphql<{ business: NaverBusinessDetail | null }>({
-    operationName: 'business',
-    query: BUSINESS_DETAIL_QUERY,
-    referer: bookingReferer(params.businessTypeId, params.businessId),
-    variables: {
-      input: {
-        businessId: params.businessId,
-        lang: 'ko',
-        projections: 'BUSINESS_DETAIL,RESOURCE',
-      },
-    },
-  });
-  return data.business;
-}
-
-export type NaverBizItemDetail = {
-  bizItemId: string;
-  name: string;
-  desc: string | null;
-  extraDescJson:
-    | Array<{
-        title?: string | null;
-        context?: string | null;
-        images?: unknown[];
-      }>
-    | null;
-  bookingPrecautionJson: Array<{ title: string | null; desc: string | null }> | null;
-};
-
-/** 방 상세 텍스트. desc/extraDescJson 에 악기 SET·장비 리스트가 들어온다. */
-export async function fetchBizItemDetail(params: {
-  businessId: string;
-  businessTypeId: number;
-  bizItemId: string;
-}): Promise<NaverBizItemDetail | null> {
-  const data = await naverGraphql<{ bizItem: NaverBizItemDetail | null }>({
-    operationName: 'bizItem',
-    query: BIZ_ITEM_DETAIL_QUERY,
-    referer: `${bookingReferer(params.businessTypeId, params.businessId)}/items/${params.bizItemId}`,
-    variables: {
-      input: {
-        businessId: params.businessId,
-        bizItemId: params.bizItemId,
-        lang: 'ko',
-        projections: 'RESOURCE,MIN_MAX_PRICE,BIZ_ITEM_DETAIL',
-      },
-    },
-  });
-  return data.bizItem;
-}
 
 /** 비즈니스의 방(bizItem) 목록. 매핑 부트스트랩/점검용. */
 export async function fetchBizItems(params: {
