@@ -13,6 +13,7 @@
     "admin:hash-password": "tsx src/admin/hash-password.ts",
     "start": "tsx src/main.ts",
     "test": "jest --runInBand",
+    "test:equipment-ops": "RUN_OPS_DB_TESTS=1 jest --runInBand src/database/equipment-ops.spec.ts",
     "typecheck": "tsc --noEmit -p tsconfig.json"
   },
   "dependencies": {
