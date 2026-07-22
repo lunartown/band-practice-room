@@ -27,9 +27,26 @@ describe('CatalogService', () => {
           rating: '4.8',
           review_count: 123,
           review_keywords: [{ keyword: '방음', count: 30 }],
+          equipment: [{ id: 9, slug: 'microphone', name: '마이크', quantity: 4, note: '유선' }],
           rooms: [
-            { id: 10, name: 'A룸', price_per_hour: 22000, capacity_min: 2, capacity_max: 8 },
-            { id: 11, name: 'B룸', price_per_hour: null, capacity_min: null, capacity_max: null },
+            {
+              id: 10,
+              name: 'A룸',
+              price_per_hour: 22000,
+              capacity_min: 2,
+              capacity_max: 8,
+              equipment: [
+                { id: 1, slug: 'drum-kit', name: '드럼 세트', quantity: 1, note: null },
+              ],
+            },
+            {
+              id: 11,
+              name: 'B룸',
+              price_per_hour: null,
+              capacity_min: null,
+              capacity_max: null,
+              equipment: [],
+            },
           ],
           has_online_booking: true,
         },
@@ -51,9 +68,24 @@ describe('CatalogService', () => {
           rating: 4.8,
           reviewCount: 123,
           reviewKeywords: [{ keyword: '방음', count: 30 }],
+          equipment: [{ id: 9, slug: 'microphone', name: '마이크', quantity: 4, note: '유선' }],
           rooms: [
-            { id: 10, name: 'A룸', pricePerHour: 22000, capacityMin: 2, capacityMax: 8 },
-            { id: 11, name: 'B룸', pricePerHour: null, capacityMin: null, capacityMax: null },
+            {
+              id: 10,
+              name: 'A룸',
+              pricePerHour: 22000,
+              capacityMin: 2,
+              capacityMax: 8,
+              equipment: [{ id: 1, slug: 'drum-kit', name: '드럼 세트', quantity: 1, note: null }],
+            },
+            {
+              id: 11,
+              name: 'B룸',
+              pricePerHour: null,
+              capacityMin: null,
+              capacityMax: null,
+              equipment: [],
+            },
           ],
           hasOnlineBooking: true,
         },
@@ -69,6 +101,56 @@ describe('CatalogService', () => {
 
     await expect(service.getStudios({ areaId: 999 })).rejects.toMatchObject({
       code: 'AREA_NOT_FOUND',
+    });
+  });
+
+  it('maps equipment catalog to response shape', async () => {
+    const service = new CatalogService({
+      findActiveEquipment: async () => [
+        {
+          id: '1',
+          slug: 'drums',
+          name: '드럼',
+          items: [
+            {
+              id: 1,
+              slug: 'drum-kit',
+              name: '드럼 세트',
+              normalized_name: 'drum kit',
+              aliases: ['드럼', '드럼셋'],
+            },
+          ],
+        },
+      ],
+    } as never);
+
+    await expect(service.getEquipment()).resolves.toEqual({
+      categories: [
+        {
+          id: 1,
+          slug: 'drums',
+          name: '드럼',
+          items: [
+            {
+              id: 1,
+              slug: 'drum-kit',
+              name: '드럼 세트',
+              normalizedName: 'drum kit',
+              aliases: ['드럼', '드럼셋'],
+            },
+          ],
+        },
+      ],
+    });
+  });
+
+  it('throws EQUIPMENT_NOT_FOUND when any selected equipment is inactive or missing', async () => {
+    const service = new CatalogService({
+      countActiveEquipmentByIds: async () => 1,
+    } as never);
+
+    await expect(service.assertActiveEquipmentIds([1, 2])).rejects.toMatchObject({
+      code: 'EQUIPMENT_NOT_FOUND',
     });
   });
 });

@@ -24,6 +24,8 @@ export interface Studio {
   reviewKeywords?: ReviewKeyword[];
   /** 온라인(네이버/스페이스클라우드) 예약 소스 보유 여부. false면 전화예약 합주실. */
   hasOnlineBooking?: boolean;
+  /** 합주실 공용 장비. 특정 방 전용 장비는 Room.equipment 에 담긴다. */
+  equipment?: EquipmentAssignment[];
   /** 활성 방 목록. 슬롯이 roomId 만 참조하므로 방 메타를 여기서 받아 조인한다. */
   rooms?: Room[];
 }
@@ -39,6 +41,30 @@ export interface Room {
   pricePerHour: number | null;
   capacityMin?: number | null;
   capacityMax?: number | null;
+  equipment?: EquipmentAssignment[];
+}
+
+export interface EquipmentAssignment {
+  id: number;
+  slug: string;
+  name: string;
+  quantity?: number | null;
+  note?: string | null;
+}
+
+export interface EquipmentItem {
+  id: number;
+  slug: string;
+  name: string;
+  normalizedName: string;
+  aliases: string[];
+}
+
+export interface EquipmentCategory {
+  id: number;
+  slug: string;
+  name: string;
+  items: EquipmentItem[];
 }
 
 /**
@@ -81,6 +107,10 @@ export interface StudiosResponse {
   studios: Studio[];
 }
 
+export interface EquipmentResponse {
+  categories: EquipmentCategory[];
+}
+
 export interface TimeWindow {
   from: string;
   to: string;
@@ -93,6 +123,7 @@ export interface SlotsQuery {
   timeWindows?: TimeWindow[];
   minCapacity?: number;
   minDuration?: number;
+  equipmentIds?: number[];
 }
 
 export interface SlotsResponse {

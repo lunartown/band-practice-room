@@ -23,6 +23,7 @@ export class SlotsController {
     @Query('timeTo') timeToQuery?: string,
     @Query('minCapacity') minCapacityQuery?: string,
     @Query('minDuration') minDurationQuery?: string,
+    @Query('equipmentIds') equipmentIdsQuery?: string | string[],
   ) {
     const dates = parseDates(datesQuery);
     const areaIds = parseOptionalPositiveIntegers(areaIdsQuery, 'areaIds');
@@ -32,6 +33,7 @@ export class SlotsController {
     const timeTo = parseOptionalTime(timeToQuery, 'timeTo');
     const minCapacity = parseOptionalPositiveInteger(minCapacityQuery, 'minCapacity');
     const minDuration = parseOptionalPositiveInteger(minDurationQuery, 'minDuration');
+    const equipmentIds = parseOptionalPositiveIntegers(equipmentIdsQuery, 'equipmentIds');
 
     if (minDuration !== undefined && (minDuration < 1 || minDuration > 4)) {
       throw new ApiError(
@@ -53,6 +55,7 @@ export class SlotsController {
       timeWindows,
       minCapacity,
       minDuration,
+      equipmentIds,
     });
   }
 }

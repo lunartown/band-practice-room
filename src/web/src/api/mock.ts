@@ -1,4 +1,4 @@
-import type { Area, Slot, SlotsQuery, SlotsResponse, StudiosResponse } from './types';
+import type { Area, EquipmentResponse, Slot, SlotsQuery, SlotsResponse, StudiosResponse } from './types';
 
 export const areas: Area[] = [
   { id: 1, slug: 'hongdae', name: '홍대' },
@@ -9,11 +9,48 @@ export const areas: Area[] = [
 ];
 
 const studioList = [
-  { id: 1, name: '그라운드 합주실 홍대 본점', areaId: 1, areaName: '홍대', imageUrl: 'https://picsum.photos/seed/ground-hongdae/120', images: ['https://picsum.photos/seed/ground-hongdae-1/600/400', 'https://picsum.photos/seed/ground-hongdae-2/600/400', 'https://picsum.photos/seed/ground-hongdae-3/600/400', 'https://picsum.photos/seed/ground-hongdae-4/600/400'], rating: 4.7, reviewCount: 213, reviewKeywords: [{ keyword: '시설이 깔끔해요', count: 69 }, { keyword: '가성비가 좋아요', count: 47 }, { keyword: '방음이 잘돼요', count: 40 }], rooms: [{ id: 1, name: 'A룸', pricePerHour: 16000, capacityMin: 2, capacityMax: 6 }, { id: 2, name: '라이브룸', pricePerHour: 20000, capacityMin: 2, capacityMax: 10 }] },
-  { id: 2, name: '그라운드 합주실 합정 1호점', areaId: 2, areaName: '합정', imageUrl: null, rating: 4.5, reviewCount: 88, reviewKeywords: [{ keyword: '친절해요', count: 22 }, { keyword: '스피커 성능이 좋아요', count: 18 }], rooms: [{ id: 5, name: '1관', pricePerHour: 14000, capacityMin: 2, capacityMax: 8 }, { id: 8, name: '2관', pricePerHour: 14000, capacityMin: 2, capacityMax: 6 }] },
-  { id: 3, name: '그루브 합주실', areaId: 3, areaName: '신촌', imageUrl: 'https://picsum.photos/seed/groove/120', images: ['https://picsum.photos/seed/groove-1/600/400', 'https://picsum.photos/seed/groove-2/600/400', 'https://picsum.photos/seed/groove-3/600/400', 'https://picsum.photos/seed/groove-4/600/400', 'https://picsum.photos/seed/groove-5/600/400'], rating: 4.2, reviewCount: 41, reviewKeywords: [{ keyword: '인테리어가 멋져요', count: 12 }], rooms: [{ id: 3, name: '스튜디오 A', pricePerHour: 18000, capacityMin: 2, capacityMax: 4 }, { id: 4, name: '스튜디오 B', pricePerHour: 18000, capacityMin: 2, capacityMax: 4 }] },
-  { id: 4, name: '사운딕트', areaId: 1, areaName: '홍대', imageUrl: null, rating: null, reviewCount: null, reviewKeywords: [], rooms: [{ id: 6, name: '룸1', pricePerHour: 12000, capacityMin: 2, capacityMax: 4 }] },
-  { id: 5, name: '웨이브랩', areaId: 2, areaName: '합정', imageUrl: null, rating: 4.9, reviewCount: 7, reviewKeywords: [], rooms: [{ id: 7, name: 'Room A', pricePerHour: 15000, capacityMin: 2, capacityMax: 6 }] },
+  { id: 1, name: '그라운드 합주실 홍대 본점', areaId: 1, areaName: '홍대', imageUrl: 'https://picsum.photos/seed/ground-hongdae/120', images: ['https://picsum.photos/seed/ground-hongdae-1/600/400', 'https://picsum.photos/seed/ground-hongdae-2/600/400', 'https://picsum.photos/seed/ground-hongdae-3/600/400', 'https://picsum.photos/seed/ground-hongdae-4/600/400'], rating: 4.7, reviewCount: 213, reviewKeywords: [{ keyword: '시설이 깔끔해요', count: 69 }, { keyword: '가성비가 좋아요', count: 47 }, { keyword: '방음이 잘돼요', count: 40 }], equipment: [{ id: 9, slug: 'microphone', name: '마이크', quantity: 4 }], rooms: [{ id: 1, name: 'A룸', pricePerHour: 16000, capacityMin: 2, capacityMax: 6, equipment: [{ id: 1, slug: 'drum-kit', name: '드럼 세트', quantity: 1 }, { id: 4, slug: 'guitar-amp', name: '기타 앰프', quantity: 2 }, { id: 5, slug: 'bass-amp', name: '베이스 앰프', quantity: 1 }] }, { id: 2, name: '라이브룸', pricePerHour: 20000, capacityMin: 2, capacityMax: 10, equipment: [{ id: 1, slug: 'drum-kit', name: '드럼 세트', quantity: 1 }, { id: 4, slug: 'guitar-amp', name: '기타 앰프', quantity: 2 }, { id: 5, slug: 'bass-amp', name: '베이스 앰프', quantity: 1 }, { id: 6, slug: 'keyboard', name: '키보드', quantity: 1 }] }] },
+  { id: 2, name: '그라운드 합주실 합정 1호점', areaId: 2, areaName: '합정', imageUrl: null, rating: 4.5, reviewCount: 88, reviewKeywords: [{ keyword: '친절해요', count: 22 }, { keyword: '스피커 성능이 좋아요', count: 18 }], equipment: [{ id: 9, slug: 'microphone', name: '마이크', quantity: 3 }], rooms: [{ id: 5, name: '1관', pricePerHour: 14000, capacityMin: 2, capacityMax: 8, equipment: [{ id: 1, slug: 'drum-kit', name: '드럼 세트', quantity: 1 }, { id: 4, slug: 'guitar-amp', name: '기타 앰프', quantity: 1 }] }, { id: 8, name: '2관', pricePerHour: 14000, capacityMin: 2, capacityMax: 6, equipment: [{ id: 1, slug: 'drum-kit', name: '드럼 세트', quantity: 1 }] }] },
+  { id: 3, name: '그루브 합주실', areaId: 3, areaName: '신촌', imageUrl: 'https://picsum.photos/seed/groove/120', images: ['https://picsum.photos/seed/groove-1/600/400', 'https://picsum.photos/seed/groove-2/600/400', 'https://picsum.photos/seed/groove-3/600/400', 'https://picsum.photos/seed/groove-4/600/400', 'https://picsum.photos/seed/groove-5/600/400'], rating: 4.2, reviewCount: 41, reviewKeywords: [{ keyword: '인테리어가 멋져요', count: 12 }], equipment: [{ id: 9, slug: 'microphone', name: '마이크', quantity: 2 }], rooms: [{ id: 3, name: '스튜디오 A', pricePerHour: 18000, capacityMin: 2, capacityMax: 4, equipment: [{ id: 1, slug: 'drum-kit', name: '드럼 세트', quantity: 1 }, { id: 5, slug: 'bass-amp', name: '베이스 앰프', quantity: 1 }] }, { id: 4, name: '스튜디오 B', pricePerHour: 18000, capacityMin: 2, capacityMax: 4, equipment: [{ id: 6, slug: 'keyboard', name: '키보드', quantity: 1 }] }] },
+  { id: 4, name: '사운딕트', areaId: 1, areaName: '홍대', imageUrl: null, rating: null, reviewCount: null, reviewKeywords: [], equipment: [], rooms: [{ id: 6, name: '룸1', pricePerHour: 12000, capacityMin: 2, capacityMax: 4, equipment: [{ id: 4, slug: 'guitar-amp', name: '기타 앰프', quantity: 1 }] }] },
+  { id: 5, name: '웨이브랩', areaId: 2, areaName: '합정', imageUrl: null, rating: 4.9, reviewCount: 7, reviewKeywords: [], equipment: [], rooms: [{ id: 7, name: 'Room A', pricePerHour: 15000, capacityMin: 2, capacityMax: 6, equipment: [{ id: 7, slug: 'digital-piano', name: '디지털 피아노', quantity: 1 }] }] },
+];
+
+const equipmentCategories: EquipmentResponse['categories'] = [
+  {
+    id: 1,
+    slug: 'drums',
+    name: '드럼',
+    items: [
+      { id: 1, slug: 'drum-kit', name: '드럼 세트', normalizedName: 'drum kit', aliases: ['드럼', '드럼셋'] },
+    ],
+  },
+  {
+    id: 2,
+    slug: 'amps',
+    name: '앰프',
+    items: [
+      { id: 4, slug: 'guitar-amp', name: '기타 앰프', normalizedName: 'guitar amp', aliases: ['기타앰프'] },
+      { id: 5, slug: 'bass-amp', name: '베이스 앰프', normalizedName: 'bass amp', aliases: ['베이스앰프'] },
+    ],
+  },
+  {
+    id: 3,
+    slug: 'keys',
+    name: '건반',
+    items: [
+      { id: 6, slug: 'keyboard', name: '키보드', normalizedName: 'keyboard', aliases: ['건반'] },
+      { id: 7, slug: 'digital-piano', name: '디지털 피아노', normalizedName: 'digital piano', aliases: ['디피'] },
+    ],
+  },
+  {
+    id: 4,
+    slug: 'pa',
+    name: 'PA/음향',
+    items: [
+      { id: 9, slug: 'microphone', name: '마이크', normalizedName: 'microphone', aliases: ['mic'] },
+    ],
+  },
 ];
 
 function dateStr(offset: number) {
@@ -129,12 +166,17 @@ export async function getMockStudios(areaIds?: number[]): Promise<StudiosRespons
     rating: s.rating,
     reviewCount: s.reviewCount,
     reviewKeywords: s.reviewKeywords,
+    equipment: s.equipment,
     rooms: s.rooms,
     hasOnlineBooking: s.id !== 5, // 5번은 전화예약 데모
   }));
   return {
     studios: areaIds?.length ? all.filter((s) => areaIds.includes(s.primaryAreaId)) : all,
   };
+}
+
+export async function getMockEquipment(): Promise<EquipmentResponse> {
+  return { categories: equipmentCategories };
 }
 
 export async function getMockSlots(query: SlotsQuery): Promise<SlotsResponse> {
@@ -149,6 +191,7 @@ export async function getMockSlots(query: SlotsQuery): Promise<SlotsResponse> {
     if (query.areaIds?.length && !query.areaIds.includes(s.studio.primaryAreaId!)) return false;
     if (query.studioId && s.studio.id !== query.studioId) return false;
     if (query.minCapacity && (s.room.capacityMax ?? 99) < query.minCapacity) return false;
+    if (query.equipmentIds?.length && !roomHasAllEquipment(s.room.id, s.studio.id, query.equipmentIds)) return false;
     if (query.timeWindows?.length) {
       const inWindow = query.timeWindows.some(
         (w) => s.startTime >= w.from && (w.to === '24:00' || s.startTime < w.to),
@@ -163,6 +206,16 @@ export async function getMockSlots(query: SlotsQuery): Promise<SlotsResponse> {
   }
 
   return { dates: effectiveDates, slots: filtered };
+}
+
+function roomHasAllEquipment(roomId: number, studioId: number, equipmentIds: number[]) {
+  const studio = studioList.find((s) => s.id === studioId);
+  const room = studio?.rooms.find((r) => r.id === roomId);
+  const available = new Set([
+    ...(studio?.equipment ?? []).map((equipment) => equipment.id),
+    ...(room?.equipment ?? []).map((equipment) => equipment.id),
+  ]);
+  return equipmentIds.every((equipmentId) => available.has(equipmentId));
 }
 
 function applyMinDuration(slots: Slot[], minDuration: number): Slot[] {
