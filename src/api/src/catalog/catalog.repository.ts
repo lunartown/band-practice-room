@@ -209,13 +209,15 @@ export class CatalogRepository {
                   'slug', ei.slug,
                   'name', ei.name,
                   'quantity', se.quantity,
-                  'note', se.note
+                  'note', COALESCE(em.display_name, se.note)
                 )
-                ORDER BY ec."order" ASC, ei.name ASC, ei.id ASC
+                ORDER BY ec."order" ASC, ei.name ASC, em.display_name ASC NULLS LAST, se.id ASC
               )
               FROM studio_equipment se
               JOIN equipment_items ei ON ei.id = se.equipment_id AND ei.is_active = true
               JOIN equipment_categories ec ON ec.id = ei.category_id
+              LEFT JOIN equipment_models em
+                ON em.id = se.equipment_model_id AND em.is_active = true
               WHERE se.studio_id = s.id
             ),
             '[]'
@@ -240,13 +242,15 @@ export class CatalogRepository {
                           'slug', ei.slug,
                           'name', ei.name,
                           'quantity', re.quantity,
-                          'note', re.note
+                          'note', COALESCE(em.display_name, re.note)
                         )
-                        ORDER BY ec."order" ASC, ei.name ASC, ei.id ASC
+                        ORDER BY ec."order" ASC, ei.name ASC, em.display_name ASC NULLS LAST, re.id ASC
                       )
                       FROM room_equipment re
                       JOIN equipment_items ei ON ei.id = re.equipment_id AND ei.is_active = true
                       JOIN equipment_categories ec ON ec.id = ei.category_id
+                      LEFT JOIN equipment_models em
+                        ON em.id = re.equipment_model_id AND em.is_active = true
                       WHERE re.room_id = r.id
                     ),
                     '[]'
