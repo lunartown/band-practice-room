@@ -202,8 +202,10 @@ function mergeEquipment(
   sharedEquipment: EquipmentAssignment[],
   roomEquipment: EquipmentAssignment[],
 ): EquipmentAssignment[] {
-  const merged = new Map(sharedEquipment.map((equipment) => [equipment.id, equipment]));
-  roomEquipment.forEach((equipment) => merged.set(equipment.id, equipment));
+  const key = (equipment: EquipmentAssignment) =>
+    `${equipment.slug}:${equipment.note ?? ''}:${equipment.quantity ?? ''}`;
+  const merged = new Map(sharedEquipment.map((equipment) => [key(equipment), equipment]));
+  roomEquipment.forEach((equipment) => merged.set(key(equipment), equipment));
   return [...merged.values()];
 }
 
@@ -214,8 +216,8 @@ function EquipmentDetails({ equipment }: { equipment: EquipmentAssignment[] }) {
     <div className="room-equipment" aria-label="장비 정보">
       <div className="room-equipment-title">장비</div>
       <dl>
-        {equipment.map((item) => (
-          <div className="room-equipment-item" key={item.id}>
+        {equipment.map((item, index) => (
+          <div className="room-equipment-item" key={`${item.id}:${item.note ?? ''}:${index}`}>
             <dt>{item.name}</dt>
             <dd>{item.note || (item.quantity ? `${item.quantity}대` : '보유')}</dd>
           </div>
