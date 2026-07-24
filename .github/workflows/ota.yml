@@ -20,10 +20,10 @@ name: OTA deploy (Capgo)
 #     CAPGO_TOKEN = Capgo API 키(All / Upload 권한) 등록
 #     → https://web.capgo.app 의 Account → API keys 에서 발급
 #   - Capgo 앱/채널 생성(최초 1회):
-#     npx @capgo/cli app add com.hapjusil.app
-#     npx @capgo/cli channel add production com.hapjusil.app --default
-#     npx @capgo/cli app add com.hapjusil.app.dev
-#     npx @capgo/cli channel add dev com.hapjusil.app.dev --default
+#     npx --yes --package @capgo/cli@8.28.2 capgo app add com.hapjusil.app
+#     npx --yes --package @capgo/cli@8.28.2 capgo channel add production com.hapjusil.app --default
+#     npx --yes --package @capgo/cli@8.28.2 capgo app add com.hapjusil.app.dev
+#     npx --yes --package @capgo/cli@8.28.2 capgo channel add dev com.hapjusil.app.dev --default
 
 on:
   workflow_dispatch:
@@ -123,8 +123,9 @@ jobs:
           BASE="1.0"
           BUNDLE="$BASE.${{ github.run_number }}"
           echo "Uploading bundle $BUNDLE to $CAPGO_APP_ID / $CAPGO_CHANNEL"
-          npx @capgo/cli@^8 bundle upload \
+          npx --yes --package @capgo/cli@8.28.2 capgo bundle upload "$CAPGO_APP_ID" \
             --apikey "$CAPGO_TOKEN" \
             --channel "$CAPGO_CHANNEL" \
             --bundle "$BUNDLE" \
-            --ignore-metadata-check
+            --ignore-metadata-check \
+            --version-exists-ok
