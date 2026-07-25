@@ -1,10 +1,15 @@
-import { Injectable, OnModuleDestroy } from '@nestjs/common';
+import { Injectable, Logger, OnModuleDestroy } from '@nestjs/common';
 import pg from 'pg';
 
 const { Pool } = pg;
 
 export const defaultDatabaseUrl =
   'postgres://band_practice_room:band_practice_room@localhost:15432/band_practice_room';
+
+function positiveInteger(value: string | undefined, fallback: number): number {
+  const parsed = Number(value);
+  return Number.isInteger(parsed) && parsed > 0 ? parsed : fallback;
+}
 
 // SSL/SCRAM 협상은 코드의 ssl 옵션으로만 제어하고, 연결 문자열의 관련 파라미터는 떼어낸다.
 // 특히 Neon 문자열의 channel_binding=require 는 node-postgres 8.21+ 가 따르는데,
@@ -31,12 +36,26 @@ export function databasePoolConfig(): pg.PoolConfig {
     rawConnectionString.includes('localhost') || rawConnectionString.includes('127.0.0.1');
   const sslDisabled = process.env.DATABASE_SSL === 'false';
   const ssl = !isLocal && !sslDisabled ? { rejectUnauthorized: false } : false;
-  return { connectionString: stripSslConnParams(rawConnectionString), ssl };
+  return {
+    connectionString: stripSslConnParams(rawConnectionString),
+    ssl,
+    max: positiveInteger(process.env.DATABASE_POOL_MAX, 10),
+    connectionTimeoutMillis: positiveInteger(process.env.DATABASE_CONNECTION_TIMEOUT_MS, 5_000),
+    idleTimeoutMillis: positiveInteger(process.env.DATABASE_IDLE_TIMEOUT_MS, 30_000),
+    keepAlive: true,
+  };
 }
 
 @Injectable()
 export class DatabaseService implements OnModuleDestroy {
+  private readonly logger = new Logger(DatabaseService.name);
   private readonly pool = new Pool(databasePoolConfig());
+
+  constructor() {
+    this.pool.on('error', (error) => {
+      this.logger.error(`Database pool error: ${error.message}`, error.stack);
+    });
+  }
 
   query<T extends pg.QueryResultRow = pg.QueryResultRow>(
     text: string,
