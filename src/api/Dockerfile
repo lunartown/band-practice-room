@@ -25,9 +25,8 @@ ENV NODE_ENV=production
 ENV PORT=3000
 EXPOSE 3000
 
-# 기동 시 마이그레이션(멱등) + 비주얼 시드(멱등) 실행 후 서버 시작.
-# 비주얼 시드(003)는 slug 기준 UPDATE 라 TRUNCATE 가 없어 콜드스타트마다 돌려도 안전하다
-# (썸네일·평점이 배포만으로 반영됨). 반면 전체 시드(db:seed)는 002 가 studios·slots 까지
-# TRUNCATE 하므로 콜드스타트마다 돌리면 안 되고, 시드/스크랩은 GitHub Actions
-# 워크플로(.github/workflows/scrape.yml)에서 담당한다.
-CMD ["sh", "-c", "npm run db:migrate && npm run db:seed:visuals && npm run start"]
+# 마이그레이션은 Render의 preDeployCommand에서 배포 전에 실행한다.
+# 컨테이너가 시작될 때 DB 작업을 기다리지 않아 재시작 중에도 포트를 빠르게 연다.
+# 전체 시드(db:seed)는 studios·slots를 TRUNCATE 하므로 콜드스타트마다 실행하지 않고,
+# 비주얼 시드와 함께 GitHub Actions 또는 별도 운영 작업으로 실행한다.
+CMD ["npm", "run", "start"]
