@@ -5,6 +5,7 @@ import {
   EquipmentAssignmentRow,
   EquipmentCategoryRow,
   EquipmentItemRow,
+  EquipmentModelRow,
   StudioRow,
 } from './catalog.repository.js';
 
@@ -114,22 +115,48 @@ export class CatalogService {
   }
 
   private toEquipmentItemResponse(item: EquipmentItemRow) {
+    const models = (item.models ?? []).map((model) => this.toEquipmentModelResponse(model));
     return {
       id: Number(item.id),
       slug: item.slug,
       name: item.name,
       normalizedName: item.normalized_name,
       aliases: item.aliases ?? [],
+      ...(models.length > 0 ? { models } : {}),
+    };
+  }
+
+  private toEquipmentModelResponse(model: EquipmentModelRow) {
+    return {
+      id: Number(model.id),
+      slug: model.slug,
+      brand: model.brand,
+      model: model.model,
+      variant: model.variant,
+      displayName: model.display_name,
+      normalizedName: model.normalized_name,
+      aliases: model.aliases ?? [],
     };
   }
 
   private toEquipmentAssignmentResponse(equipment: EquipmentAssignmentRow) {
-    return {
+    const response = {
       id: Number(equipment.id),
       slug: equipment.slug,
       name: equipment.name,
       quantity: equipment.quantity ?? null,
       note: equipment.note ?? null,
+    };
+    if (equipment.model_id == null) return response;
+    return {
+      ...response,
+      modelId: Number(equipment.model_id),
+      brand: equipment.brand ?? null,
+      model: equipment.model ?? null,
+      variant: equipment.variant ?? null,
+      displayName: equipment.display_name ?? null,
+      normalizedName: equipment.normalized_name ?? null,
+      aliases: equipment.aliases ?? [],
     };
   }
 }
