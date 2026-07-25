@@ -13,6 +13,18 @@ export interface EquipmentItemRow {
   name: string;
   normalized_name: string;
   aliases: string[];
+  models: EquipmentModelRow[];
+}
+
+export interface EquipmentModelRow {
+  id: number | string;
+  slug: string;
+  brand: string | null;
+  model: string;
+  variant: string | null;
+  display_name: string;
+  normalized_name: string;
+  aliases: string[];
 }
 
 export interface EquipmentCategoryRow {
@@ -28,6 +40,13 @@ export interface EquipmentAssignmentRow {
   name: string;
   quantity: number | null;
   note: string | null;
+  model_id: number | string | null;
+  brand: string | null;
+  model: string | null;
+  variant: string | null;
+  display_name: string | null;
+  normalized_name: string | null;
+  aliases: string[];
 }
 
 export interface StudioRow {
@@ -134,6 +153,29 @@ export class CatalogRepository {
                     WHERE ea.equipment_id = ei.id
                   ),
                   '[]'
+                ),
+                'models', COALESCE(
+                  (
+                    SELECT json_agg(
+                      json_build_object(
+                        'id', em.id,
+                        'slug', em.slug,
+                        'brand', em.brand,
+                        'model', em.model,
+                        'variant', em.variant,
+                        'display_name', em.display_name,
+                        'normalized_name', em.normalized_name,
+                        'aliases', COALESCE(
+                          (SELECT json_agg(ema.alias ORDER BY ema.alias ASC)
+                           FROM equipment_model_aliases ema
+                           WHERE ema.equipment_model_id = em.id), '[]'
+                        )
+                      ) ORDER BY em.display_name ASC
+                    )
+                    FROM equipment_models em
+                    WHERE em.equipment_id = ei.id AND em.is_active = true
+                  ),
+                  '[]'
                 )
               )
               ORDER BY ei.name ASC, ei.id ASC
@@ -209,7 +251,18 @@ export class CatalogRepository {
                   'slug', ei.slug,
                   'name', ei.name,
                   'quantity', se.quantity,
-                  'note', COALESCE(em.display_name, se.note)
+                  'note', COALESCE(em.display_name, se.note),
+                  'model_id', em.id,
+                  'brand', em.brand,
+                  'model', em.model,
+                  'variant', em.variant,
+                  'display_name', em.display_name,
+                  'normalized_name', em.normalized_name,
+                  'aliases', COALESCE(
+                    (SELECT json_agg(ema.alias ORDER BY ema.alias ASC)
+                     FROM equipment_model_aliases ema
+                     WHERE ema.equipment_model_id = em.id), '[]'
+                  )
                 )
                 ORDER BY ec."order" ASC, ei.name ASC, em.display_name ASC NULLS LAST, se.id ASC
               )
@@ -241,8 +294,19 @@ export class CatalogRepository {
                           'id', ei.id,
                           'slug', ei.slug,
                           'name', ei.name,
-                          'quantity', re.quantity,
-                          'note', COALESCE(em.display_name, re.note)
+                  'quantity', re.quantity,
+                          'note', COALESCE(em.display_name, re.note),
+                          'model_id', em.id,
+                          'brand', em.brand,
+                          'model', em.model,
+                          'variant', em.variant,
+                          'display_name', em.display_name,
+                          'normalized_name', em.normalized_name,
+                          'aliases', COALESCE(
+                            (SELECT json_agg(ema.alias ORDER BY ema.alias ASC)
+                             FROM equipment_model_aliases ema
+                             WHERE ema.equipment_model_id = em.id), '[]'
+                          )
                         )
                         ORDER BY ec."order" ASC, ei.name ASC, em.display_name ASC NULLS LAST, re.id ASC
                       )
