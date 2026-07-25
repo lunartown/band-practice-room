@@ -50,12 +50,31 @@ export interface EquipmentAssignment {
   name: string;
   quantity?: number | null;
   note?: string | null;
+  modelId?: number | null;
+  brand?: string | null;
+  model?: string | null;
+  variant?: string | null;
+  displayName?: string | null;
+  normalizedName?: string | null;
+  aliases?: string[];
 }
 
 export interface EquipmentItem {
   id: number;
   slug: string;
   name: string;
+  normalizedName: string;
+  aliases: string[];
+  models?: EquipmentModel[];
+}
+
+export interface EquipmentModel {
+  id: number;
+  slug: string;
+  brand: string | null;
+  model: string;
+  variant: string | null;
+  displayName: string;
   normalizedName: string;
   aliases: string[];
 }
