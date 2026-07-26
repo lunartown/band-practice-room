@@ -3,6 +3,7 @@ import { dateLabel } from '../lib/date';
 import type { AlertDraft } from '../lib/alerts';
 import type { FilterState } from './FilterSheet';
 import { timeWindowLabel } from './TimeWindowPicker';
+import { BottomSheet } from './BottomSheet';
 
 interface AlertConfirmSheetProps {
   draft: AlertDraft;
@@ -24,42 +25,40 @@ export function AlertConfirmSheet({ draft, filters, areas, onClose, onConfirm }:
   ];
 
   return (
-    <div className="sheet-layer sheet-layer--safe">
-      <div className="sheet-dim" aria-hidden="true" onClick={onClose} />
-      <section className="filter-sheet alert-sheet" role="dialog" aria-modal="true" aria-label="빈 자리 알림 조건">
-        <div className="sheet-drag">
-          <div className="sheet-handle" />
-          <header>
-            <h2>빈 자리 알림</h2>
-            <button type="button" onClick={onClose}>닫기</button>
-          </header>
-        </div>
-
-        <div className="sheet-body">
-          <div className="alert-summary">
-            <BellIcon />
-            <div>
-              <strong>{headline}</strong>
-              <span>아래 조건에 맞는 빈 시간을 확인해요</span>
-            </div>
-          </div>
-
-          <dl className="alert-condition-list">
-            {rows.map((row) => (
-              <div key={row.label} className="alert-condition-row">
-                <dt>{row.label}</dt>
-                <dd>{row.value}</dd>
-              </div>
-            ))}
-          </dl>
-        </div>
-
+    <BottomSheet
+      ariaLabel="빈 자리 알림 조건"
+      sheetClassName="alert-sheet"
+      onClose={onClose}
+      header={({ requestClose }) => (
+        <header>
+          <h2>빈 자리 알림</h2>
+          <button type="button" onClick={requestClose}>닫기</button>
+        </header>
+      )}
+      footer={({ requestClose }) => (
         <footer>
-          <button type="button" className="secondary" onClick={onClose}>취소</button>
+          <button type="button" className="secondary" onClick={requestClose}>취소</button>
           <button type="button" className="primary" onClick={onConfirm}>등록</button>
         </footer>
-      </section>
-    </div>
+      )}
+    >
+      <div className="alert-summary">
+        <BellIcon />
+        <div>
+          <strong>{headline}</strong>
+          <span>아래 조건에 맞는 빈 시간을 확인해요</span>
+        </div>
+      </div>
+
+      <dl className="alert-condition-list">
+        {rows.map((row) => (
+          <div key={row.label} className="alert-condition-row">
+            <dt>{row.label}</dt>
+            <dd>{row.value}</dd>
+          </div>
+        ))}
+      </dl>
+    </BottomSheet>
   );
 }
 
