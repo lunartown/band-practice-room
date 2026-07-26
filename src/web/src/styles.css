@@ -184,6 +184,35 @@ button {
   letter-spacing: 0;
 }
 
+.area-title-button {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-px2);
+  min-width: 0;
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  text-align: left;
+  color: inherit;
+}
+
+.area-title-button h1 {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.area-title-button svg {
+  flex: 0 0 auto;
+  color: var(--text-3);
+}
+
+.area-title-accent {
+  color: var(--accent-strong);
+}
+
 .sync-status {
   display: flex;
   align-items: center;
@@ -2178,6 +2207,42 @@ button {
   background: var(--gray-200);
   color: var(--text-disabled);
   cursor: default;
+}
+
+/* ============================================================
+   Area sheet
+   ============================================================ */
+.area-sheet {
+  height: auto;
+  max-height: 75%;
+}
+
+.area-sheet-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.area-sheet-row {
+  width: 100%;
+  min-height: 52px;
+  padding: var(--sp-3) var(--sp-1);
+  border-bottom: 1px solid var(--border-subtle);
+  background: transparent;
+  text-align: left;
+  color: var(--text-1);
+  font-size: var(--fs-lg);
+}
+
+.area-sheet-row:last-child {
+  border-bottom: none;
+}
+
+.area-sheet-row:active {
+  background: var(--surface-sunken);
+}
+
+.area-sheet-row.selected {
+  font-weight: var(--fw-bold);
 }
 
 /* ============================================================

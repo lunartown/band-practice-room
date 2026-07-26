@@ -11,6 +11,7 @@ import { CalendarPicker } from './components/CalendarPicker';
 import { TimeWindowPicker, timeWindowLabel } from './components/TimeWindowPicker';
 import { Popover } from './components/Popover';
 import { OpenScreen } from './components/OpenScreen';
+import { AreaSheet } from './components/AreaSheet';
 import { MenuSheet } from './components/MenuSheet';
 import { AlertConfirmSheet } from './components/AlertConfirmSheet';
 import { AlertsScreen } from './components/AlertsScreen';
@@ -45,8 +46,8 @@ import {
 import { useFavorites } from './lib/useFavorites';
 import { usePullToRefresh } from './lib/usePullToRefresh';
 
-type PopoverKind = 'time' | 'date' | 'area' | 'sort';
-const POP_WIDTH: Record<PopoverKind, number> = { time: 320, date: 340, area: 220, sort: 180 };
+type PopoverKind = 'time' | 'date' | 'sort';
+const POP_WIDTH: Record<PopoverKind, number> = { time: 320, date: 340, sort: 180 };
 const SORT_OPTIONS: { value: StudioSortOption; label: string }[] = [
   { value: 'popular', label: '인기순' },
   { value: 'name_asc', label: '이름순' },
@@ -63,6 +64,7 @@ interface NativeBackState {
   alertDraftOpen: boolean;
   isMenuOpen: boolean;
   isFilterOpen: boolean;
+  isAreaSheetOpen: boolean;
   popoverOpen: boolean;
   isStudioSearchOpen: boolean;
   isAlertsOpen: boolean;
@@ -82,6 +84,7 @@ export function App() {
   // 콜드스타트나 오랜만의 방문은 오픈 화면 + 기본 필터로 다시 시작한다.
   const [entered, setEntered] = useState(savedPrefs?.fresh ?? false);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [isAreaSheetOpen, setIsAreaSheetOpen] = useState(false);
   const [isStudioSearchOpen, setIsStudioSearchOpen] = useState(false);
   const [isAlertsOpen, setIsAlertsOpen] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -105,6 +108,7 @@ export function App() {
     alertDraftOpen: false,
     isMenuOpen: false,
     isFilterOpen: false,
+    isAreaSheetOpen: false,
     popoverOpen: false,
     isStudioSearchOpen: false,
     isAlertsOpen: false,
@@ -298,6 +302,17 @@ export function App() {
     setIsStudioSearchOpen(true);
   }
 
+  function openAreaSheet() {
+    setPopover(null);
+    setIsFilterOpen(false);
+    setIsMenuOpen(false);
+    setIsAreaSheetOpen(true);
+  }
+
+  function selectArea(areaId: number | null) {
+    setFilters((f) => ({ ...f, areaIds: areaId == null ? [] : [areaId] }));
+  }
+
   function openAlertsScreen() {
     setPopover(null);
     setIsFilterOpen(false);
@@ -488,6 +503,8 @@ export function App() {
     () => new Map(areas.map((area) => [area.id, area.name])),
     [areas],
   );
+  const selectedAreaName =
+    filters.areaIds.length > 0 ? areaNameById.get(filters.areaIds[0]) ?? '전체 지역' : '전체 지역';
   // 빈자리 검색의 합주실 선택 목록엔 온라인 예약 가능한 곳만 노출한다.
   // 전화예약 등 슬롯이 영영 안 잡히는 곳은 추후 별도 카탈로그 검색에서 다룬다.
   const bookableStudios = useMemo(
@@ -532,7 +549,6 @@ export function App() {
   // 기본값에서 바꾼(지정한) 경우만 활성으로 표시한다.
   const timeActive = filters.timeWindows.length > 0;
   const dateActive = filters.dates.length > 0;
-  const areaActive = filters.areaIds.length > 0;
   const studioActive = filters.studioIds.length > 0;
   const sheetActive =
     filters.minDuration !== defaultFilters.minDuration || filters.people !== defaultFilters.people;
@@ -544,6 +560,7 @@ export function App() {
     alertDraftOpen: alertDraft !== null,
     isMenuOpen,
     isFilterOpen,
+    isAreaSheetOpen,
     popoverOpen: popover !== null,
     isStudioSearchOpen,
     isAlertsOpen,
@@ -613,6 +630,10 @@ export function App() {
       }
       if (state.isFilterOpen) {
         setIsFilterOpen(false);
+        return;
+      }
+      if (state.isAreaSheetOpen) {
+        setIsAreaSheetOpen(false);
         return;
       }
       if (state.popoverOpen) {
@@ -770,7 +791,12 @@ export function App() {
                   >
                     <MenuIcon />
                   </button>
-                  <h1>예약 가능 시간</h1>
+                  <button type="button" className="area-title-button" aria-haspopup="dialog" onClick={openAreaSheet}>
+                    <h1>
+                      <span className="area-title-accent">{selectedAreaName}</span> 합주실
+                    </h1>
+                    <ChevronIcon />
+                  </button>
                 </div>
                 <div className="top-bar-right">
                   <div className="sync-status">
@@ -802,7 +828,6 @@ export function App() {
             <div className={`chip-row${studioActive ? ' has-studio-chip' : ''}`}>
               <button className={`chip${timeActive ? ' active' : ''}${popover?.kind === 'time' ? ' open' : ''}`} aria-pressed={timeActive} onClick={(e) => openPopover('time', e)}><span>{timeWindowLabel(filters.timeWindows)}</span><ChevronIcon /></button>
               <button className={`chip${dateActive ? ' active' : ''}${popover?.kind === 'date' ? ' open' : ''}`} aria-pressed={dateActive} onClick={(e) => openPopover('date', e)}><span>{buildDateChipLabel(filters.dates)}</span><ChevronIcon /></button>
-              <button className={`chip${areaActive ? ' active' : ''}${popover?.kind === 'area' ? ' open' : ''}`} aria-pressed={areaActive} onClick={(e) => openPopover('area', e)}><span>{areaChipLabel}</span><ChevronIcon /></button>
               <div className="chip-actions">
                 <button className={`filter-button${sheetActive ? ' active' : ''}`} aria-pressed={sheetActive} aria-label="필터" onClick={() => setIsFilterOpen(true)}>
                   <FilterIcon />
@@ -957,40 +982,6 @@ export function App() {
               />
             )}
 
-            {popover.kind === 'area' && (
-              <>
-                <button
-                  role="menuitemradio"
-                  aria-checked={filters.areaIds.length === 0}
-                  className={`popover-option${filters.areaIds.length === 0 ? ' selected' : ''}`}
-                  onClick={() => setFilters((f) => ({ ...f, areaIds: [] }))}
-                >
-                  <span>전체 지역</span>
-                  {filters.areaIds.length === 0 && <span className="pop-check">✓</span>}
-                </button>
-                {areas.map((area) => {
-                  const on = filters.areaIds.includes(area.id);
-                  return (
-                    <button
-                      key={area.id}
-                      role="menuitemcheckbox"
-                      aria-checked={on}
-                      className={`popover-option${on ? ' selected' : ''}`}
-                      onClick={() =>
-                        setFilters((f) => ({
-                          ...f,
-                          areaIds: on ? f.areaIds.filter((x) => x !== area.id) : [...f.areaIds, area.id],
-                        }))
-                      }
-                    >
-                      <span>{area.name}</span>
-                      {on && <span className="pop-check">✓</span>}
-                    </button>
-                  );
-                })}
-              </>
-            )}
-
             {popover.kind === 'date' && (
               <CalendarPicker
                 selected={filters.dates}
@@ -1022,11 +1013,19 @@ export function App() {
 
         {isFilterOpen && (
           <FilterSheet
-            areas={areas}
             filters={filters}
             resultCount={totalStudios}
             onClose={() => setIsFilterOpen(false)}
             onChange={setFilters}
+          />
+        )}
+
+        {isAreaSheetOpen && (
+          <AreaSheet
+            areas={areas}
+            selectedAreaId={filters.areaIds[0] ?? null}
+            onClose={() => setIsAreaSheetOpen(false)}
+            onSelect={selectArea}
           />
         )}
 

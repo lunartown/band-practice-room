@@ -1,9 +1,6 @@
-import { useEffect, useRef, useState } from 'react';
-import type { Area, TimeWindow } from '../api/types';
+import type { TimeWindow } from '../api/types';
 import { CalendarPicker } from './CalendarPicker';
-
-const DISMISS_THRESHOLD = 110; // 이 거리 이상 아래로 끌면 닫는다
-const CLOSE_DURATION_MS = 260;
+import { BottomSheet } from './BottomSheet';
 
 export const DURATION_OPTIONS: { label: string; value: 1 | 2 | 3 | 4 }[] = [
   { label: '1시간', value: 1 },
@@ -31,174 +28,69 @@ export const defaultFilters: FilterState = {
 };
 
 interface FilterSheetProps {
-  areas: Area[];
   filters: FilterState;
   resultCount: number;
   onClose: () => void;
   onChange: (f: FilterState) => void;
 }
 
-export function FilterSheet({ areas, filters, resultCount, onClose, onChange }: FilterSheetProps) {
+export function FilterSheet({ filters, resultCount, onClose, onChange }: FilterSheetProps) {
   const set = (patch: Partial<FilterState>) => onChange({ ...filters, ...patch });
 
-  function toggleArea(id: number) {
-    const next = filters.areaIds.includes(id)
-      ? filters.areaIds.filter((a) => a !== id)
-      : [...filters.areaIds, id];
-    set({ areaIds: next });
-  }
-
-  const [dragY, setDragY] = useState(0);
-  const [dragging, setDragging] = useState(false);
-  const [closing, setClosing] = useState(false);
-  const startY = useRef(0);
-  const closeTimer = useRef<number | null>(null);
-
-  useEffect(() => {
-    return () => {
-      if (closeTimer.current !== null) window.clearTimeout(closeTimer.current);
-    };
-  }, []);
-
-  function requestClose() {
-    if (closing || closeTimer.current !== null) return;
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-      onClose();
-      return;
-    }
-
-    setDragging(false);
-    setClosing(true);
-    closeTimer.current = window.setTimeout(onClose, CLOSE_DURATION_MS + 80);
-  }
-
-  function finishClose(e: React.TransitionEvent<HTMLElement>) {
-    if (!closing || e.target !== e.currentTarget || e.propertyName !== 'transform') return;
-    if (closeTimer.current !== null) window.clearTimeout(closeTimer.current);
-    closeTimer.current = null;
-    onClose();
-  }
-
-  function onDragStart(e: React.PointerEvent) {
-    if (closing) return;
-    if ((e.target as HTMLElement).closest('button')) return; // 초기화 버튼 탭은 드래그로 보지 않음
-    startY.current = e.clientY;
-    setDragging(true);
-    (e.currentTarget as Element).setPointerCapture?.(e.pointerId);
-  }
-
-  function onDragMove(e: React.PointerEvent) {
-    if (!dragging || closing) return;
-    setDragY(Math.max(0, e.clientY - startY.current));
-  }
-
-  function onDragEnd() {
-    if (!dragging) return;
-    setDragging(false);
-    if (dragY > DISMISS_THRESHOLD) requestClose();
-    else setDragY(0);
-  }
-
-  const sheetTransform = closing
-    ? 'translateY(calc(100% + var(--sp-4)))'
-    : dragY
-      ? `translateY(${dragY}px)`
-      : undefined;
-
   return (
-    <div className="sheet-layer sheet-layer--safe">
-      <div
-        className={`sheet-dim filter-dim${closing ? ' closing' : ''}`}
-        aria-hidden="true"
-        onClick={requestClose}
-      />
-      <section
-        className={`filter-sheet filter-sheet-motion${closing ? ' closing' : ''}`}
-        role="dialog"
-        aria-modal="true"
-        aria-label="필터"
-        onTransitionEnd={finishClose}
-        style={{
-          transform: sheetTransform,
-          transition: dragging ? 'none' : undefined,
-        }}
-      >
-        <div
-          className="sheet-drag"
-          onPointerDown={onDragStart}
-          onPointerMove={onDragMove}
-          onPointerUp={onDragEnd}
-          onPointerCancel={onDragEnd}
-        >
-          <div className="sheet-handle" />
-          <header>
-            <h2>필터</h2>
-          </header>
-        </div>
-
-        <div className="sheet-body">
-          {/* 지역 */}
-          <div className="filter-group">
-            <h3>지역</h3>
-            <div className="filter-chips">
-              {areas.map((area) => (
-                <button
-                  key={area.id}
-                  className={filters.areaIds.includes(area.id) ? 'selected' : ''}
-                  onClick={() => toggleArea(area.id)}
-                >
-                  {filters.areaIds.includes(area.id) && <span className="check-icon">✓ </span>}
-                  {area.name}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* 날짜 */}
-          <div className="filter-group">
-            <h3>날짜 <span className="filter-hint">여러 날 선택 가능 · 미선택 시 일주일 내</span></h3>
-            <CalendarPicker
-              selected={filters.dates}
-              onChange={(dates) => set({ dates })}
-            />
-          </div>
-
-          {/* 합주 시간 */}
-          <div className="filter-group">
-            <h3>합주 시간 <span className="filter-hint">연속</span></h3>
-            <div className="filter-chips">
-              {DURATION_OPTIONS.map((opt) => (
-                <button
-                  key={opt.value}
-                  className={filters.minDuration === opt.value ? 'selected' : ''}
-                  onClick={() => set({ minDuration: opt.value })}
-                >
-                  {opt.label}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* 인원 */}
-          <div className="people-control">
-            <span>인원</span>
-            <button onClick={() => set({ people: Math.max(1, filters.people - 1) })}>−</button>
-            <strong>{filters.people}명</strong>
-            <button onClick={() => set({ people: Math.min(10, filters.people + 1) })}>+</button>
-          </div>
-
-        </div>
-
+    <BottomSheet
+      ariaLabel="필터"
+      dimClassName="filter-dim"
+      onClose={onClose}
+      header={() => (
+        <header>
+          <h2>필터</h2>
+        </header>
+      )}
+      footer={({ requestClose }) => (
         <footer>
           <button
             className="secondary"
-            onClick={() => onChange({ ...defaultFilters, studioIds: filters.studioIds })}
+            onClick={() => onChange({ ...defaultFilters, studioIds: filters.studioIds, areaIds: filters.areaIds })}
           >
             초기화
           </button>
           <button className="primary" onClick={requestClose}>결과 {resultCount}곳 보기</button>
         </footer>
-      </section>
-    </div>
+      )}
+    >
+      {/* 날짜 */}
+      <div className="filter-group">
+        <h3>날짜 <span className="filter-hint">여러 날 선택 가능 · 미선택 시 일주일 내</span></h3>
+        <CalendarPicker
+          selected={filters.dates}
+          onChange={(dates) => set({ dates })}
+        />
+      </div>
+
+      {/* 합주 시간 */}
+      <div className="filter-group">
+        <h3>합주 시간 <span className="filter-hint">연속</span></h3>
+        <div className="filter-chips">
+          {DURATION_OPTIONS.map((opt) => (
+            <button
+              key={opt.value}
+              className={filters.minDuration === opt.value ? 'selected' : ''}
+              onClick={() => set({ minDuration: opt.value })}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* 인원 */}
+      <div className="people-control">
+        <span>인원</span>
+        <button onClick={() => set({ people: Math.max(1, filters.people - 1) })}>−</button>
+        <strong>{filters.people}명</strong>
+        <button onClick={() => set({ people: Math.min(10, filters.people + 1) })}>+</button>
+      </div>
+    </BottomSheet>
   );
 }
