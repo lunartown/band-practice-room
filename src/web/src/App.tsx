@@ -1143,7 +1143,6 @@ function EmptyState({
 }) {
   const suggestions: { label: string; apply: () => void }[] = [
     { label: '합주실 해제', apply: () => setFilters((f) => ({ ...f, studioIds: [] })) },
-    { label: '날짜 초기화', apply: () => setFilters((f) => ({ ...f, dates: [] })) },
     { label: '지역 초기화', apply: () => setFilters((f) => ({ ...f, areaIds: [] })) },
     {
       label: `인원 ${filters.people} → ${Math.max(1, filters.people - 1)}명`,
@@ -1152,7 +1151,6 @@ function EmptyState({
     { label: '시간 제한 해제', apply: () => setFilters((f) => ({ ...f, timeWindows: [] })) },
   ].filter((s) => {
     if (s.label === '합주실 해제' && filters.studioIds.length === 0) return false;
-    if (s.label === '날짜 초기화' && filters.dates.length === 0) return false;
     if (s.label === '지역 초기화' && filters.areaIds.length === 0) return false;
     if (s.label.startsWith('인원') && filters.people <= 1) return false;
     if (s.label === '시간 제한 해제' && filters.timeWindows.length === 0) return false;
@@ -1311,12 +1309,7 @@ function RemoveChipIcon() {
 }
 
 function buildConditionChipLabel(filters: FilterState) {
-  const sortedDates = [...filters.dates].sort();
-  const datePart = sortedDates.length === 0
-    ? '날짜'
-    : sortedDates.length === 1
-      ? formatCompactDate(sortedDates[0])
-      : `${formatCompactDate(sortedDates[0])}~${formatCompactDate(sortedDates[sortedDates.length - 1])}`;
+  const datePart = formatCompactDate(filters.dates[0] ?? todayKst());
   const span = contiguousSpan(filters.timeWindows);
   const timePart = filters.timeWindows.length === 0
     ? '시간대'

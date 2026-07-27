@@ -55,12 +55,14 @@ export function loadFilters(): SavedPrefs | null {
     const ttlFresh = typeof parsed.savedAt === 'number' && Date.now() - parsed.savedAt < FRESH_TTL_MS;
     if (!ttlFresh) return null;
 
-    // 저장된 날짜 중 이미 지난 날은 버린다. 며칠 전 고른 날짜를 그대로 복원하면
+    // 저장된 날짜가 이미 지났으면 버린다. 며칠 전 고른 날짜를 그대로 복원하면
     // API가 과거 날짜를 거부(INVALID_DATE)해 재방문자가 에러 화면에 갇힌다.
+    // 유효한 저장 날짜가 없으면 오늘로 되돌린다(날짜는 항상 하나 선택돼 있어야 한다).
     const today = todayKst();
-    const dates = Array.isArray(f.dates)
+    const validSaved = Array.isArray(f.dates)
       ? f.dates.filter((d) => typeof d === 'string' && d >= today)
-      : defaultFilters.dates;
+      : [];
+    const dates = validSaved.length > 0 ? [validSaved[0]] : [today];
     // 저장 구조가 바뀌어도 깨지지 않게 기본값 위에 덮어쓴다.
     const filters = {
       ...defaultFilters,
