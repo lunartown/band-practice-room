@@ -2,7 +2,7 @@ import { memo, useEffect, useRef, useState } from 'react';
 import type { EquipmentAssignment, Studio } from '../api/types';
 import type { AvailabilityChip, RoomAvailability, StudioAvailability } from '../lib/availability';
 import { toReviewBadges } from '../lib/reviewKeywords';
-import { STUDIO_FALLBACK_IMAGE_URL, galleryImageUrl } from '../lib/imageUrl';
+import { STUDIO_FALLBACK_IMAGE_URL, galleryImageUrl, thumbnailUrl } from '../lib/imageUrl';
 import { useFavorite } from '../lib/useFavorites';
 import { toggleFavorite } from '../lib/favorites';
 import { shareStudio } from '../lib/share';
@@ -71,6 +71,59 @@ function HeartIcon({ filled }: { filled: boolean }) {
   );
 }
 
+function StudioAvatar({ studio }: { studio: Pick<Studio, 'imageUrl'> }) {
+  const { imageUrl } = studio;
+  const [imgFailed, setImgFailed] = useState(false);
+  const [loadedSrc, setLoadedSrc] = useState<string | null>(null);
+  const [useOriginal, setUseOriginal] = useState(false);
+  const resized = thumbnailUrl(imageUrl);
+
+  useEffect(() => {
+    setImgFailed(false);
+    setLoadedSrc(null);
+    setUseOriginal(false);
+  }, [imageUrl]);
+
+  const sourceImgSrc = !useOriginal && resized ? resized : imageUrl ?? null;
+  const showSourceImg = Boolean(sourceImgSrc) && !imgFailed;
+  const showFallback = !showSourceImg || loadedSrc !== sourceImgSrc;
+
+  const handleImgError = () => {
+    setLoadedSrc(null);
+    if (!useOriginal && resized && resized !== imageUrl) setUseOriginal(true);
+    else setImgFailed(true);
+  };
+
+  const markLoadedIfComplete = (img: HTMLImageElement | null) => {
+    if (img && img.complete && img.naturalWidth > 0) {
+      setLoadedSrc(img.getAttribute('src'));
+    }
+  };
+
+  return (
+    <div className={`studio-avatar${showFallback ? ' is-fallback' : ''}`} aria-hidden>
+      {showFallback && (
+        <span
+          className="studio-fallback-image"
+          style={{ backgroundImage: `url(${STUDIO_FALLBACK_IMAGE_URL})` }}
+        />
+      )}
+      {showSourceImg && sourceImgSrc ? (
+        <img
+          ref={markLoadedIfComplete}
+          src={sourceImgSrc}
+          alt=""
+          loading="lazy"
+          referrerPolicy="no-referrer"
+          style={{ opacity: loadedSrc === sourceImgSrc ? 1 : 0 }}
+          onLoad={(event) => setLoadedSrc(event.currentTarget.getAttribute('src'))}
+          onError={handleImgError}
+        />
+      ) : null}
+    </div>
+  );
+}
+
 // 갤러리 사진 한 장. 리사이즈 URL → 실패 시 원본 → 그래도 실패면 숨김(self-healing).
 // referrerPolicy="no-referrer" 로 외부 CDN 의 핫링크 보호에 걸리지 않게 한다.
 function StudioPhoto({
@@ -128,12 +181,10 @@ function StudioPhoto({
   );
 }
 
-// 카드 폭을 채우는 1장 단위 캐러셀. 실제 갤러리가 없으면 커버, 커버도 없으면
-// 로컬 기본 이미지를 쓴다. 가로 드래그 직후 상위 예약 링크가 열리지 않게 막는다.
-function StudioPhotos({ studio }: { studio: Pick<Studio, 'imageUrl' | 'images' | 'name'> }) {
-  const { imageUrl, images, name } = studio;
-  const sourceUrls = [...new Set((images?.length ? images : imageUrl ? [imageUrl] : [])
-    .filter((url): url is string => Boolean(url)))];
+// 카드 폭을 채우는 1장 단위 캐러셀. 합주실 로고(imageUrl)와 섞지 않고 실제
+// 갤러리 사진(images)만 보여준다. 가로 드래그 직후 상위 예약 링크가 열리지 않게 막는다.
+function StudioPhotos({ images, name }: { images?: string[]; name: string }) {
+  const sourceUrls = [...new Set((images ?? []).filter((url): url is string => Boolean(url)))];
   const sourceKey = sourceUrls.join('\n');
   const [failedUrls, setFailedUrls] = useState<Set<string>>(() => new Set());
   const [activeIndex, setActiveIndex] = useState(0);
@@ -146,14 +197,15 @@ function StudioPhotos({ studio }: { studio: Pick<Studio, 'imageUrl' | 'images' |
     setActiveIndex(0);
   }, [sourceKey]);
 
-  const availableUrls = sourceUrls.filter((url) => !failedUrls.has(url));
-  const displayUrls = availableUrls.length > 0 ? availableUrls : [STUDIO_FALLBACK_IMAGE_URL];
+  const displayUrls = sourceUrls.filter((url) => !failedUrls.has(url));
 
   useEffect(() => {
     if (activeIndex >= displayUrls.length) {
       setActiveIndex(Math.max(0, displayUrls.length - 1));
     }
   }, [activeIndex, displayUrls.length]);
+
+  if (displayUrls.length === 0) return null;
 
   const handleScroll = () => {
     const scroller = scrollerRef.current;
@@ -338,9 +390,10 @@ export function SelectedStudioEmptyRow({
   return (
     <div className="studio-row studio-row-empty">
       <div className="studio-main studio-main-static">
-        <StudioPhotos studio={studio} />
+        <StudioPhotos images={studio.images} name={name} />
 
         <div className="studio-head">
+          <StudioAvatar studio={studio} />
           <div className="studio-name-area">
             <div className="studio-name">{name}</div>
             <div className="studio-meta">
@@ -461,9 +514,10 @@ export const StudioRow = memo(function StudioRow({ studio }: StudioRowProps) {
           })
         }
       >
-        <StudioPhotos studio={studio.studio} />
+        <StudioPhotos images={studio.studio.images} name={name} />
 
         <div className="studio-head">
+          <StudioAvatar studio={studio.studio} />
           <div className="studio-name-area">
             <div className="studio-name">{name}</div>
             <div className="studio-meta">
