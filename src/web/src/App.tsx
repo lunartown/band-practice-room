@@ -1219,11 +1219,11 @@ function RemoveChipIcon() {
 function buildConditionChipLabel(filters: FilterState) {
   const datePart = formatCompactDate(filters.dates[0] ?? todayKst());
   const span = contiguousSpan(filters.timeWindows);
-  const timePart = filters.timeWindows.length === 0
-    ? '시간대'
+  const timePart = filters.timeWindows.length === 0 || (span?.from === '00:00' && span.to === '24:00')
+    ? '하루종일'
     : span
       ? `${formatCompactHour(span.from)}~${formatCompactHour(span.to)}`
-      : `시간대 ${filters.timeWindows.length}개`;
+      : `${filters.timeWindows.length}개 구간`;
   return `${datePart} · ${timePart} · ${filters.minDuration}시간`;
 }
 
