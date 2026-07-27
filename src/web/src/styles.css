@@ -278,7 +278,9 @@ button {
 .condition-chip {
   flex: 1 1 auto;
   justify-content: flex-start;
-  min-height: 44px;
+  min-height: 48px;
+  padding: var(--sp-2) var(--sp-4);
+  font-size: 16px;
 }
 
 .condition-chip > svg:first-child {
@@ -352,9 +354,9 @@ button {
    pill과 같은 높이의 정사각 */
 .filter-button,
 .sort-filter-button {
-  width: 36px;
-  height: 36px;
-  min-width: 36px;
+  width: 48px;
+  height: 48px;
+  min-width: 48px;
   padding: 0;
   background: transparent;
   color: var(--text-2);
