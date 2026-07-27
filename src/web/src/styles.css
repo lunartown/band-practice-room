@@ -1031,7 +1031,47 @@ button {
   display: flex;
   align-items: center;
   gap: var(--sp-3);
+}
+
+.studio-photo-carousel + .studio-head {
   margin-top: var(--sp-4);
+}
+
+.studio-avatar {
+  flex: 0 0 auto;
+  position: relative;
+  width: 44px;
+  height: 44px;
+  border-radius: var(--r-md);
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+  background: var(--accent-soft);
+  box-shadow: 0 2px 8px -5px rgba(20, 28, 42, 0.42);
+}
+
+.studio-avatar img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.studio-avatar.is-fallback {
+  background: var(--surface-sunken);
+}
+
+.studio-fallback-image {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  background-position: center;
+  background-size: cover;
+  mix-blend-mode: multiply;
 }
 
 .studio-name-area {
