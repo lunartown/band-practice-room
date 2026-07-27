@@ -278,6 +278,7 @@ button {
 .condition-chip {
   flex: 1 1 auto;
   justify-content: flex-start;
+  min-height: 44px;
 }
 
 .condition-chip > svg:first-child {
@@ -863,78 +864,6 @@ button {
   to {
     transform: rotate(360deg);
   }
-}
-
-.date-heading {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  width: 100%;
-  padding: var(--sp-4) var(--gutter);
-  background: var(--surface-section);
-  border-top: 1px solid var(--gray-150);
-  border-bottom: 1px solid var(--gray-150);
-  border-radius: 0;
-  color: var(--text-1);
-  font-size: var(--fs-lg);
-  font-weight: var(--fw-semibold);
-  text-align: left;
-}
-
-.date-heading:active {
-  background: var(--gray-150);
-}
-
-.date-heading-label {
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.date-heading-side {
-  flex: 0 0 auto;
-  display: inline-flex;
-  align-items: center;
-  gap: var(--sp-2);
-  margin-left: var(--sp-3);
-}
-
-.date-toggle-icon {
-  flex: 0 0 auto;
-  color: var(--text-faint);
-  transform: rotate(180deg);
-  transition: transform 0.15s ease;
-}
-
-.date-heading.collapsed .date-toggle-icon {
-  transform: rotate(0deg);
-}
-
-.date-heading .count-pill {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--sp-1);
-  padding: var(--sp-1) var(--sp-2);
-  border-radius: var(--r-md);
-  font-size: var(--fs-xs);
-  font-weight: var(--fw-bold);
-  color: var(--accent-strong);
-  background: var(--accent-soft);
-}
-
-.date-heading .count-pill::before {
-  content: '✓';
-  font-size: 10px;
-}
-
-.date-heading .count-pill.empty {
-  color: var(--text-3);
-  background: var(--surface-sunken);
-}
-
-.date-heading .count-pill.empty::before {
-  content: none;
 }
 
 .selected-studio-empty-section {
@@ -1620,7 +1549,6 @@ button {
   to { background-position: 0 0; }
 }
 
-.sk-heading { width: 88px; height: 13px; }
 .sk-avatar { flex: 0 0 auto; width: 44px; height: 44px; border-radius: var(--r-md); }
 .sk-title { width: 55%; height: 15px; }
 .sk-sub { width: 32%; height: 12px; margin-top: var(--sp-fine); }

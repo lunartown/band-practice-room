@@ -28,7 +28,7 @@ import { ensurePushReady, onForegroundNotification, onNotificationTap } from './
 import { track } from './lib/analytics';
 import { buildAvailability, sortDateAvailabilityGroups } from './lib/availability';
 import type { StudioSortOption } from './lib/availability';
-import { dateLabel, todayKst } from './lib/date';
+import { todayKst } from './lib/date';
 import { loadFilters, saveFilters, markEntered } from './lib/prefs';
 import { loadRecentStudioIds, recordRecentStudioSelections } from './lib/recentStudios';
 import {
@@ -95,7 +95,6 @@ export function App() {
   const [alerts, setAlerts] = useState<SavedAlert[]>([]);
   const [favOnly, setFavOnly] = useState(false);
   const [sortOption, setSortOption] = useState<StudioSortOption>('popular');
-  const [collapsedDates, setCollapsedDates] = useState<Set<string>>(() => new Set());
   const [studioSearchQuery, setStudioSearchQuery] = useState('');
   const [recentStudioIds, setRecentStudioIds] = useState<number[]>(() => loadRecentStudioIds());
   const [popover, setPopover] = useState<PopoverState | null>(null);
@@ -425,15 +424,6 @@ export function App() {
     }
     setFilters((f) => (f.studioIds.length > 0 ? { ...f, studioIds: [] } : f));
     setFavOnly(true);
-  }
-
-  function toggleDateSection(date: string) {
-    setCollapsedDates((prev) => {
-      const next = new Set(prev);
-      if (next.has(date)) next.delete(date);
-      else next.add(date);
-      return next;
-    });
   }
 
   function openAlertDraft(draft: AlertDraft) {
@@ -918,9 +908,7 @@ export function App() {
                     />
                   ) : (
                     visibleGroups.map((group) => {
-                      const isCollapsed = collapsedDates.has(group.date);
-                      const bodyId = `date-section-${group.date}`;
-                      const selectedEmptyItems = !isCollapsed && studioActive
+                      const selectedEmptyItems = studioActive
                         ? buildSelectedStudioEmptyItems({
                             selectedStudios,
                             visibleGroups: [group],
@@ -928,60 +916,36 @@ export function App() {
                             preferredAreaIds: filters.areaIds,
                           })
                         : [];
-                      const hasBodyRows =
-                        !isCollapsed && (group.studios.length > 0 || selectedEmptyItems.length > 0);
+                      const hasBodyRows = group.studios.length > 0 || selectedEmptyItems.length > 0;
 
                       return (
                         <section className="date-section" key={group.date}>
-                          <button
-                            type="button"
-                            className={`date-heading${isCollapsed ? ' collapsed' : ''}`}
-                            aria-expanded={!isCollapsed}
-                            aria-controls={bodyId}
-                            onClick={() => toggleDateSection(group.date)}
-                          >
-                            <span className="date-heading-label">{dateLabel(group.date)}</span>
-                            <span className="date-heading-side">
-                              {group.studios.length > 0 ? (
-                                <span className="count-pill">{group.studios.length}곳</span>
-                              ) : (
-                                <span className="count-pill empty">없음</span>
-                              )}
-                              <DateToggleIcon />
-                            </span>
-                          </button>
-                          <div id={bodyId} className="date-section-body" hidden={isCollapsed}>
-                            {!isCollapsed && (
-                              <>
-                                {group.studios.map((studio) => (
-                                  <StudioRow key={studio.studio.id} studio={studio} />
-                                ))}
-                                {selectedEmptyItems.map((item) => (
-                                  <SelectedStudioEmptyRow
-                                    key={item.studio.id}
-                                    studio={item.studio}
-                                    areaName={item.areaName}
-                                    onCreateAlert={(studio) => openStudioAlert(studio, group.date)}
-                                    onRemove={removeStudioSelection}
-                                  />
-                                ))}
-                                {!hasBodyRows && favFilterActive ? (
-                                  <EmptyDay
-                                    message="이 날은 즐겨찾기한 곳이 비어 있어요"
-                                    minDuration={filters.minDuration}
-                                    setFilters={setFilters}
-                                    onCreateAlert={() => openCurrentConditionAlert(group.date)}
-                                  />
-                                ) : !hasBodyRows ? (
-                                  <EmptyDay
-                                    minDuration={filters.minDuration}
-                                    setFilters={setFilters}
-                                    onCreateAlert={() => openCurrentConditionAlert(group.date)}
-                                  />
-                                ) : null}
-                              </>
-                            )}
-                          </div>
+                          {group.studios.map((studio) => (
+                            <StudioRow key={studio.studio.id} studio={studio} />
+                          ))}
+                          {selectedEmptyItems.map((item) => (
+                            <SelectedStudioEmptyRow
+                              key={item.studio.id}
+                              studio={item.studio}
+                              areaName={item.areaName}
+                              onCreateAlert={(studio) => openStudioAlert(studio, group.date)}
+                              onRemove={removeStudioSelection}
+                            />
+                          ))}
+                          {!hasBodyRows && favFilterActive ? (
+                            <EmptyDay
+                              message="이 날은 즐겨찾기한 곳이 비어 있어요"
+                              minDuration={filters.minDuration}
+                              setFilters={setFilters}
+                              onCreateAlert={() => openCurrentConditionAlert(group.date)}
+                            />
+                          ) : !hasBodyRows ? (
+                            <EmptyDay
+                              minDuration={filters.minDuration}
+                              setFilters={setFilters}
+                              onCreateAlert={() => openCurrentConditionAlert(group.date)}
+                            />
+                          ) : null}
                         </section>
                       );
                     })
@@ -1072,28 +1036,21 @@ export function App() {
 function SkeletonList() {
   return (
     <div aria-busy="true" aria-label="불러오는 중">
-      {[0, 1].map((g) => (
-        <div key={g}>
-          <div className="date-heading">
-            <span className="skeleton sk-heading" />
-          </div>
-          {[0, 1, 2].map((r) => (
-            <div className="studio-row" key={r}>
-              <div className="studio-head">
-                <span className="skeleton sk-avatar" />
-                <div className="studio-name-area">
-                  <span className="skeleton sk-title" />
-                  <span className="skeleton sk-sub" />
-                </div>
-                <span className="skeleton sk-price" />
-              </div>
-              <div className="studio-chips">
-                <span className="skeleton sk-chip" />
-                <span className="skeleton sk-chip" />
-                <span className="skeleton sk-chip" />
-              </div>
+      {[0, 1, 2].map((row) => (
+        <div className="studio-row" key={row}>
+          <div className="studio-head">
+            <span className="skeleton sk-avatar" />
+            <div className="studio-name-area">
+              <span className="skeleton sk-title" />
+              <span className="skeleton sk-sub" />
             </div>
-          ))}
+            <span className="skeleton sk-price" />
+          </div>
+          <div className="studio-chips">
+            <span className="skeleton sk-chip" />
+            <span className="skeleton sk-chip" />
+            <span className="skeleton sk-chip" />
+          </div>
         </div>
       ))}
     </div>
@@ -1287,14 +1244,6 @@ function SearchIcon() {
 function ChevronIcon() {
   return (
     <svg className="chip-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden>
-      <path d="M7 10l5 5 5-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
-}
-
-function DateToggleIcon() {
-  return (
-    <svg className="date-toggle-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden>
       <path d="M7 10l5 5 5-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
