@@ -275,6 +275,20 @@ button {
   text-overflow: ellipsis;
 }
 
+.condition-chip {
+  flex: 1 1 auto;
+  justify-content: flex-start;
+}
+
+.condition-chip > svg:first-child {
+  flex: 0 0 auto;
+}
+
+.condition-chip > span {
+  flex: 1 1 auto;
+  text-align: left;
+}
+
 /* 셰브론: 텍스트 글리프 대신 옵티컬 정렬된 SVG. 무게는 라벨에 양보 */
 .chip-chevron {
   flex: 0 0 auto;

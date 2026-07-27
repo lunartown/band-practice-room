@@ -7,8 +7,8 @@ import { buildCatalogIndex, hydrateSlots } from './lib/slotHydration';
 import { SelectedStudioEmptyRow, StudioRow } from './components/StudioRow';
 import { FilterSheet, defaultFilters } from './components/FilterSheet';
 import type { FilterState } from './components/FilterSheet';
-import { CalendarPicker } from './components/CalendarPicker';
-import { TimeWindowPicker, timeWindowLabel } from './components/TimeWindowPicker';
+import { SearchConditionSheet } from './components/SearchConditionSheet';
+import { contiguousSpan } from './components/TimeWindowPicker';
 import { Popover } from './components/Popover';
 import { OpenScreen } from './components/OpenScreen';
 import { AreaSheet } from './components/AreaSheet';
@@ -46,8 +46,8 @@ import {
 import { useFavorites } from './lib/useFavorites';
 import { usePullToRefresh } from './lib/usePullToRefresh';
 
-type PopoverKind = 'time' | 'date' | 'sort';
-const POP_WIDTH: Record<PopoverKind, number> = { time: 320, date: 340, sort: 180 };
+type PopoverKind = 'sort';
+const POP_WIDTH: Record<PopoverKind, number> = { sort: 180 };
 const SORT_OPTIONS: { value: StudioSortOption; label: string }[] = [
   { value: 'popular', label: '인기순' },
   { value: 'name_asc', label: '이름순' },
@@ -64,6 +64,7 @@ interface NativeBackState {
   alertDraftOpen: boolean;
   isMenuOpen: boolean;
   isFilterOpen: boolean;
+  isConditionOpen: boolean;
   isAreaSheetOpen: boolean;
   popoverOpen: boolean;
   isStudioSearchOpen: boolean;
@@ -84,6 +85,7 @@ export function App() {
   // 콜드스타트나 오랜만의 방문은 오픈 화면 + 기본 필터로 다시 시작한다.
   const [entered, setEntered] = useState(savedPrefs?.fresh ?? false);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [isConditionOpen, setIsConditionOpen] = useState(false);
   const [isAreaSheetOpen, setIsAreaSheetOpen] = useState(false);
   const [isStudioSearchOpen, setIsStudioSearchOpen] = useState(false);
   const [isAlertsOpen, setIsAlertsOpen] = useState(false);
@@ -108,6 +110,7 @@ export function App() {
     alertDraftOpen: false,
     isMenuOpen: false,
     isFilterOpen: false,
+    isConditionOpen: false,
     isAreaSheetOpen: false,
     popoverOpen: false,
     isStudioSearchOpen: false,
@@ -168,6 +171,7 @@ export function App() {
     return onNotificationTap((target) => {
       setPopover(null);
       setIsFilterOpen(false);
+      setIsConditionOpen(false);
       setIsMenuOpen(false);
       setIsStudioSearchOpen(false);
       setIsAlertsOpen(false);
@@ -295,6 +299,7 @@ export function App() {
   function openStudioSearch() {
     setPopover(null);
     setIsFilterOpen(false);
+    setIsConditionOpen(false);
     setIsMenuOpen(false);
     setIsAlertsOpen(false);
     setStudioSearchQuery('');
@@ -305,6 +310,7 @@ export function App() {
   function openAreaSheet() {
     setPopover(null);
     setIsFilterOpen(false);
+    setIsConditionOpen(false);
     setIsMenuOpen(false);
     setIsAreaSheetOpen(true);
   }
@@ -316,6 +322,7 @@ export function App() {
   function openAlertsScreen() {
     setPopover(null);
     setIsFilterOpen(false);
+    setIsConditionOpen(false);
     setIsMenuOpen(false);
     setIsStudioSearchOpen(false);
     setAlertDraft(null);
@@ -432,6 +439,7 @@ export function App() {
   function openAlertDraft(draft: AlertDraft) {
     setPopover(null);
     setIsFilterOpen(false);
+    setIsConditionOpen(false);
     setIsMenuOpen(false);
     setAlertDraft(draft);
   }
@@ -547,11 +555,11 @@ export function App() {
   );
 
   // 기본값에서 바꾼(지정한) 경우만 활성으로 표시한다.
-  const timeActive = filters.timeWindows.length > 0;
-  const dateActive = filters.dates.length > 0;
+  const conditionActive = filters.dates.length > 0
+    || filters.timeWindows.length > 0
+    || filters.minDuration !== defaultFilters.minDuration;
   const studioActive = filters.studioIds.length > 0;
-  const sheetActive =
-    filters.minDuration !== defaultFilters.minDuration || filters.people !== defaultFilters.people;
+  const sheetActive = filters.people !== defaultFilters.people;
   const favFilterActive = favOnly;
 
   const syncLabel = updatedAt ? formatUpdatedAt(updatedAt) : '–';
@@ -560,6 +568,7 @@ export function App() {
     alertDraftOpen: alertDraft !== null,
     isMenuOpen,
     isFilterOpen,
+    isConditionOpen,
     isAreaSheetOpen,
     popoverOpen: popover !== null,
     isStudioSearchOpen,
@@ -630,6 +639,10 @@ export function App() {
       }
       if (state.isFilterOpen) {
         setIsFilterOpen(false);
+        return;
+      }
+      if (state.isConditionOpen) {
+        setIsConditionOpen(false);
         return;
       }
       if (state.isAreaSheetOpen) {
@@ -826,8 +839,20 @@ export function App() {
             </header>
 
             <div className={`chip-row${studioActive ? ' has-studio-chip' : ''}`}>
-              <button className={`chip${timeActive ? ' active' : ''}${popover?.kind === 'time' ? ' open' : ''}`} aria-pressed={timeActive} onClick={(e) => openPopover('time', e)}><span>{timeWindowLabel(filters.timeWindows)}</span><ChevronIcon /></button>
-              <button className={`chip${dateActive ? ' active' : ''}${popover?.kind === 'date' ? ' open' : ''}`} aria-pressed={dateActive} onClick={(e) => openPopover('date', e)}><span>{buildDateChipLabel(filters.dates)}</span><ChevronIcon /></button>
+              <button
+                className={`chip condition-chip${conditionActive ? ' active' : ''}`}
+                aria-pressed={conditionActive}
+                aria-haspopup="dialog"
+                onClick={() => {
+                  setPopover(null);
+                  setIsFilterOpen(false);
+                  setIsConditionOpen(true);
+                }}
+              >
+                <CalendarChipIcon />
+                <span>{buildConditionChipLabel(filters)}</span>
+                <ChevronIcon />
+              </button>
               <div className="chip-actions">
                 <button className={`filter-button${sheetActive ? ' active' : ''}`} aria-pressed={sheetActive} aria-label="필터" onClick={() => setIsFilterOpen(true)}>
                   <FilterIcon />
@@ -972,23 +997,8 @@ export function App() {
             top={popover.top}
             left={popover.left}
             width={popover.width}
-            className={popover.kind === 'date' || popover.kind === 'time' ? 'padded' : undefined}
             onClose={() => setPopover(null)}
           >
-            {popover.kind === 'time' && (
-              <TimeWindowPicker
-                value={filters.timeWindows}
-                onChange={(timeWindows) => setFilters((f) => ({ ...f, timeWindows }))}
-              />
-            )}
-
-            {popover.kind === 'date' && (
-              <CalendarPicker
-                selected={filters.dates}
-                onChange={(dates) => setFilters((f) => ({ ...f, dates }))}
-              />
-            )}
-
             {popover.kind === 'sort' && (
               <>
                 {SORT_OPTIONS.map((option) => (
@@ -1009,6 +1019,15 @@ export function App() {
               </>
             )}
           </Popover>
+        )}
+
+        {isConditionOpen && (
+          <SearchConditionSheet
+            filters={filters}
+            resultCount={totalStudios}
+            onClose={() => setIsConditionOpen(false)}
+            onChange={setFilters}
+          />
         )}
 
         {isFilterOpen && (
@@ -1291,9 +1310,38 @@ function RemoveChipIcon() {
   );
 }
 
-function buildDateChipLabel(dates: string[]) {
-  if (dates.length === 0) return '날짜';
-  return `${dates.length}일 선택`;
+function buildConditionChipLabel(filters: FilterState) {
+  const sortedDates = [...filters.dates].sort();
+  const datePart = sortedDates.length === 0
+    ? '날짜'
+    : sortedDates.length === 1
+      ? formatCompactDate(sortedDates[0])
+      : `${formatCompactDate(sortedDates[0])}~${formatCompactDate(sortedDates[sortedDates.length - 1])}`;
+  const span = contiguousSpan(filters.timeWindows);
+  const timePart = filters.timeWindows.length === 0
+    ? '시간대'
+    : span
+      ? `${formatCompactHour(span.from)}~${formatCompactHour(span.to)}`
+      : `시간대 ${filters.timeWindows.length}개`;
+  return `${datePart} · ${timePart} · ${filters.minDuration}시간`;
+}
+
+function formatCompactDate(date: string) {
+  return `${date.slice(5, 7)}.${date.slice(8, 10)}`;
+}
+
+function formatCompactHour(time: string) {
+  const [hour, minute] = time.split(':');
+  return minute === '00' ? `${Number(hour)}시` : `${Number(hour)}:${minute}`;
+}
+
+function CalendarChipIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden>
+      <rect x="3" y="5" width="18" height="16" rx="3" stroke="currentColor" strokeWidth="2" />
+      <path d="M8 3v4M16 3v4M3 10h18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+    </svg>
+  );
 }
 
 function sortOptionLabel(value: StudioSortOption) {

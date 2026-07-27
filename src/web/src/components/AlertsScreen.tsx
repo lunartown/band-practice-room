@@ -3,7 +3,7 @@ import type { Area, Studio, TimeWindow } from '../api/types';
 import type { AlertStudio, SavedAlert } from '../lib/alerts';
 import { dateLabel } from '../lib/date';
 import { CalendarPicker } from './CalendarPicker';
-import { DURATION_OPTIONS } from './FilterSheet';
+import { DURATION_OPTIONS } from './filterOptions';
 import { TimeWindowPicker, timeWindowLabel } from './TimeWindowPicker';
 
 interface AlertsScreenProps {
