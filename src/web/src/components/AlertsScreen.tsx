@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import type { Area, Studio, TimeWindow } from '../api/types';
 import type { AlertStudio, SavedAlert } from '../lib/alerts';
-import { dateLabel } from '../lib/date';
+import { dateLabel, todayKst } from '../lib/date';
 import { CalendarPicker } from './CalendarPicker';
 import { DURATION_OPTIONS } from './filterOptions';
 import { TimeWindowPicker, timeWindowLabel } from './TimeWindowPicker';
@@ -270,7 +270,7 @@ function AlertEditSheet({ alert, areas, studios, onClose, onSave }: AlertEditShe
 
           <div className="filter-group">
             <h3>날짜</h3>
-            <CalendarPicker selected={dates} onChange={setDates} />
+            <CalendarPicker selected={dates[0] ?? todayKst()} onChange={(date) => setDates([date])} />
           </div>
 
           <div className="filter-group">
