@@ -2185,25 +2185,18 @@ button {
   font-weight: var(--fw-extrabold);
 }
 
-.price-control-heading strong {
-  color: var(--accent-strong);
-  font-size: var(--fs-md);
+.price-control-heading small {
+  color: var(--text-3);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-medium);
 }
 
 .price-range-inputs {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
-  align-items: end;
+  align-items: center;
   gap: var(--sp-3);
-  margin-bottom: var(--sp-2);
-}
-
-.price-range-inputs label > span {
-  display: block;
-  margin-bottom: var(--sp-1);
-  color: var(--text-3);
-  font-size: var(--fs-xs);
-  font-weight: var(--fw-semibold);
+  margin-top: var(--sp-3);
 }
 
 .price-range-inputs label > div {
@@ -2235,7 +2228,6 @@ button {
 }
 
 .price-range-inputs > i {
-  margin-bottom: 13px;
   color: var(--text-faint);
   font-style: normal;
   font-weight: var(--fw-bold);
@@ -2246,7 +2238,7 @@ button {
   --price-end: 100%;
   position: relative;
   height: var(--tap);
-  background: linear-gradient(var(--gray-150), var(--gray-150)) center / 100% 6px no-repeat;
+  background: linear-gradient(var(--gray-150), var(--gray-150)) center / calc(100% - 26px) 6px no-repeat;
 }
 
 .price-range-slider::before {
@@ -2305,8 +2297,8 @@ button {
 }
 
 .price-range-slider input[type='range']::-moz-range-thumb {
-  width: 20px;
-  height: 20px;
+  width: 26px;
+  height: 26px;
   border: 3px solid var(--accent);
   border-radius: 50%;
   background: var(--surface);
@@ -2317,7 +2309,7 @@ button {
 .price-control-scale {
   position: relative;
   height: 29px;
-  margin-top: calc(var(--sp-1) * -1);
+  margin: calc(var(--sp-1) * -1) 13px 0;
   color: var(--text-3);
   font-size: var(--fs-2xs);
   font-weight: var(--fw-semibold);
