@@ -1012,8 +1012,9 @@ button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 34px;
-  height: 34px;
+  width: 48px;
+  height: 48px;
+  min-width: 48px;
   border-radius: var(--r-md);
   padding: 0;
   background: var(--surface);
