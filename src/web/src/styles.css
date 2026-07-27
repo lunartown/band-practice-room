@@ -2046,7 +2046,7 @@ button {
 /* --- Filter groups --- */
 .filter-group h3 {
   margin: var(--sp-4) 0 var(--sp-2);
-  font-size: var(--fs-sm);
+  font-size: var(--fs-lg);
 }
 
 .condition-sheet .filter-group + .filter-group {
@@ -2148,7 +2148,7 @@ button {
 
 .people-control span {
   margin-right: auto;
-  font-size: var(--fs-sm);
+  font-size: var(--fs-lg);
   font-weight: var(--fw-extrabold);
 }
 
@@ -2178,10 +2178,10 @@ button {
 
 .price-control-heading {
   margin-bottom: var(--sp-4);
-  font-size: var(--fs-sm);
 }
 
 .price-control-heading > span {
+  font-size: var(--fs-lg);
   font-weight: var(--fw-extrabold);
 }
 
