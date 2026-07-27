@@ -26,6 +26,7 @@ export function buildVisibleGroups(
   selectedStudioIds: number[],
   favOnly: boolean,
   favorites: ReadonlySet<number>,
+  minHourlyPrice: number | null = null,
   maxHourlyPrice: number | null = null,
 ): DateAvailability[] {
   let filtered = dateGroups;
@@ -43,12 +44,15 @@ export function buildVisibleGroups(
     }));
   }
 
-  if (maxHourlyPrice == null) return filtered;
+  if (minHourlyPrice == null && maxHourlyPrice == null) return filtered;
 
   return filtered.map((group) => ({
     ...group,
     studios: group.studios.filter(
-      (studio) => studio.pricePerHourMin != null && studio.pricePerHourMin <= maxHourlyPrice,
+      (studio) => studio.pricePerHourMin != null
+        && studio.pricePerHourMax != null
+        && (minHourlyPrice == null || studio.pricePerHourMax >= minHourlyPrice)
+        && (maxHourlyPrice == null || studio.pricePerHourMin <= maxHourlyPrice),
     ),
   }));
 }

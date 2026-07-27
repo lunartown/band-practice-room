@@ -3,7 +3,6 @@ import {
   defaultFilters,
   PRICE_FILTER_MAX,
   PRICE_FILTER_MIN,
-  PRICE_FILTER_STEP,
 } from '../components/FilterSheet';
 import type { FilterState } from '../components/FilterSheet';
 import { todayKst } from './date';
@@ -76,6 +75,7 @@ export function loadFilters(): SavedPrefs | null {
       studioIds: readStudioIds(f),
       dates,
       timeWindows: Array.isArray(f.timeWindows) ? f.timeWindows : defaultFilters.timeWindows,
+      minHourlyPrice: readMinHourlyPrice(f.minHourlyPrice),
       maxHourlyPrice: readMaxHourlyPrice(f.maxHourlyPrice),
     };
     return { filters, fresh: true };
@@ -84,11 +84,16 @@ export function loadFilters(): SavedPrefs | null {
   }
 }
 
+function readMinHourlyPrice(value: unknown): number | null {
+  if (typeof value !== 'number' || !Number.isFinite(value)) return null;
+  if (value <= PRICE_FILTER_MIN) return null;
+  return Math.min(PRICE_FILTER_MAX, Math.round(value));
+}
+
 function readMaxHourlyPrice(value: unknown): number | null {
   if (typeof value !== 'number' || !Number.isFinite(value)) return null;
   if (value >= PRICE_FILTER_MAX) return null;
-  const clamped = Math.max(PRICE_FILTER_MIN, value);
-  return Math.round(clamped / PRICE_FILTER_STEP) * PRICE_FILTER_STEP;
+  return Math.max(PRICE_FILTER_MIN, Math.round(value));
 }
 
 export function saveFilters(filters: FilterState) {

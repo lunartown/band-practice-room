@@ -1,3 +1,4 @@
+import { useEffect, useState, type CSSProperties } from 'react';
 import type { TimeWindow } from '../api/types';
 import { BottomSheet } from './BottomSheet';
 import { todayKst } from '../lib/date';
@@ -9,12 +10,15 @@ export interface FilterState {
   timeWindows: TimeWindow[];
   minDuration: 1 | 2 | 3 | 4;
   people: number;
+  minHourlyPrice: number | null;
   maxHourlyPrice: number | null;
 }
 
-export const PRICE_FILTER_MIN = 10000;
+export const PRICE_FILTER_MIN = 0;
 export const PRICE_FILTER_MAX = 50000;
 export const PRICE_FILTER_STEP = 1000;
+const PRICE_SNAP_STEP = 10000;
+const PRICE_SNAP_THRESHOLD = 1500;
 
 export const defaultFilters: FilterState = {
   areaIds: [],
@@ -23,6 +27,7 @@ export const defaultFilters: FilterState = {
   timeWindows: [],
   minDuration: 1,
   people: 2,
+  minHourlyPrice: null,
   maxHourlyPrice: null,
 };
 
@@ -35,10 +40,37 @@ interface FilterSheetProps {
 
 export function FilterSheet({ filters, resultCount, onClose, onChange }: FilterSheetProps) {
   const set = (patch: Partial<FilterState>) => onChange({ ...filters, ...patch });
-  const sliderValue = filters.maxHourlyPrice ?? PRICE_FILTER_MAX;
-  const priceLabel = filters.maxHourlyPrice == null
-    ? '제한 없음'
-    : `${filters.maxHourlyPrice.toLocaleString('ko-KR')}원 이하`;
+  const minSliderValue = filters.minHourlyPrice ?? PRICE_FILTER_MIN;
+  const maxSliderValue = filters.maxHourlyPrice ?? PRICE_FILTER_MAX;
+  const [minInput, setMinInput] = useState(String(minSliderValue));
+  const [maxInput, setMaxInput] = useState(String(maxSliderValue));
+  const priceLabel = formatPriceRange(filters.minHourlyPrice, filters.maxHourlyPrice);
+
+  useEffect(() => setMinInput(String(minSliderValue)), [minSliderValue]);
+  useEffect(() => setMaxInput(String(maxSliderValue)), [maxSliderValue]);
+
+  const setRange = (min: number, max: number) => set({
+    minHourlyPrice: min <= PRICE_FILTER_MIN ? null : min,
+    maxHourlyPrice: max >= PRICE_FILTER_MAX ? null : max,
+  });
+
+  const commitInput = (kind: 'min' | 'max') => {
+    const input = kind === 'min' ? minInput : maxInput;
+    const fallback = kind === 'min' ? PRICE_FILTER_MIN : PRICE_FILTER_MAX;
+    const parsed = input.trim() === '' ? fallback : Number(input.replace(/,/g, ''));
+    const clamped = Number.isFinite(parsed)
+      ? Math.min(PRICE_FILTER_MAX, Math.max(PRICE_FILTER_MIN, Math.round(parsed)))
+      : fallback;
+    if (kind === 'min') {
+      const next = Math.min(clamped, maxSliderValue);
+      setMinInput(String(next));
+      setRange(next, maxSliderValue);
+    } else {
+      const next = Math.max(clamped, minSliderValue);
+      setMaxInput(String(next));
+      setRange(minSliderValue, next);
+    }
+  };
 
   return (
     <BottomSheet
@@ -56,6 +88,7 @@ export function FilterSheet({ filters, resultCount, onClose, onChange }: FilterS
             className="secondary"
             onClick={() => set({
               people: defaultFilters.people,
+              minHourlyPrice: defaultFilters.minHourlyPrice,
               maxHourlyPrice: defaultFilters.maxHourlyPrice,
             })}
           >
@@ -75,31 +108,101 @@ export function FilterSheet({ filters, resultCount, onClose, onChange }: FilterS
 
       <div className="price-control">
         <div className="price-control-heading">
-          <span>시간당 최대 가격</span>
+          <span>시간당 가격</span>
           <strong>{priceLabel}</strong>
         </div>
-        <input
-          type="range"
-          min={PRICE_FILTER_MIN}
-          max={PRICE_FILTER_MAX}
-          step={PRICE_FILTER_STEP}
-          value={sliderValue}
-          aria-label="시간당 최대 가격"
-          aria-valuetext={priceLabel}
-          style={{ '--price-progress': `${((sliderValue - PRICE_FILTER_MIN) / (PRICE_FILTER_MAX - PRICE_FILTER_MIN)) * 100}%` } as React.CSSProperties}
-          onChange={(event) => {
-            const value = Number(event.target.value);
-            set({ maxHourlyPrice: value === PRICE_FILTER_MAX ? null : value });
-          }}
-        />
+
+        <div className="price-range-inputs">
+          <label>
+            <span>최저</span>
+            <div>
+              <input
+                type="text"
+                inputMode="numeric"
+                value={minInput}
+                aria-label="시간당 최저 가격 직접 입력"
+                onChange={(event) => setMinInput(event.target.value.replace(/[^0-9,]/g, ''))}
+                onBlur={() => commitInput('min')}
+                onKeyDown={(event) => event.key === 'Enter' && event.currentTarget.blur()}
+              />
+              <b>원</b>
+            </div>
+          </label>
+          <i aria-hidden>–</i>
+          <label>
+            <span>최고</span>
+            <div>
+              <input
+                type="text"
+                inputMode="numeric"
+                value={maxInput}
+                aria-label="시간당 최고 가격 직접 입력"
+                onChange={(event) => setMaxInput(event.target.value.replace(/[^0-9,]/g, ''))}
+                onBlur={() => commitInput('max')}
+                onKeyDown={(event) => event.key === 'Enter' && event.currentTarget.blur()}
+              />
+              <b>원</b>
+            </div>
+          </label>
+        </div>
+
+        <div
+          className="price-range-slider"
+          style={{
+            '--price-start': `${(minSliderValue / PRICE_FILTER_MAX) * 100}%`,
+            '--price-end': `${(maxSliderValue / PRICE_FILTER_MAX) * 100}%`,
+          } as CSSProperties}
+        >
+          <input
+            className="price-range-min"
+            type="range"
+            min={PRICE_FILTER_MIN}
+            max={PRICE_FILTER_MAX}
+            step={PRICE_FILTER_STEP}
+            value={minSliderValue}
+            aria-label="시간당 최저 가격"
+            aria-valuetext={`${minSliderValue.toLocaleString('ko-KR')}원`}
+            onChange={(event) => {
+              const value = Math.min(snapPrice(Number(event.target.value)), maxSliderValue);
+              setRange(value, maxSliderValue);
+            }}
+          />
+          <input
+            className="price-range-max"
+            type="range"
+            min={PRICE_FILTER_MIN}
+            max={PRICE_FILTER_MAX}
+            step={PRICE_FILTER_STEP}
+            value={maxSliderValue}
+            aria-label="시간당 최고 가격"
+            aria-valuetext={`${maxSliderValue.toLocaleString('ko-KR')}원`}
+            onChange={(event) => {
+              const value = Math.max(snapPrice(Number(event.target.value)), minSliderValue);
+              setRange(minSliderValue, value);
+            }}
+          />
+        </div>
         <div className="price-control-scale" aria-hidden>
+          <span>0</span>
           <span>1만</span>
           <span>2만</span>
           <span>3만</span>
           <span>4만</span>
-          <span>제한 없음</span>
+          <span>5만+</span>
         </div>
       </div>
     </BottomSheet>
   );
+}
+
+function snapPrice(value: number) {
+  const mark = Math.round(value / PRICE_SNAP_STEP) * PRICE_SNAP_STEP;
+  return Math.abs(value - mark) <= PRICE_SNAP_THRESHOLD ? mark : value;
+}
+
+function formatPriceRange(min: number | null, max: number | null) {
+  if (min == null && max == null) return '전체 가격';
+  if (min == null) return `${max?.toLocaleString('ko-KR')}원 이하`;
+  if (max == null) return `${min.toLocaleString('ko-KR')}원 이상`;
+  return `${min.toLocaleString('ko-KR')}–${max.toLocaleString('ko-KR')}원`;
 }
