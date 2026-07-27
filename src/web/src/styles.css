@@ -1125,7 +1125,7 @@ button {
 .studio-photo {
   flex: 0 0 100%;
   width: 100%;
-  aspect-ratio: 3 / 2;
+  aspect-ratio: 16 / 9;
   overflow: hidden;
   background: var(--surface-sunken);
   scroll-snap-align: start;
