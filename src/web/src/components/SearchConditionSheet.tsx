@@ -42,8 +42,11 @@ export function SearchConditionSheet({ filters, resultCount, onClose, onChange }
       )}
     >
       <div className="filter-group">
-        <h3>날짜 <span className="filter-hint">여러 날 선택 가능 · 미선택 시 일주일 내</span></h3>
-        <CalendarPicker selected={filters.dates} onChange={(dates) => set({ dates })} />
+        <h3>날짜</h3>
+        <CalendarPicker
+          selected={filters.dates[0] ?? defaultFilters.dates[0]}
+          onChange={(date) => set({ dates: [date] })}
+        />
       </div>
 
       <div className="filter-group">

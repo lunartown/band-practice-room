@@ -1,5 +1,6 @@
 import type { TimeWindow } from '../api/types';
 import { BottomSheet } from './BottomSheet';
+import { todayKst } from '../lib/date';
 
 export interface FilterState {
   areaIds: number[];
@@ -13,7 +14,7 @@ export interface FilterState {
 export const defaultFilters: FilterState = {
   areaIds: [],
   studioIds: [],
-  dates: [],
+  dates: [todayKst()],
   timeWindows: [],
   minDuration: 1,
   people: 2,

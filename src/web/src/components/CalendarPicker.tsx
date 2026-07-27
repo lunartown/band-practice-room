@@ -1,8 +1,8 @@
 import { useState } from 'react';
 
 interface CalendarPickerProps {
-  selected: string[];
-  onChange: (dates: string[]) => void;
+  selected: string;
+  onChange: (date: string) => void;
 }
 
 function todayStr() {
@@ -38,13 +38,9 @@ export function CalendarPicker({ selected, onChange }: CalendarPickerProps) {
     return `${viewYear}-${String(viewMonth).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
   }
 
-  function toggle(dateStr: string) {
+  function pick(dateStr: string) {
     if (dateStr < today || dateStr > maxDate) return;
-    if (selected.includes(dateStr)) {
-      onChange(selected.filter((d) => d !== dateStr));
-    } else {
-      onChange([...selected, dateStr].sort());
-    }
+    onChange(dateStr);
   }
 
   function prevMonth() {
@@ -81,7 +77,7 @@ export function CalendarPicker({ selected, onChange }: CalendarPickerProps) {
           const isPast = ds < today;
           const isFuture = ds > maxDate;
           const disabled = isPast || isFuture;
-          const isSelected = selected.includes(ds);
+          const isSelected = ds === selected;
           const isToday = ds === today;
           const dow = (firstDay + day - 1) % 7;
           return (
@@ -94,7 +90,7 @@ export function CalendarPicker({ selected, onChange }: CalendarPickerProps) {
                 disabled ? 'disabled' : '',
                 dow === 0 ? 'sun' : dow === 6 ? 'sat' : '',
               ].filter(Boolean).join(' ')}
-              onClick={() => toggle(ds)}
+              onClick={() => pick(ds)}
               disabled={disabled}
             >
               {day}
@@ -102,20 +98,6 @@ export function CalendarPicker({ selected, onChange }: CalendarPickerProps) {
           );
         })}
       </div>
-      {selected.length > 0 && (
-        <div className="cal-chips">
-          {selected.map((d) => {
-            const dt = new Date(`${d}T00:00:00`);
-            const label = new Intl.DateTimeFormat('ko-KR', { month: 'numeric', day: 'numeric', weekday: 'short' }).format(dt);
-            return (
-              <span key={d} className="cal-chip">
-                {label}
-                <button onClick={() => onChange(selected.filter((x) => x !== d))} aria-label={`${label} 제거`}>×</button>
-              </span>
-            );
-          })}
-        </div>
-      )}
     </div>
   );
 }
