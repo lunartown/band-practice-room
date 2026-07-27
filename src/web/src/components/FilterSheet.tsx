@@ -12,7 +12,7 @@ export interface FilterState {
   maxHourlyPrice: number | null;
 }
 
-export const PRICE_FILTER_MIN = 8000;
+export const PRICE_FILTER_MIN = 10000;
 export const PRICE_FILTER_MAX = 50000;
 export const PRICE_FILTER_STEP = 1000;
 
@@ -92,8 +92,11 @@ export function FilterSheet({ filters, resultCount, onClose, onChange }: FilterS
             set({ maxHourlyPrice: value === PRICE_FILTER_MAX ? null : value });
           }}
         />
-        <div className="price-control-range" aria-hidden>
-          <span>{PRICE_FILTER_MIN.toLocaleString('ko-KR')}원</span>
+        <div className="price-control-scale" aria-hidden>
+          <span>1만</span>
+          <span>2만</span>
+          <span>3만</span>
+          <span>4만</span>
           <span>제한 없음</span>
         </div>
       </div>

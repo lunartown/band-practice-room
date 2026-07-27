@@ -2167,11 +2167,11 @@ button {
 
 /* --- Hourly price slider --- */
 .price-control {
-  margin-top: var(--sp-7);
+  margin-top: calc(var(--sp-8) + var(--sp-2));
 }
 
 .price-control-heading,
-.price-control-range {
+.price-control-scale {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -2248,11 +2248,47 @@ button {
   box-shadow: 0 2px 8px rgb(0 0 0 / 16%);
 }
 
-.price-control-range {
+.price-control-scale {
+  position: relative;
+  height: 29px;
   margin-top: calc(var(--sp-1) * -1);
   color: var(--text-3);
   font-size: var(--fs-2xs);
   font-weight: var(--fw-semibold);
+}
+
+.price-control-scale::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto;
+  height: 7px;
+  background:
+    linear-gradient(var(--gray-300), var(--gray-300)) left top / 1px 7px no-repeat,
+    linear-gradient(var(--gray-300), var(--gray-300)) 25% top / 1px 7px no-repeat,
+    linear-gradient(var(--gray-300), var(--gray-300)) 50% top / 1px 7px no-repeat,
+    linear-gradient(var(--gray-300), var(--gray-300)) 75% top / 1px 7px no-repeat,
+    linear-gradient(var(--gray-300), var(--gray-300)) right top / 1px 7px no-repeat;
+}
+
+.price-control-scale span {
+  position: absolute;
+  top: 10px;
+  transform: translateX(-50%);
+  white-space: nowrap;
+}
+
+.price-control-scale span:nth-child(1) {
+  left: 0;
+  transform: none;
+}
+
+.price-control-scale span:nth-child(2) { left: 25%; }
+.price-control-scale span:nth-child(3) { left: 50%; }
+.price-control-scale span:nth-child(4) { left: 75%; }
+
+.price-control-scale span:nth-child(5) {
+  right: 0;
+  transform: none;
 }
 
 /* --- Footer --- */
