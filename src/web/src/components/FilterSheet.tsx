@@ -1,13 +1,5 @@
 import type { TimeWindow } from '../api/types';
-import { CalendarPicker } from './CalendarPicker';
 import { BottomSheet } from './BottomSheet';
-
-export const DURATION_OPTIONS: { label: string; value: 1 | 2 | 3 | 4 }[] = [
-  { label: '1시간', value: 1 },
-  { label: '2시간', value: 2 },
-  { label: '3시간', value: 3 },
-  { label: '4시간', value: 4 },
-];
 
 export interface FilterState {
   areaIds: number[];
@@ -51,7 +43,7 @@ export function FilterSheet({ filters, resultCount, onClose, onChange }: FilterS
         <footer>
           <button
             className="secondary"
-            onClick={() => onChange({ ...defaultFilters, studioIds: filters.studioIds, areaIds: filters.areaIds })}
+            onClick={() => set({ people: defaultFilters.people })}
           >
             초기화
           </button>
@@ -59,31 +51,6 @@ export function FilterSheet({ filters, resultCount, onClose, onChange }: FilterS
         </footer>
       )}
     >
-      {/* 날짜 */}
-      <div className="filter-group">
-        <h3>날짜 <span className="filter-hint">여러 날 선택 가능 · 미선택 시 일주일 내</span></h3>
-        <CalendarPicker
-          selected={filters.dates}
-          onChange={(dates) => set({ dates })}
-        />
-      </div>
-
-      {/* 합주 시간 */}
-      <div className="filter-group">
-        <h3>합주 시간 <span className="filter-hint">연속</span></h3>
-        <div className="filter-chips">
-          {DURATION_OPTIONS.map((opt) => (
-            <button
-              key={opt.value}
-              className={filters.minDuration === opt.value ? 'selected' : ''}
-              onClick={() => set({ minDuration: opt.value })}
-            >
-              {opt.label}
-            </button>
-          ))}
-        </div>
-      </div>
-
       {/* 인원 */}
       <div className="people-control">
         <span>인원</span>
