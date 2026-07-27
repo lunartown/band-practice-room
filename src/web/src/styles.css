@@ -2197,6 +2197,54 @@ button {
 }
 
 /* ============================================================
+   Sort sheet
+   ============================================================ */
+.sort-sheet {
+  height: auto;
+  max-height: 75%;
+}
+
+.sort-sheet-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.sort-sheet-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  width: 100%;
+  min-height: 52px;
+  padding: var(--sp-3) var(--sp-1);
+  border-bottom: 1px solid var(--border-subtle);
+  background: transparent;
+  color: var(--text-1);
+  font-size: var(--fs-lg);
+  text-align: left;
+}
+
+.sort-sheet-row:last-child {
+  border-bottom: none;
+}
+
+.sort-sheet-row:active {
+  background: var(--surface-sunken);
+}
+
+.sort-sheet-row.selected {
+  color: var(--accent-strong);
+  font-weight: var(--fw-bold);
+}
+
+.sort-sheet-check {
+  flex: 0 0 var(--sp-5);
+  color: var(--accent);
+  font-size: var(--fs-sm);
+  text-align: center;
+}
+
+/* ============================================================
    Alert confirm sheet
    ============================================================ */
 .alert-sheet {
@@ -2482,74 +2530,6 @@ button {
   font-size: var(--fs-xs);
   font-weight: var(--fw-medium);
   color: var(--text-faint);
-}
-
-/* ============================================================
-   Popover (per-chip quick filter)
-   ============================================================ */
-.popover-layer {
-  position: absolute;
-  inset: 0;
-  z-index: 10;
-  -webkit-tap-highlight-color: transparent;
-}
-
-.popover-backdrop {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  background: transparent;
-  touch-action: manipulation;
-}
-
-.popover-backdrop:active {
-  background: transparent;
-}
-
-.popover {
-  position: absolute;
-  max-height: 72%;
-  overflow: auto;
-  padding: var(--sp-1);
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--r-lg);
-  box-shadow: var(--shadow-pop);
-}
-
-.popover.padded {
-  padding: var(--sp-3);
-}
-
-.popover-option {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--sp-2);
-  width: 100%;
-  min-height: var(--tap);
-  padding: var(--sp-2) var(--sp-3);
-  border-radius: var(--r-sm);
-  background: transparent;
-  color: var(--text-1);
-  font-size: var(--fs-md);
-  font-weight: var(--fw-semibold);
-  text-align: left;
-}
-
-.popover-option:hover {
-  background: var(--surface-sunken);
-}
-
-.popover-option.selected {
-  color: var(--accent-strong);
-  font-weight: var(--fw-extrabold);
-}
-
-.popover-option .pop-check {
-  flex: 0 0 auto;
-  color: var(--accent);
-  font-size: var(--fs-sm);
 }
 
 /* ============================================================

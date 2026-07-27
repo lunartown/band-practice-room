@@ -292,7 +292,7 @@ function compareStudios(a: StudioAvailability, b: StudioAvailability, sortOption
   if (sortOption === 'price_asc') return compareByPrice(a, b, 'asc');
   if (sortOption === 'price_desc') return compareByPrice(a, b, 'desc');
 
-  // 인기순은 리뷰 많은 순이다(평점은 대표성이 약해 쓰지 않는다).
+  // 리뷰 많은 순은 평점보다 표본 수가 명확한 리뷰 수를 기준으로 한다.
   // 리뷰 수가 같거나 없으면 이름 가나다순으로 안정 정렬한다.
   return compareByPopularity(a, b);
 }
