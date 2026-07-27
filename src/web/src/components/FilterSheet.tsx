@@ -164,6 +164,7 @@ export function FilterSheet({ filters, resultCount, onClose, onChange }: FilterS
                 inputMode="numeric"
                 value={minInput}
                 aria-label="최저 가격 직접 입력"
+                onFocus={(event) => event.currentTarget.select()}
                 onChange={(event) => setMinInput(event.target.value.replace(/[^0-9,]/g, ''))}
                 onBlur={() => commitInput('min')}
                 onKeyDown={(event) => event.key === 'Enter' && event.currentTarget.blur()}
@@ -179,6 +180,7 @@ export function FilterSheet({ filters, resultCount, onClose, onChange }: FilterS
                 inputMode="numeric"
                 value={maxInput}
                 aria-label="최고 가격 직접 입력"
+                onFocus={(event) => event.currentTarget.select()}
                 onChange={(event) => setMaxInput(event.target.value.replace(/[^0-9,]/g, ''))}
                 onBlur={() => commitInput('max')}
                 onKeyDown={(event) => event.key === 'Enter' && event.currentTarget.blur()}
