@@ -9,9 +9,9 @@ import { FilterSheet, defaultFilters } from './components/FilterSheet';
 import type { FilterState } from './components/FilterSheet';
 import { SearchConditionSheet } from './components/SearchConditionSheet';
 import { contiguousSpan } from './components/TimeWindowPicker';
-import { Popover } from './components/Popover';
 import { OpenScreen } from './components/OpenScreen';
 import { AreaSheet } from './components/AreaSheet';
+import { SORT_OPTIONS, SortSheet } from './components/SortSheet';
 import { MenuSheet } from './components/MenuSheet';
 import { AlertConfirmSheet } from './components/AlertConfirmSheet';
 import { AlertsScreen } from './components/AlertsScreen';
@@ -46,27 +46,13 @@ import {
 import { useFavorites } from './lib/useFavorites';
 import { usePullToRefresh } from './lib/usePullToRefresh';
 
-type PopoverKind = 'sort';
-const POP_WIDTH: Record<PopoverKind, number> = { sort: 180 };
-const SORT_OPTIONS: { value: StudioSortOption; label: string }[] = [
-  { value: 'popular', label: '인기순' },
-  { value: 'name_asc', label: '이름순' },
-  { value: 'price_asc', label: '가격 낮은순' },
-  { value: 'price_desc', label: '가격 높은순' },
-];
-interface PopoverState {
-  kind: PopoverKind;
-  top: number;
-  left: number;
-  width: number;
-}
 interface NativeBackState {
   alertDraftOpen: boolean;
   isMenuOpen: boolean;
   isFilterOpen: boolean;
   isConditionOpen: boolean;
   isAreaSheetOpen: boolean;
-  popoverOpen: boolean;
+  isSortOpen: boolean;
   isStudioSearchOpen: boolean;
   isAlertsOpen: boolean;
   studioIds: number[];
@@ -95,9 +81,9 @@ export function App() {
   const [alerts, setAlerts] = useState<SavedAlert[]>([]);
   const [favOnly, setFavOnly] = useState(false);
   const [sortOption, setSortOption] = useState<StudioSortOption>('popular');
+  const [isSortOpen, setIsSortOpen] = useState(false);
   const [studioSearchQuery, setStudioSearchQuery] = useState('');
   const [recentStudioIds, setRecentStudioIds] = useState<number[]>(() => loadRecentStudioIds());
-  const [popover, setPopover] = useState<PopoverState | null>(null);
   const favorites = useFavorites({ enabled: favOnly || isStudioSearchOpen });
   const [error, setError] = useState<string | null>(null);
   const [areasError, setAreasError] = useState(false);
@@ -111,7 +97,7 @@ export function App() {
     isFilterOpen: false,
     isConditionOpen: false,
     isAreaSheetOpen: false,
-    popoverOpen: false,
+    isSortOpen: false,
     isStudioSearchOpen: false,
     isAlertsOpen: false,
     studioIds: [],
@@ -122,16 +108,6 @@ export function App() {
       setRecentStudioIds(recordRecentStudioSelections(studioIds));
     }
   }, []);
-
-  function openPopover(kind: PopoverKind, e: React.MouseEvent<HTMLButtonElement>) {
-    const phone = phoneRef.current;
-    if (!phone) return;
-    const a = e.currentTarget.getBoundingClientRect();
-    const p = phone.getBoundingClientRect();
-    const width = POP_WIDTH[kind];
-    const left = Math.max(12, Math.min(a.left - p.left, p.width - width - 12));
-    setPopover({ kind, top: a.bottom - p.top + 6, left, width });
-  }
 
   function loadAreas() {
     setAreasError(false);
@@ -168,7 +144,7 @@ export function App() {
   useEffect(() => {
     // 알림 탭 → 알림이 가리키는 날짜·합주실 결과 화면으로 이동한다(콜드스타트 포함).
     return onNotificationTap((target) => {
-      setPopover(null);
+      setIsSortOpen(false);
       setIsFilterOpen(false);
       setIsConditionOpen(false);
       setIsMenuOpen(false);
@@ -296,7 +272,7 @@ export function App() {
   }
 
   function openStudioSearch() {
-    setPopover(null);
+    setIsSortOpen(false);
     setIsFilterOpen(false);
     setIsConditionOpen(false);
     setIsMenuOpen(false);
@@ -307,7 +283,7 @@ export function App() {
   }
 
   function openAreaSheet() {
-    setPopover(null);
+    setIsSortOpen(false);
     setIsFilterOpen(false);
     setIsConditionOpen(false);
     setIsMenuOpen(false);
@@ -319,7 +295,7 @@ export function App() {
   }
 
   function openAlertsScreen() {
-    setPopover(null);
+    setIsSortOpen(false);
     setIsFilterOpen(false);
     setIsConditionOpen(false);
     setIsMenuOpen(false);
@@ -427,7 +403,7 @@ export function App() {
   }
 
   function openAlertDraft(draft: AlertDraft) {
-    setPopover(null);
+    setIsSortOpen(false);
     setIsFilterOpen(false);
     setIsConditionOpen(false);
     setIsMenuOpen(false);
@@ -560,7 +536,7 @@ export function App() {
     isFilterOpen,
     isConditionOpen,
     isAreaSheetOpen,
-    popoverOpen: popover !== null,
+    isSortOpen,
     isStudioSearchOpen,
     isAlertsOpen,
     studioIds: filters.studioIds,
@@ -639,8 +615,8 @@ export function App() {
         setIsAreaSheetOpen(false);
         return;
       }
-      if (state.popoverOpen) {
-        setPopover(null);
+      if (state.isSortOpen) {
+        setIsSortOpen(false);
         return;
       }
       if (state.isStudioSearchOpen) {
@@ -834,7 +810,7 @@ export function App() {
                 aria-pressed={conditionActive}
                 aria-haspopup="dialog"
                 onClick={() => {
-                  setPopover(null);
+                  setIsSortOpen(false);
                   setIsFilterOpen(false);
                   setIsConditionOpen(true);
                 }}
@@ -848,12 +824,16 @@ export function App() {
                   <FilterIcon />
                 </button>
                 <button
-                  className={`sort-filter-button${sortOption !== 'popular' ? ' active' : ''}${popover?.kind === 'sort' ? ' open' : ''}`}
-                  aria-haspopup="menu"
-                  aria-expanded={popover?.kind === 'sort'}
+                  className={`sort-filter-button${sortOption !== 'popular' ? ' active' : ''}${isSortOpen ? ' open' : ''}`}
+                  aria-haspopup="dialog"
+                  aria-expanded={isSortOpen}
                   aria-label={`정렬 기준: ${sortOptionLabel(sortOption)}`}
                   title={`정렬 기준: ${sortOptionLabel(sortOption)}`}
-                  onClick={(e) => openPopover('sort', e)}
+                  onClick={() => {
+                    setIsFilterOpen(false);
+                    setIsConditionOpen(false);
+                    setIsSortOpen(true);
+                  }}
                 >
                   <SortIcon />
                 </button>
@@ -956,33 +936,12 @@ export function App() {
           </>
         )}
 
-        {popover && (
-          <Popover
-            top={popover.top}
-            left={popover.left}
-            width={popover.width}
-            onClose={() => setPopover(null)}
-          >
-            {popover.kind === 'sort' && (
-              <>
-                {SORT_OPTIONS.map((option) => (
-                  <button
-                    key={option.value}
-                    role="menuitemradio"
-                    aria-checked={sortOption === option.value}
-                    className={`popover-option${sortOption === option.value ? ' selected' : ''}`}
-                    onClick={() => {
-                      setSortOption(option.value);
-                      setPopover(null);
-                    }}
-                  >
-                    <span>{option.label}</span>
-                    {sortOption === option.value && <span className="pop-check">✓</span>}
-                  </button>
-                ))}
-              </>
-            )}
-          </Popover>
+        {isSortOpen && (
+          <SortSheet
+            value={sortOption}
+            onClose={() => setIsSortOpen(false)}
+            onChange={setSortOption}
+          />
         )}
 
         {isConditionOpen && (
@@ -1287,7 +1246,7 @@ function CalendarChipIcon() {
 }
 
 function sortOptionLabel(value: StudioSortOption) {
-  return SORT_OPTIONS.find((option) => option.value === value)?.label ?? '인기순';
+  return SORT_OPTIONS.find((option) => option.value === value)?.label ?? '리뷰 많은 순';
 }
 
 function buildSlotsQuery(
