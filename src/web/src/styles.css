@@ -2170,8 +2170,7 @@ button {
   margin-top: calc(var(--sp-8) + var(--sp-2));
 }
 
-.price-control-heading,
-.price-control-scale {
+.price-control-heading {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -2191,9 +2190,81 @@ button {
   font-size: var(--fs-md);
 }
 
-.price-control input[type='range'] {
-  --price-progress: 100%;
+.price-range-inputs {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: end;
+  gap: var(--sp-3);
+  margin-bottom: var(--sp-2);
+}
+
+.price-range-inputs label > span {
   display: block;
+  margin-bottom: var(--sp-1);
+  color: var(--text-3);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-semibold);
+}
+
+.price-range-inputs label > div {
+  display: flex;
+  align-items: center;
+  height: var(--tap);
+  padding: 0 var(--sp-3);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--surface);
+}
+
+.price-range-inputs input {
+  min-width: 0;
+  width: 100%;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--text-1);
+  font-family: inherit;
+  font-size: var(--fs-md);
+  font-weight: var(--fw-bold);
+}
+
+.price-range-inputs b {
+  flex: 0 0 auto;
+  color: var(--text-3);
+  font-size: var(--fs-xs);
+}
+
+.price-range-inputs > i {
+  margin-bottom: 13px;
+  color: var(--text-faint);
+  font-style: normal;
+  font-weight: var(--fw-bold);
+}
+
+.price-range-slider {
+  --price-start: 0%;
+  --price-end: 100%;
+  position: relative;
+  height: var(--tap);
+  background: linear-gradient(var(--gray-150), var(--gray-150)) center / 100% 6px no-repeat;
+}
+
+.price-range-slider::before {
+  content: '';
+  position: absolute;
+  z-index: 1;
+  top: 19px;
+  right: calc(100% - var(--price-end));
+  left: var(--price-start);
+  height: 6px;
+  border-radius: 999px;
+  background: var(--accent);
+}
+
+.price-range-slider input[type='range'] {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
   width: 100%;
   height: var(--tap);
   margin: 0;
@@ -2202,20 +2273,20 @@ button {
   -webkit-appearance: none;
   background: transparent;
   cursor: pointer;
+  pointer-events: none;
   touch-action: pan-y;
 }
 
-.price-control input[type='range']::-webkit-slider-runnable-track {
-  height: 6px;
-  border-radius: 999px;
-  background: linear-gradient(
-    to right,
-    var(--accent) 0 var(--price-progress),
-    var(--gray-150) var(--price-progress) 100%
-  );
+.price-range-slider .price-range-max {
+  z-index: 3;
 }
 
-.price-control input[type='range']::-webkit-slider-thumb {
+.price-range-slider input[type='range']::-webkit-slider-runnable-track {
+  height: 6px;
+  background: transparent;
+}
+
+.price-range-slider input[type='range']::-webkit-slider-thumb {
   width: 26px;
   height: 26px;
   margin-top: -10px;
@@ -2225,27 +2296,22 @@ button {
   box-shadow: 0 2px 8px rgb(0 0 0 / 16%);
   appearance: none;
   -webkit-appearance: none;
+  pointer-events: auto;
 }
 
-.price-control input[type='range']::-moz-range-track {
+.price-range-slider input[type='range']::-moz-range-track {
   height: 6px;
-  border-radius: 999px;
-  background: var(--gray-150);
+  background: transparent;
 }
 
-.price-control input[type='range']::-moz-range-progress {
-  height: 6px;
-  border-radius: 999px;
-  background: var(--accent);
-}
-
-.price-control input[type='range']::-moz-range-thumb {
+.price-range-slider input[type='range']::-moz-range-thumb {
   width: 20px;
   height: 20px;
   border: 3px solid var(--accent);
   border-radius: 50%;
   background: var(--surface);
   box-shadow: 0 2px 8px rgb(0 0 0 / 16%);
+  pointer-events: auto;
 }
 
 .price-control-scale {
@@ -2264,9 +2330,10 @@ button {
   height: 7px;
   background:
     linear-gradient(var(--gray-300), var(--gray-300)) left top / 1px 7px no-repeat,
-    linear-gradient(var(--gray-300), var(--gray-300)) 25% top / 1px 7px no-repeat,
-    linear-gradient(var(--gray-300), var(--gray-300)) 50% top / 1px 7px no-repeat,
-    linear-gradient(var(--gray-300), var(--gray-300)) 75% top / 1px 7px no-repeat,
+    linear-gradient(var(--gray-300), var(--gray-300)) 20% top / 1px 7px no-repeat,
+    linear-gradient(var(--gray-300), var(--gray-300)) 40% top / 1px 7px no-repeat,
+    linear-gradient(var(--gray-300), var(--gray-300)) 60% top / 1px 7px no-repeat,
+    linear-gradient(var(--gray-300), var(--gray-300)) 80% top / 1px 7px no-repeat,
     linear-gradient(var(--gray-300), var(--gray-300)) right top / 1px 7px no-repeat;
 }
 
@@ -2282,11 +2349,12 @@ button {
   transform: none;
 }
 
-.price-control-scale span:nth-child(2) { left: 25%; }
-.price-control-scale span:nth-child(3) { left: 50%; }
-.price-control-scale span:nth-child(4) { left: 75%; }
+.price-control-scale span:nth-child(2) { left: 20%; }
+.price-control-scale span:nth-child(3) { left: 40%; }
+.price-control-scale span:nth-child(4) { left: 60%; }
+.price-control-scale span:nth-child(5) { left: 80%; }
 
-.price-control-scale span:nth-child(5) {
+.price-control-scale span:nth-child(6) {
   right: 0;
   transform: none;
 }

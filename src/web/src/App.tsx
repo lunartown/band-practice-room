@@ -274,6 +274,7 @@ export function App() {
       time_window_count: filters.timeWindows.length,
       min_duration: filters.minDuration,
       people: filters.people,
+      min_hourly_price: filters.minHourlyPrice,
       max_hourly_price: filters.maxHourlyPrice,
     });
   }, [filters]);
@@ -463,11 +464,12 @@ export function App() {
         filters.studioIds,
         favOnly,
         favorites,
+        filters.minHourlyPrice,
         filters.maxHourlyPrice,
       ),
       sortOption,
     ),
-    [dateGroups, favOnly, favorites, filters.maxHourlyPrice, filters.studioIds, sortOption],
+    [dateGroups, favOnly, favorites, filters.maxHourlyPrice, filters.minHourlyPrice, filters.studioIds, sortOption],
   );
 
   const totalStudios = visibleGroups.reduce((sum, g) => sum + g.studios.length, 0);
@@ -545,6 +547,7 @@ export function App() {
     || filters.minDuration !== defaultFilters.minDuration;
   const studioActive = filters.studioIds.length > 0;
   const sheetActive = filters.people !== defaultFilters.people
+    || filters.minHourlyPrice !== defaultFilters.minHourlyPrice
     || filters.maxHourlyPrice !== defaultFilters.maxHourlyPrice;
   const favFilterActive = favOnly;
 
@@ -941,7 +944,9 @@ export function App() {
                             />
                           ) : !hasBodyRows ? (
                             <EmptyDay
-                              message={filters.maxHourlyPrice != null ? '이 날은 설정한 가격에 맞는 곳이 없어요' : undefined}
+                              message={filters.minHourlyPrice != null || filters.maxHourlyPrice != null
+                                ? '이 날은 설정한 가격 범위에 맞는 곳이 없어요'
+                                : undefined}
                               minDuration={filters.minDuration}
                               setFilters={setFilters}
                               onCreateAlert={() => openCurrentConditionAlert(group.date)}
@@ -1086,13 +1091,18 @@ function EmptyState({
       apply: () => setFilters((f) => ({ ...f, people: Math.max(1, f.people - 1) })),
     },
     { label: '시간 제한 해제', apply: () => setFilters((f) => ({ ...f, timeWindows: [] })) },
-    { label: '가격 제한 해제', apply: () => setFilters((f) => ({ ...f, maxHourlyPrice: null })) },
+    {
+      label: '가격 제한 해제',
+      apply: () => setFilters((f) => ({ ...f, minHourlyPrice: null, maxHourlyPrice: null })),
+    },
   ].filter((s) => {
     if (s.label === '합주실 해제' && filters.studioIds.length === 0) return false;
     if (s.label === '지역 초기화' && filters.areaIds.length === 0) return false;
     if (s.label.startsWith('인원') && filters.people <= 1) return false;
     if (s.label === '시간 제한 해제' && filters.timeWindows.length === 0) return false;
-    if (s.label === '가격 제한 해제' && filters.maxHourlyPrice == null) return false;
+    if (s.label === '가격 제한 해제'
+      && filters.minHourlyPrice == null
+      && filters.maxHourlyPrice == null) return false;
     return true;
   });
   const studioLabel = buildSelectedStudioLabel(selectedStudios, filters.studioIds.length);
