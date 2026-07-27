@@ -2080,6 +2080,14 @@ button {
   font-size: var(--fs-sm);
 }
 
+.condition-sheet .filter-group + .filter-group {
+  margin-top: var(--sp-8);
+}
+
+.condition-sheet .filter-group + .filter-group h3 {
+  margin-top: 0;
+}
+
 .filter-hint {
   font-size: var(--fs-2xs);
   font-weight: var(--fw-medium);

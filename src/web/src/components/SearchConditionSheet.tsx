@@ -19,6 +19,7 @@ export function SearchConditionSheet({ filters, resultCount, onClose, onChange }
     <BottomSheet
       ariaLabel="예약 조건"
       dimClassName="filter-dim"
+      sheetClassName="condition-sheet"
       onClose={onClose}
       header={() => (
         <header>
