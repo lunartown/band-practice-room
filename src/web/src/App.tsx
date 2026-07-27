@@ -164,11 +164,15 @@ export function App() {
 
   useEffect(() => {
     if (!entered) return;
-    let canceled = false;
     // 이번 실행에서 진입했음을 기록한다. 같은 세션 안에서의 새로고침은
     // 조건을 복원하지만, 콜드스타트(앱 재실행/새 탭)면 기본 필터로 다시 시작한다.
     markEntered();
     saveFilters(filters);
+  }, [filters, entered]);
+
+  useEffect(() => {
+    if (!entered) return;
+    let canceled = false;
     setError(null);
     setLoading(true);
     getSlots(buildSlotsQuery(filters, { includeSelectedStudio: true }))
@@ -188,7 +192,15 @@ export function App() {
     return () => {
       canceled = true;
     };
-  }, [filters, entered]);
+  }, [
+    entered,
+    filters.areaIds,
+    filters.dates,
+    filters.minDuration,
+    filters.people,
+    filters.studioIds,
+    filters.timeWindows,
+  ]);
 
   useEffect(() => {
     if (!entered || !isStudioSearchOpen) return;
@@ -262,6 +274,7 @@ export function App() {
       time_window_count: filters.timeWindows.length,
       min_duration: filters.minDuration,
       people: filters.people,
+      max_hourly_price: filters.maxHourlyPrice,
     });
   }, [filters]);
 
@@ -445,10 +458,16 @@ export function App() {
 
   const visibleGroups = useMemo(
     () => sortDateAvailabilityGroups(
-      buildVisibleGroups(dateGroups, filters.studioIds, favOnly, favorites),
+      buildVisibleGroups(
+        dateGroups,
+        filters.studioIds,
+        favOnly,
+        favorites,
+        filters.maxHourlyPrice,
+      ),
       sortOption,
     ),
-    [dateGroups, favOnly, favorites, filters.studioIds, sortOption],
+    [dateGroups, favOnly, favorites, filters.maxHourlyPrice, filters.studioIds, sortOption],
   );
 
   const totalStudios = visibleGroups.reduce((sum, g) => sum + g.studios.length, 0);
@@ -525,7 +544,8 @@ export function App() {
     || filters.timeWindows.length > 0
     || filters.minDuration !== defaultFilters.minDuration;
   const studioActive = filters.studioIds.length > 0;
-  const sheetActive = filters.people !== defaultFilters.people;
+  const sheetActive = filters.people !== defaultFilters.people
+    || filters.maxHourlyPrice !== defaultFilters.maxHourlyPrice;
   const favFilterActive = favOnly;
 
   const syncLabel = updatedAt ? formatUpdatedAt(updatedAt) : '–';
@@ -891,7 +911,7 @@ export function App() {
                       const selectedEmptyItems = studioActive
                         ? buildSelectedStudioEmptyItems({
                             selectedStudios,
-                            visibleGroups: [group],
+                            visibleGroups: dateGroups.filter((dateGroup) => dateGroup.date === group.date),
                             areaNameById,
                             preferredAreaIds: filters.areaIds,
                           })
@@ -921,6 +941,7 @@ export function App() {
                             />
                           ) : !hasBodyRows ? (
                             <EmptyDay
+                              message={filters.maxHourlyPrice != null ? '이 날은 설정한 가격에 맞는 곳이 없어요' : undefined}
                               minDuration={filters.minDuration}
                               setFilters={setFilters}
                               onCreateAlert={() => openCurrentConditionAlert(group.date)}
@@ -1065,11 +1086,13 @@ function EmptyState({
       apply: () => setFilters((f) => ({ ...f, people: Math.max(1, f.people - 1) })),
     },
     { label: '시간 제한 해제', apply: () => setFilters((f) => ({ ...f, timeWindows: [] })) },
+    { label: '가격 제한 해제', apply: () => setFilters((f) => ({ ...f, maxHourlyPrice: null })) },
   ].filter((s) => {
     if (s.label === '합주실 해제' && filters.studioIds.length === 0) return false;
     if (s.label === '지역 초기화' && filters.areaIds.length === 0) return false;
     if (s.label.startsWith('인원') && filters.people <= 1) return false;
     if (s.label === '시간 제한 해제' && filters.timeWindows.length === 0) return false;
+    if (s.label === '가격 제한 해제' && filters.maxHourlyPrice == null) return false;
     return true;
   });
   const studioLabel = buildSelectedStudioLabel(selectedStudios, filters.studioIds.length);
@@ -1087,7 +1110,7 @@ function EmptyState({
         {studioLabel ? (
           <>카탈로그에는 있지만 지금 조건에 맞는<br />예약 가능 시간이 없어요</>
         ) : (
-          <>날짜·인원·시간 조건을 조금만 넓히면<br />예약 가능한 시간이 나올 수 있어요</>
+          <>날짜·인원·시간·가격 조건을 조금만 넓히면<br />예약 가능한 시간이 나올 수 있어요</>
         )}
       </p>
       {suggestions.length > 0 && (

@@ -2165,6 +2165,96 @@ button {
   font-weight: var(--fw-extrabold);
 }
 
+/* --- Hourly price slider --- */
+.price-control {
+  margin-top: var(--sp-7);
+}
+
+.price-control-heading,
+.price-control-range {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.price-control-heading {
+  margin-bottom: var(--sp-4);
+  font-size: var(--fs-sm);
+}
+
+.price-control-heading > span {
+  font-weight: var(--fw-extrabold);
+}
+
+.price-control-heading strong {
+  color: var(--accent-strong);
+  font-size: var(--fs-md);
+}
+
+.price-control input[type='range'] {
+  --price-progress: 100%;
+  display: block;
+  width: 100%;
+  height: var(--tap);
+  margin: 0;
+  padding: 0;
+  appearance: none;
+  -webkit-appearance: none;
+  background: transparent;
+  cursor: pointer;
+  touch-action: pan-y;
+}
+
+.price-control input[type='range']::-webkit-slider-runnable-track {
+  height: 6px;
+  border-radius: 999px;
+  background: linear-gradient(
+    to right,
+    var(--accent) 0 var(--price-progress),
+    var(--gray-150) var(--price-progress) 100%
+  );
+}
+
+.price-control input[type='range']::-webkit-slider-thumb {
+  width: 26px;
+  height: 26px;
+  margin-top: -10px;
+  border: 3px solid var(--accent);
+  border-radius: 50%;
+  background: var(--surface);
+  box-shadow: 0 2px 8px rgb(0 0 0 / 16%);
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+.price-control input[type='range']::-moz-range-track {
+  height: 6px;
+  border-radius: 999px;
+  background: var(--gray-150);
+}
+
+.price-control input[type='range']::-moz-range-progress {
+  height: 6px;
+  border-radius: 999px;
+  background: var(--accent);
+}
+
+.price-control input[type='range']::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  border: 3px solid var(--accent);
+  border-radius: 50%;
+  background: var(--surface);
+  box-shadow: 0 2px 8px rgb(0 0 0 / 16%);
+}
+
+.price-control-range {
+  margin-top: calc(var(--sp-1) * -1);
+  color: var(--text-3);
+  font-size: var(--fs-2xs);
+  font-weight: var(--fw-semibold);
+}
+
 /* --- Footer --- */
 .filter-sheet footer {
   gap: var(--sp-3);

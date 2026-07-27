@@ -1,5 +1,10 @@
 import { Capacitor } from '@capacitor/core';
-import { defaultFilters } from '../components/FilterSheet';
+import {
+  defaultFilters,
+  PRICE_FILTER_MAX,
+  PRICE_FILTER_MIN,
+  PRICE_FILTER_STEP,
+} from '../components/FilterSheet';
 import type { FilterState } from '../components/FilterSheet';
 import { todayKst } from './date';
 
@@ -71,11 +76,19 @@ export function loadFilters(): SavedPrefs | null {
       studioIds: readStudioIds(f),
       dates,
       timeWindows: Array.isArray(f.timeWindows) ? f.timeWindows : defaultFilters.timeWindows,
+      maxHourlyPrice: readMaxHourlyPrice(f.maxHourlyPrice),
     };
     return { filters, fresh: true };
   } catch {
     return null;
   }
+}
+
+function readMaxHourlyPrice(value: unknown): number | null {
+  if (typeof value !== 'number' || !Number.isFinite(value)) return null;
+  if (value >= PRICE_FILTER_MAX) return null;
+  const clamped = Math.max(PRICE_FILTER_MIN, value);
+  return Math.round(clamped / PRICE_FILTER_STEP) * PRICE_FILTER_STEP;
 }
 
 export function saveFilters(filters: FilterState) {

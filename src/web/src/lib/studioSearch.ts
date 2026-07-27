@@ -26,20 +26,30 @@ export function buildVisibleGroups(
   selectedStudioIds: number[],
   favOnly: boolean,
   favorites: ReadonlySet<number>,
+  maxHourlyPrice: number | null = null,
 ): DateAvailability[] {
+  let filtered = dateGroups;
+
   if (selectedStudioIds.length > 0) {
     const selected = new Set(selectedStudioIds);
-    return dateGroups.map((group) => ({
+    filtered = filtered.map((group) => ({
       ...group,
       studios: group.studios.filter((studio) => selected.has(studio.studio.id)),
     }));
+  } else if (favOnly) {
+    filtered = filtered.map((group) => ({
+      ...group,
+      studios: group.studios.filter((studio) => favorites.has(studio.studio.id)),
+    }));
   }
 
-  if (!favOnly) return dateGroups;
+  if (maxHourlyPrice == null) return filtered;
 
-  return dateGroups.map((group) => ({
+  return filtered.map((group) => ({
     ...group,
-    studios: group.studios.filter((studio) => favorites.has(studio.studio.id)),
+    studios: group.studios.filter(
+      (studio) => studio.pricePerHourMin != null && studio.pricePerHourMin <= maxHourlyPrice,
+    ),
   }));
 }
 
