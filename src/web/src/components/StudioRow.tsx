@@ -1,8 +1,8 @@
-import { memo, useEffect, useState } from 'react';
+import { memo, useEffect, useRef, useState } from 'react';
 import type { EquipmentAssignment, Studio } from '../api/types';
 import type { AvailabilityChip, RoomAvailability, StudioAvailability } from '../lib/availability';
 import { toReviewBadges } from '../lib/reviewKeywords';
-import { STUDIO_FALLBACK_IMAGE_URL, galleryImageUrl, thumbnailUrl } from '../lib/imageUrl';
+import { STUDIO_FALLBACK_IMAGE_URL, galleryImageUrl } from '../lib/imageUrl';
 import { useFavorite } from '../lib/useFavorites';
 import { toggleFavorite } from '../lib/favorites';
 import { shareStudio } from '../lib/share';
@@ -71,75 +71,21 @@ function HeartIcon({ filled }: { filled: boolean }) {
   );
 }
 
-function StudioAvatar({ studio }: { studio: Pick<Studio, 'imageUrl' | 'name'> }) {
-  const { imageUrl, name } = studio;
-  const [imgFailed, setImgFailed] = useState(false);
-  const [loadedSrc, setLoadedSrc] = useState<string | null>(null);
-  // 리사이즈 URL 부터 시도하고, 실패하면 원본 URL 로 한 번 더 시도(self-healing).
-  // 리사이즈 타입이 호스트에서 안 먹혀도 이미지가 사라지지 않게 보장한다.
-  const [useOriginal, setUseOriginal] = useState(false);
-  const resized = thumbnailUrl(imageUrl);
-
-  // studio(이미지)가 바뀌면 폴백 상태를 초기화한다(행 재사용 대비).
-  useEffect(() => {
-    setImgFailed(false);
-    setLoadedSrc(null);
-    setUseOriginal(false);
-  }, [imageUrl]);
-
-  // 아바타는 항상 렌더한다. 이미지가 없거나(또는 로드 실패하면) 로컬 폴백 이미지로
-  // 떨어져, 행마다 좌측 정렬이 흔들리지 않게 한다.
-  const sourceImgSrc = !useOriginal && resized ? resized : imageUrl ?? null;
-  const showSourceImg = Boolean(sourceImgSrc) && !imgFailed;
-  const showFallback = !showSourceImg || loadedSrc !== sourceImgSrc;
-
-  const handleImgError = () => {
-    setLoadedSrc(null);
-    // 1차(리사이즈) 실패 → 원본 재시도, 2차(원본) 실패 → 로컬 폴백.
-    if (!useOriginal && resized && resized !== imageUrl) setUseOriginal(true);
-    else setImgFailed(true);
-  };
-
-  // 캐시 히트면 <img>가 DOM 에 붙기 전에 load 이벤트가 지나가 onLoad 가 안 불릴 수
-  // 있다(React img 캐시 레이스). 그러면 opacity 0 으로 실제 이미지가 숨어 폴백만
-  // 보인다. ref 로 마운트 시 complete 상태를 직접 확인해 이 누락을 메운다.
-  const markLoadedIfComplete = (img: HTMLImageElement | null) => {
-    if (img && img.complete && img.naturalWidth > 0) {
-      setLoadedSrc(img.getAttribute('src'));
-    }
-  };
-
-  return (
-    <div className={`studio-avatar${showFallback ? ' is-fallback' : ''}`} aria-hidden>
-      {showFallback && (
-        <span
-          className="studio-fallback-image"
-          style={{ backgroundImage: `url(${STUDIO_FALLBACK_IMAGE_URL})` }}
-        />
-      )}
-      {showSourceImg && sourceImgSrc ? (
-        // 합주실 썸네일은 네이버 phinf·스페이스클라우드 등 외부 CDN 원본이다.
-        // 홈화면 PWA(standalone) WebKit 은 모바일 웹과 다른 Referer 를 실어
-        // 보내 CDN 핫링크 보호에 막히곤 한다("이미지 다 깨짐"). Referer 를 아예
-        // 빼서 두 환경의 요청을 통일하고, 깨짐을 막는다(phinf 는 no-referer 로 받힘).
-        <img
-          ref={markLoadedIfComplete}
-          src={sourceImgSrc}
-          alt=""
-          loading="lazy"
-          referrerPolicy="no-referrer"
-          style={{ opacity: loadedSrc === sourceImgSrc ? 1 : 0 }}
-          onLoad={(event) => setLoadedSrc(event.currentTarget.getAttribute('src'))}
-          onError={handleImgError}
-        />
-      ) : null}
-    </div>
-  );
-}
-
 // 갤러리 사진 한 장. 리사이즈 URL → 실패 시 원본 → 그래도 실패면 숨김(self-healing).
-// 아바타와 같은 이유로 referrerPolicy="no-referrer" 로 CDN 핫링크 보호를 피한다.
-function StudioPhoto({ url }: { url: string }) {
+// referrerPolicy="no-referrer" 로 외부 CDN 의 핫링크 보호에 걸리지 않게 한다.
+function StudioPhoto({
+  url,
+  name,
+  index,
+  total,
+  onFailure,
+}: {
+  url: string;
+  name: string;
+  index: number;
+  total: number;
+  onFailure: (url: string) => void;
+}) {
   const [src, setSrc] = useState(galleryImageUrl(url) ?? url);
   const [triedOriginal, setTriedOriginal] = useState(false);
   const [failed, setFailed] = useState(false);
@@ -153,11 +99,17 @@ function StudioPhoto({ url }: { url: string }) {
   };
 
   return (
-    <div className="studio-photo">
+    <div
+      className="studio-photo"
+      role="group"
+      aria-roledescription="슬라이드"
+      aria-label={`${total}장 중 ${index + 1}번째`}
+    >
       <img
         ref={markLoadedIfComplete}
         src={src}
-        alt=""
+        alt={`${name} 사진 ${index + 1}`}
+        draggable={false}
         loading="lazy"
         referrerPolicy="no-referrer"
         style={{ opacity: loaded ? 1 : 0 }}
@@ -168,6 +120,7 @@ function StudioPhoto({ url }: { url: string }) {
             setSrc(url);
           } else {
             setFailed(true);
+            onFailure(url);
           }
         }}
       />
@@ -175,14 +128,89 @@ function StudioPhoto({ url }: { url: string }) {
   );
 }
 
-// 합주실 내부 사진을 가로 스크롤 스트립으로 보여준다(4~5장). 사진이 없으면 렌더하지 않는다.
-function StudioPhotos({ images, name }: { images?: string[]; name: string }) {
-  if (!images || images.length === 0) return null;
+// 카드 폭을 채우는 1장 단위 캐러셀. 실제 갤러리가 없으면 커버, 커버도 없으면
+// 로컬 기본 이미지를 쓴다. 가로 드래그 직후 상위 예약 링크가 열리지 않게 막는다.
+function StudioPhotos({ studio }: { studio: Pick<Studio, 'imageUrl' | 'images' | 'name'> }) {
+  const { imageUrl, images, name } = studio;
+  const sourceUrls = [...new Set((images?.length ? images : imageUrl ? [imageUrl] : [])
+    .filter((url): url is string => Boolean(url)))];
+  const sourceKey = sourceUrls.join('\n');
+  const [failedUrls, setFailedUrls] = useState<Set<string>>(() => new Set());
+  const [activeIndex, setActiveIndex] = useState(0);
+  const scrollerRef = useRef<HTMLDivElement>(null);
+  const pointerStartX = useRef<number | null>(null);
+  const dragged = useRef(false);
+
+  useEffect(() => {
+    setFailedUrls(new Set());
+    setActiveIndex(0);
+  }, [sourceKey]);
+
+  const availableUrls = sourceUrls.filter((url) => !failedUrls.has(url));
+  const displayUrls = availableUrls.length > 0 ? availableUrls : [STUDIO_FALLBACK_IMAGE_URL];
+
+  useEffect(() => {
+    if (activeIndex >= displayUrls.length) {
+      setActiveIndex(Math.max(0, displayUrls.length - 1));
+    }
+  }, [activeIndex, displayUrls.length]);
+
+  const handleScroll = () => {
+    const scroller = scrollerRef.current;
+    if (!scroller || scroller.clientWidth === 0) return;
+    const nextIndex = Math.min(
+      displayUrls.length - 1,
+      Math.max(0, Math.round(scroller.scrollLeft / scroller.clientWidth)),
+    );
+    setActiveIndex((current) => current === nextIndex ? current : nextIndex);
+  };
+
   return (
-    <div className="studio-photos" aria-label={`${name} 사진`}>
-      {images.map((url) => (
-        <StudioPhoto key={url} url={url} />
-      ))}
+    <div
+      className="studio-photo-carousel"
+      role="region"
+      aria-roledescription="캐러셀"
+      aria-label={`${name} 사진`}
+      onPointerDown={(event) => {
+        pointerStartX.current = event.clientX;
+        dragged.current = false;
+      }}
+      onPointerMove={(event) => {
+        if (pointerStartX.current != null && Math.abs(event.clientX - pointerStartX.current) > 8) {
+          dragged.current = true;
+        }
+      }}
+      onPointerCancel={() => {
+        pointerStartX.current = null;
+        dragged.current = false;
+      }}
+      onClickCapture={(event) => {
+        if (!dragged.current) return;
+        event.preventDefault();
+        event.stopPropagation();
+        pointerStartX.current = null;
+        dragged.current = false;
+      }}
+    >
+      <div className="studio-photos" ref={scrollerRef} onScroll={handleScroll}>
+        {displayUrls.map((url, index) => (
+          <StudioPhoto
+            key={url}
+            url={url}
+            name={name}
+            index={index}
+            total={displayUrls.length}
+            onFailure={(failedUrl) => setFailedUrls((current) => new Set(current).add(failedUrl))}
+          />
+        ))}
+      </div>
+      {displayUrls.length > 1 && (
+        <div className="studio-photo-pages" aria-hidden>
+          {displayUrls.map((url, index) => (
+            <span key={url} className={index === activeIndex ? 'active' : ''} />
+          ))}
+        </div>
+      )}
     </div>
   );
 }
@@ -310,8 +338,9 @@ export function SelectedStudioEmptyRow({
   return (
     <div className="studio-row studio-row-empty">
       <div className="studio-main studio-main-static">
+        <StudioPhotos studio={studio} />
+
         <div className="studio-head">
-          <StudioAvatar studio={studio} />
           <div className="studio-name-area">
             <div className="studio-name">{name}</div>
             <div className="studio-meta">
@@ -325,8 +354,6 @@ export function SelectedStudioEmptyRow({
             {phoneOnly ? '📞 전화예약' : '빈 시간 없음'}
           </div>
         </div>
-
-        <StudioPhotos images={studio.images} name={name} />
 
         {badges.length > 0 && (
           <div className="review-badges">
@@ -434,8 +461,9 @@ export const StudioRow = memo(function StudioRow({ studio }: StudioRowProps) {
           })
         }
       >
+        <StudioPhotos studio={studio.studio} />
+
         <div className="studio-head">
-          <StudioAvatar studio={studio.studio} />
           <div className="studio-name-area">
             <div className="studio-name">{name}</div>
             <div className="studio-meta">
@@ -448,8 +476,6 @@ export const StudioRow = memo(function StudioRow({ studio }: StudioRowProps) {
           <div className="studio-price">{studio.priceLabel}</div>
           <BookChevron />
         </div>
-
-        <StudioPhotos images={studio.studio.images} name={name} />
 
         {/* 리뷰 배지: 신원(아바타+이름) 헤더 밖, 예약 칩과 같은 게터 라인에 둔다 */}
         {badges.length > 0 && (
