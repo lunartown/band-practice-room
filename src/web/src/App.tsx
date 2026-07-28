@@ -29,6 +29,7 @@ import { track } from './lib/analytics';
 import { buildAvailability, sortDateAvailabilityGroups } from './lib/availability';
 import type { StudioSortOption } from './lib/availability';
 import { todayKst } from './lib/date';
+import { formatTimeRangeLabel } from './lib/timeFormat';
 import { loadFilters, saveFilters, markEntered } from './lib/prefs';
 import { loadRecentStudioIds, recordRecentStudioSelections } from './lib/recentStudios';
 import {
@@ -1253,20 +1254,15 @@ function buildConditionChipLabel(filters: FilterState) {
   const datePart = formatCompactDate(filters.dates[0] ?? todayKst());
   const span = contiguousSpan(filters.timeWindows);
   const timePart = filters.timeWindows.length === 0 || (span?.from === '00:00' && span.to === '24:00')
-    ? '하루종일'
+    ? '아무때나'
     : span
-      ? `${formatCompactHour(span.from)}~${formatCompactHour(span.to)}`
+      ? formatTimeRangeLabel(span.from, span.to)
       : `${filters.timeWindows.length}개 구간`;
   return `${datePart} · ${timePart} · ${filters.minDuration}시간`;
 }
 
 function formatCompactDate(date: string) {
   return `${date.slice(5, 7)}.${date.slice(8, 10)}`;
-}
-
-function formatCompactHour(time: string) {
-  const [hour, minute] = time.split(':');
-  return minute === '00' ? `${Number(hour)}시` : `${Number(hour)}:${minute}`;
 }
 
 function CalendarChipIcon() {
