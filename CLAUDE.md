@@ -86,7 +86,7 @@ CHORE: iOS 수출 규정 면제 키 추가
 - **`dev`와 `main` 사이의 동기화·릴리스 머지는 반드시 fast-forward only로 수행한다.** 릴리스 전에 `git fetch origin`과 `git merge-base --is-ancestor origin/main origin/dev`로 선형 관계를 확인한다. `main` 릴리스 worktree에서 `git merge --ff-only origin/dev`를 실행한 뒤 `git push origin main`으로 반영한다. `main`을 `dev`에 반영해야 할 때도 `git merge --ff-only origin/main`을 사용한다. 두 브랜치 사이에서 rebase, squash, 머지 커밋, force push로 이력을 다시 쓰는 것은 금지한다.
 - `dev` → `main` 릴리스 PR은 리뷰·승인용으로만 사용할 수 있다. GitHub의 rebase, squash, merge 버튼으로 합치지 말고, 승인 후 위 fast-forward 절차로 `main`을 이동한다.
 - `--ff-only`가 실패하면 두 브랜치가 이미 분기된 것이므로 rebase나 머지 커밋으로 우회하지 않는다. 작업을 멈추고 분기 원인과 해결 방법을 사용자에게 보고한다.
-- 기능 브랜치를 `dev`에 반영하는 PR은 squash 머지를 사용해 `dev` 히스토리를 선형으로 유지하고, 머지 커밋은 생성하지 않는다.
+- **기능 브랜치를 `dev`에 반영할 때는 rebase를 사용한다.** PR 반영 전에 `git fetch origin` 후 해당 기능 브랜치에서 `git rebase origin/dev`를 실행하고 검증한다. PR은 rebase merge로 `dev`에 반영하며, squash 머지와 머지 커밋은 사용하지 않는다. 이미 push한 브랜치를 rebase해 업데이트할 때는 사용자에게 먼저 확인한 뒤 `git push --force-with-lease`만 사용한다.
 - 브랜치명은 의미 있게 짓되 **뒤에 짧은 숫자·해시 suffix를 붙여 중복을 피한다.** 무엇을 하는지 드러나는 이름 + 구분자(`fix-vercel-backend-load-ll89qg`, `feat-favorite-share-2` 등)를 쓰고, 의미 없는 해시·번호만으로 짓지는 않는다.
 - 로컬에서 새 작업을 시작할 때는 현재 체크아웃을 직접 건드리지 말고 **별도 `git worktree`를 만들어 그 안에서 브랜치를 딴다.** 예: `git worktree add ../band-practice-room-<branch> -b <branch> dev`. 이미 작업 전용 worktree/브랜치 안에 있다면 그대로 이어가되, 다른 사람이 쓰는 worktree의 파일을 섞어서 수정하지 않는다.
 - PR 머지 후 더 이상 쓰지 않는 로컬 worktree는 `git worktree remove <path>`로 정리하고, 필요하면 `git worktree prune`을 실행한다.
