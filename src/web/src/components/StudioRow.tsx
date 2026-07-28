@@ -7,16 +7,19 @@ import { useFavorite } from '../lib/useFavorites';
 import { toggleFavorite } from '../lib/favorites';
 import { shareStudio } from '../lib/share';
 import { track } from '../lib/analytics';
+import { formatTimeLabel, formatTimeRangeLabel } from '../lib/timeFormat';
 
 interface StudioRowProps {
   studio: StudioAvailability;
 }
 
 function chipLabel(chip: AvailabilityChip): string {
-  return chip.kind === 'single' ? chip.start : `${chip.start}~${chip.end}`;
+  return chip.kind === 'single'
+    ? formatTimeLabel(chip.start)
+    : formatTimeRangeLabel(chip.start, chip.end);
 }
 
-// 비는 시간 = 정보(액션 아님). 중립 회색 칩으로 "슬롯" 단위를 또렷하게 하되,
+// 예약 가능 시간 = 정보(액션 아님). 중립 회색 칩으로 "슬롯" 단위를 또렷하게 하되,
 // 틸(액션) 색은 쓰지 않아 예약 버튼과 확실히 구분한다.
 function TimeSlots({ chips }: { chips: AvailabilityChip[] }) {
   return (
@@ -497,7 +500,7 @@ export const StudioRow = memo(function StudioRow({ studio }: StudioRowProps) {
 
   return (
     <div className="studio-row">
-      {/* 카드 본문(헤더+비는시간) 전체가 단 하나의 주 액션 = 예약 링크.
+      {/* 카드 본문(헤더+예약 가능 시간) 전체가 단 하나의 주 액션 = 예약 링크.
           우측 셰브론이 어포던스. 방별 토글·방별 링크는 중첩될 수 없으므로 형제로 분리한다. */}
       <a
         className="studio-main"
@@ -542,11 +545,11 @@ export const StudioRow = memo(function StudioRow({ studio }: StudioRowProps) {
           </div>
         )}
 
-        {/* 비는 시간 = 정보(액션 아님) */}
+        {/* 예약 가능 시간 = 정보(액션 아님) */}
         <div className="studio-times">
           <div className="times-label">
             <ClockIcon />
-            비는 시간
+            예약 가능 시간
           </div>
           <TimeSlots chips={studio.chips} />
         </div>

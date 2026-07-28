@@ -1,4 +1,5 @@
 import type { TimeWindow } from '../api/types';
+import { formatTimeRangeLabel } from '../lib/timeFormat';
 
 const TIME_OPTIONS = [
   '00:00', '01:00', '02:00', '03:00', '04:00', '05:00',
@@ -27,17 +28,17 @@ export function contiguousSpan(windows: TimeWindow[]): TimeWindow | null {
   return { from, to };
 }
 
-// 칩 라벨: 미선택 또는 00:00~24:00은 '하루종일', 단일 프리셋은 프리셋명,
-// 이어진 구간은 'HH:MM~HH:MM', 떨어진 여러 구간은 'N개 구간'으로 압축한다.
+// 칩 라벨: 미선택 또는 00:00~24:00은 '아무때나', 단일 프리셋은 프리셋명,
+// 이어진 구간은 'H~H시', 떨어진 여러 구간은 'N개 구간'으로 압축한다.
 export function timeWindowLabel(windows: TimeWindow[]): string {
-  if (windows.length === 0) return '하루종일';
+  if (windows.length === 0) return '아무때나';
   if (windows.length === 1) {
     const preset = TIME_PRESETS.find((p) => p.from === windows[0].from && p.to === windows[0].to);
     if (preset) return preset.label;
   }
   const span = contiguousSpan(windows);
-  if (span?.from === '00:00' && span.to === '24:00') return '하루종일';
-  if (span) return `${span.from}~${span.to}`;
+  if (span?.from === '00:00' && span.to === '24:00') return '아무때나';
+  if (span) return formatTimeRangeLabel(span.from, span.to);
   return `${windows.length}개 구간`;
 }
 
