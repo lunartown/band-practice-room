@@ -27,6 +27,9 @@
 
 ## 로컬 확인 URL 안내
 
+- 작업 결과가 웹·API로 로컬 확인 가능한 변경이면, 완료 보고 전에 **해당 작업 worktree에서 개발 서버를 실제로 실행하고 사용자가 확인할 때까지 종료하지 않는다.** 문서만 바꾸었거나 서버로 확인할 결과물이 없는 작업은 예외로 한다.
+- 서버는 휴대폰에서도 접속할 수 있게 `0.0.0.0`에 바인딩하고, 완료 보고 전에 HTTP 응답을 확인한다. 이미 실행 중인 서버가 있으면 작업 브랜치와 포트를 확인하고 재사용하며, 다른 작업의 서버를 임의로 종료하지 않는다.
+- 완료 보고에는 실행한 명령, 휴대폰용 LAN IP URL, `localhost` 보조 URL, 연결된 API·DB 환경을 함께 적는다.
 - 개발 서버 URL을 사용자에게 안내할 때는 가능하면 `localhost` 대신 같은 네트워크의 휴대폰에서 접근 가능한 IP 주소를 우선 제공한다. 이 프로젝트는 모바일 확인 작업이 잦다.
 - 예: `http://192.168.x.x:5173/`
 - IP 확인이 어렵거나 로컬 전용 작업이면 `localhost`를 보조로 안내한다.
@@ -78,9 +81,12 @@ CHORE: iOS 수출 규정 면제 키 추가
 
 - `dev`가 통합 브랜치다. 기능 작업은 **`dev`에서 브랜치를 따서** 진행하고 **`dev`로 PR**을 올린다. 직접 푸시는 피한다.
 - `stg`는 프론트 변경을 prod API/DB에 붙여 확인하는 장기 브랜치다. 백엔드·DB 검증은 `dev`, 프론트 실데이터 확인은 `stg`로 역할을 나눈다.
-- `main`은 배포(프로덕션) 브랜치다. 검증 끝난 `dev`를 `main`으로 머지해 릴리스한다. `main` 직접 푸시는 하지 않는다.
-- **`dev`는 항상 `main`보다 앞서(또는 같게) 유지한다.** `main`에 핫픽스가 들어가면 곧바로 `main`을 `dev`에 리베이스로 따라잡혀, `dev`가 `main`보다 뒤처지지 않게 한다.
-- **선형(일자) 히스토리를 유지한다.** 머지할 때는 rebase를 우선하고, 애매하면 squash를 사용한다. 머지 커밋은 금지한다.
+- `main`은 배포(프로덕션) 브랜치다. 검증 끝난 `dev`를 `main`에 fast-forward해 릴리스한다. 임의의 커밋을 `main`에 직접 푸시하지 않고, 아래에 정한 검증된 fast-forward 릴리스 푸시만 예외로 한다.
+- **`dev`는 항상 `main`보다 앞서거나 같은 선형(일자) 히스토리를 유지한다.** 핫픽스도 `main`에서 따로 진행하지 말고 `dev`를 기준으로 작업한 뒤 정상 릴리스 절차를 따른다.
+- **`dev`와 `main` 사이의 동기화·릴리스 머지는 반드시 fast-forward only로 수행한다.** 릴리스 전에 `git fetch origin`과 `git merge-base --is-ancestor origin/main origin/dev`로 선형 관계를 확인한다. `main` 릴리스 worktree에서 `git merge --ff-only origin/dev`를 실행한 뒤 `git push origin main`으로 반영한다. `main`을 `dev`에 반영해야 할 때도 `git merge --ff-only origin/main`을 사용한다. 두 브랜치 사이에서 rebase, squash, 머지 커밋, force push로 이력을 다시 쓰는 것은 금지한다.
+- `dev` → `main` 릴리스 PR은 리뷰·승인용으로만 사용할 수 있다. GitHub의 rebase, squash, merge 버튼으로 합치지 말고, 승인 후 위 fast-forward 절차로 `main`을 이동한다.
+- `--ff-only`가 실패하면 두 브랜치가 이미 분기된 것이므로 rebase나 머지 커밋으로 우회하지 않는다. 작업을 멈추고 분기 원인과 해결 방법을 사용자에게 보고한다.
+- 기능 브랜치를 `dev`에 반영하는 PR은 squash 머지를 사용해 `dev` 히스토리를 선형으로 유지하고, 머지 커밋은 생성하지 않는다.
 - 브랜치명은 의미 있게 짓되 **뒤에 짧은 숫자·해시 suffix를 붙여 중복을 피한다.** 무엇을 하는지 드러나는 이름 + 구분자(`fix-vercel-backend-load-ll89qg`, `feat-favorite-share-2` 등)를 쓰고, 의미 없는 해시·번호만으로 짓지는 않는다.
 - 로컬에서 새 작업을 시작할 때는 현재 체크아웃을 직접 건드리지 말고 **별도 `git worktree`를 만들어 그 안에서 브랜치를 딴다.** 예: `git worktree add ../band-practice-room-<branch> -b <branch> dev`. 이미 작업 전용 worktree/브랜치 안에 있다면 그대로 이어가되, 다른 사람이 쓰는 worktree의 파일을 섞어서 수정하지 않는다.
 - PR 머지 후 더 이상 쓰지 않는 로컬 worktree는 `git worktree remove <path>`로 정리하고, 필요하면 `git worktree prune`을 실행한다.
