@@ -912,7 +912,7 @@ button {
      하단 패딩을 한 단계(16→12px) 줄여 위아래 광학 균형을 맞춘다. */
   padding: var(--sp-4) var(--gutter) var(--sp-3);
   background: var(--surface);
-  border-bottom: 1px solid var(--border-subtle);
+  border-bottom: 1px solid var(--border);
 }
 
 @supports (content-visibility: auto) {
@@ -1144,11 +1144,12 @@ button {
   margin-top: var(--sp-3);
 }
 
-/* 합주실 사진: 카드 상단 좌우를 채우고, 정확히 한 장씩 스냅되는 캐러셀. */
+/* 합주실 사진: 카드 안쪽 여백과 둥근 모서리를 살리고, 정확히 한 장씩 스냅되는 캐러셀. */
 .studio-photo-carousel {
   position: relative;
-  margin: calc(-1 * var(--sp-4)) calc(-1 * var(--gutter)) 0;
+  margin: var(--sp-2) 0 0;
   overflow: hidden;
+  border-radius: var(--r-lg);
   background: var(--surface-sunken);
 }
 
