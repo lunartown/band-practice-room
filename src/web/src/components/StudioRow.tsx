@@ -393,8 +393,6 @@ export function SelectedStudioEmptyRow({
   return (
     <div className="studio-row studio-row-empty">
       <div className="studio-main studio-main-static">
-        <StudioPhotos images={studio.images} name={name} />
-
         <div className="studio-head">
           <StudioAvatar studio={studio} />
           <div className="studio-name-area">
@@ -410,6 +408,8 @@ export function SelectedStudioEmptyRow({
             {phoneOnly ? '📞 전화예약' : '빈 시간 없음'}
           </div>
         </div>
+
+        <StudioPhotos images={studio.images} name={name} />
 
         {badges.length > 0 && (
           <div className="review-badges">
@@ -517,8 +517,6 @@ export const StudioRow = memo(function StudioRow({ studio }: StudioRowProps) {
           })
         }
       >
-        <StudioPhotos images={studio.studio.images} name={name} />
-
         <div className="studio-head">
           <StudioAvatar studio={studio.studio} />
           <div className="studio-name-area">
@@ -533,6 +531,8 @@ export const StudioRow = memo(function StudioRow({ studio }: StudioRowProps) {
           <div className="studio-price">{studio.priceLabel}</div>
           <BookChevron />
         </div>
+
+        <StudioPhotos images={studio.studio.images} name={name} />
 
         {/* 리뷰 배지: 신원(아바타+이름) 헤더 밖, 예약 칩과 같은 게터 라인에 둔다 */}
         {badges.length > 0 && (

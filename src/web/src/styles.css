@@ -1029,14 +1029,14 @@ button {
   background: var(--surface-sunken);
 }
 
-/* 큰 사진 아래의 합주실 정보 헤더: 이름·지역 | 가격 */
+/* 큰 사진 위의 합주실 정보 헤더: 이름·지역 | 가격 */
 .studio-head {
   display: flex;
   align-items: center;
   gap: var(--sp-3);
 }
 
-.studio-photo-carousel + .studio-head {
+.studio-head + .studio-photo-carousel {
   margin-top: var(--sp-4);
 }
 
