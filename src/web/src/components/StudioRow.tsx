@@ -364,7 +364,7 @@ function RoomRow({
           aria-expanded={equipmentOpen}
           onClick={() => setEquipmentOpen((open) => !open)}
         >
-          {equipmentOpen ? '장비 접기' : `장비 ${equipment.length}종 보기`}
+          {equipmentOpen ? '장비 접기' : '장비 목록 보기'}
           <span aria-hidden>▾</span>
         </button>
       )}
