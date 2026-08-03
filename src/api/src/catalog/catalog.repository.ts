@@ -44,9 +44,6 @@ export interface EquipmentAssignmentRow {
   brand: string | null;
   model: string | null;
   variant: string | null;
-  display_name: string | null;
-  normalized_name: string | null;
-  aliases: string[];
 }
 
 export interface StudioRow {
@@ -255,14 +252,7 @@ export class CatalogRepository {
                   'model_id', em.id,
                   'brand', em.brand,
                   'model', em.model,
-                  'variant', em.variant,
-                  'display_name', em.display_name,
-                  'normalized_name', em.normalized_name,
-                  'aliases', COALESCE(
-                    (SELECT json_agg(ema.alias ORDER BY ema.alias ASC)
-                     FROM equipment_model_aliases ema
-                     WHERE ema.equipment_model_id = em.id), '[]'
-                  )
+                  'variant', em.variant
                 )
                 ORDER BY ec."order" ASC, ei.name ASC, em.display_name ASC NULLS LAST, se.id ASC
               )
@@ -299,14 +289,7 @@ export class CatalogRepository {
                           'model_id', em.id,
                           'brand', em.brand,
                           'model', em.model,
-                          'variant', em.variant,
-                          'display_name', em.display_name,
-                          'normalized_name', em.normalized_name,
-                          'aliases', COALESCE(
-                            (SELECT json_agg(ema.alias ORDER BY ema.alias ASC)
-                             FROM equipment_model_aliases ema
-                             WHERE ema.equipment_model_id = em.id), '[]'
-                          )
+                          'variant', em.variant
                         )
                         ORDER BY ec."order" ASC, ei.name ASC, em.display_name ASC NULLS LAST, re.id ASC
                       )
