@@ -148,15 +148,13 @@ export class CatalogService {
       note: equipment.note ?? null,
     };
     if (equipment.model_id == null) return response;
+    // 표시명·정규화명·별칭은 방마다 중복되므로 /equipment 카탈로그에서만 내려준다.
     return {
       ...response,
       modelId: Number(equipment.model_id),
       brand: equipment.brand ?? null,
       model: equipment.model ?? null,
       variant: equipment.variant ?? null,
-      displayName: equipment.display_name ?? null,
-      normalizedName: equipment.normalized_name ?? null,
-      aliases: equipment.aliases ?? [],
     };
   }
 }

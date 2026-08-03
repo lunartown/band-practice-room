@@ -50,13 +50,11 @@ export interface EquipmentAssignment {
   name: string;
   quantity?: number | null;
   note?: string | null;
+  /** 표시명·별칭 등 나머지 모델 정보는 /equipment 카탈로그를 modelId로 조인해 얻는다. */
   modelId?: number | null;
   brand?: string | null;
   model?: string | null;
   variant?: string | null;
-  displayName?: string | null;
-  normalizedName?: string | null;
-  aliases?: string[];
 }
 
 export interface EquipmentItem {
