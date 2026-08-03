@@ -1378,8 +1378,8 @@ button {
 .room-selector {
   display: flex;
   gap: var(--sp-2);
-  margin: var(--sp-2) calc(-1 * var(--gutter)) 0;
-  padding: var(--sp-1) var(--gutter) var(--sp-2);
+  margin: var(--sp-2) 0 0;
+  padding: var(--sp-1) 0 var(--sp-2);
   overflow-x: auto;
   overscroll-behavior-x: contain;
   scroll-snap-type: x proximity;
