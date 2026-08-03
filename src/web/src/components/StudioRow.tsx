@@ -8,6 +8,7 @@ import { toggleFavorite } from '../lib/favorites';
 import { shareStudio } from '../lib/share';
 import { track } from '../lib/analytics';
 import { formatTimeLabel, formatTimeRangeLabel } from '../lib/timeFormat';
+import { bookingRedirectHref } from '../lib/bookingRedirect';
 
 interface StudioRowProps {
   studio: StudioAvailability;
@@ -329,7 +330,7 @@ function RoomRow({
     <div className="room-row">
       <a
         className="room-booking-link"
-        href={room.bookingUrl ?? '#'}
+        href={bookingRedirectHref(room.bookingUrl, `${studioName} ${room.room.name}`)}
         target="_blank"
         rel="noreferrer"
         aria-label={`${room.room.name} 예약`}
@@ -504,7 +505,7 @@ export const StudioRow = memo(function StudioRow({ studio }: StudioRowProps) {
           우측 셰브론이 어포던스. 방별 토글·방별 링크는 중첩될 수 없으므로 형제로 분리한다. */}
       <a
         className="studio-main"
-        href={studio.bookingUrl ?? '#'}
+        href={bookingRedirectHref(studio.bookingUrl, name)}
         target="_blank"
         rel="noreferrer"
         aria-label={`${name} 예약`}

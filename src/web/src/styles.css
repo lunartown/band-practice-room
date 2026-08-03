@@ -1896,6 +1896,107 @@ button {
 }
 
 /* ============================================================
+   External booking redirect
+   ============================================================ */
+.booking-redirect-screen {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-5);
+  padding: var(--sp-8) var(--gutter) calc(var(--sp-8) + var(--sp-6));
+  text-align: center;
+}
+
+.booking-redirect-logo {
+  width: 76px;
+  height: 76px;
+  object-fit: contain;
+}
+
+.booking-redirect-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.booking-redirect-spinner {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-fine);
+  height: var(--sp-4);
+  margin-bottom: var(--sp-4);
+}
+
+.booking-redirect-spinner span {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--accent);
+  animation: booking-redirect-pulse 0.9s ease-in-out infinite;
+}
+
+.booking-redirect-spinner span:nth-child(2) {
+  animation-delay: 0.15s;
+}
+
+.booking-redirect-spinner span:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+@keyframes booking-redirect-pulse {
+  0%, 60%, 100% { opacity: 0.28; transform: translateY(0); }
+  30% { opacity: 1; transform: translateY(-3px); }
+}
+
+.booking-redirect-content h1 {
+  margin: 0;
+  color: var(--text-1);
+  font-size: 23px;
+  line-height: 1.35;
+  font-weight: var(--fw-extrabold);
+  letter-spacing: -0.025em;
+}
+
+.booking-redirect-content p {
+  margin: var(--sp-3) 0 0;
+  color: var(--text-3);
+  font-size: var(--fs-md);
+  line-height: 1.65;
+  font-weight: var(--fw-medium);
+}
+
+.booking-redirect-content p strong {
+  color: var(--text-2);
+  font-weight: var(--fw-bold);
+}
+
+.booking-redirect-link {
+  min-height: var(--tap);
+  margin-top: var(--sp-5);
+  padding: var(--sp-3);
+  color: var(--accent-strong);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-bold);
+  text-decoration: none;
+}
+
+.booking-redirect-error .booking-redirect-link {
+  padding-right: var(--sp-5);
+  padding-left: var(--sp-5);
+  border-radius: var(--r-pill);
+  background: var(--accent-soft);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .booking-redirect-spinner span {
+    animation: none;
+    opacity: 0.65;
+  }
+}
+
+/* ============================================================
    Filter sheet
    ============================================================ */
 .sheet-layer {
