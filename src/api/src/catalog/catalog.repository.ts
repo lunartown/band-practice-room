@@ -294,7 +294,7 @@ export class CatalogRepository {
                           'id', ei.id,
                           'slug', ei.slug,
                           'name', ei.name,
-                  'quantity', re.quantity,
+                          'quantity', re.quantity,
                           'note', COALESCE(em.display_name, re.note),
                           'model_id', em.id,
                           'brand', em.brand,
