@@ -373,6 +373,46 @@ function RoomRow({
   );
 }
 
+function RoomSelector({
+  rooms,
+  selectedRoomId,
+  studioName,
+  onSelect,
+}: {
+  rooms: RoomAvailability[];
+  selectedRoomId: number;
+  studioName: string;
+  onSelect: (roomId: number) => void;
+}) {
+  return (
+    <div className="room-selector" role="group" aria-label={`${studioName} 방 선택`}>
+      {rooms.map((room) => {
+        const selected = room.room.id === selectedRoomId;
+        return (
+          <button
+            key={room.room.id}
+            type="button"
+            className={`room-selector-card${selected ? ' selected' : ''}`}
+            aria-pressed={selected}
+            onClick={() => onSelect(room.room.id)}
+          >
+            <span className="room-selector-name">{room.room.name}</span>
+            <span className="room-selector-meta">
+              {room.capacityLabel && (
+                <span className="room-selector-capacity">
+                  <PersonIcon />
+                  {room.capacityLabel}
+                </span>
+              )}
+              <span className="room-selector-price">{room.priceLabel}</span>
+            </span>
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
 export function SelectedStudioEmptyRow({
   studio,
   areaName,
@@ -496,7 +536,13 @@ export const StudioRow = memo(function StudioRow({ studio }: StudioRowProps) {
   const { id, name, reviewCount, reviewKeywords } = studio.studio;
   const badges = toReviewBadges(reviewKeywords, reviewCount);
   const isFav = useFavorite(id);
-  const [expanded, setExpanded] = useState(false);
+  const [selectedRoomId, setSelectedRoomId] = useState(studio.rooms[0]?.room.id ?? 0);
+  const selectedRoom = studio.rooms.find((room) => room.room.id === selectedRoomId) ?? studio.rooms[0];
+
+  useEffect(() => {
+    if (studio.rooms.some((room) => room.room.id === selectedRoomId)) return;
+    setSelectedRoomId(studio.rooms[0]?.room.id ?? 0);
+  }, [selectedRoomId, studio.rooms]);
 
   return (
     <div className="studio-row">
@@ -555,20 +601,35 @@ export const StudioRow = memo(function StudioRow({ studio }: StudioRowProps) {
         </div>
       </a>
 
-      {/* 하단 보조 액션: 방별 보기(좌) + 즐겨찾기·공유 아이콘(우 그룹).
-          주 액션(예약)은 카드 본문 링크라, 여기는 전부 가벼운 보조 액션이다. */}
-      <div className="studio-actions">
-        <button
-          type="button"
-          className={`room-toggle${expanded ? ' open' : ''}`}
-          aria-expanded={expanded}
-          onClick={() => setExpanded((v) => !v)}
-        >
-          {expanded ? '방별 시간 접기' : `방 ${studio.rooms.length}개 · 방별로 보기`}
-          <span className="room-toggle-arrow" aria-hidden>
-            ▾
-          </span>
-        </button>
+      {selectedRoom && (
+        <>
+          <RoomSelector
+            rooms={studio.rooms}
+            selectedRoomId={selectedRoom.room.id}
+            studioName={name}
+            onSelect={(roomId) => {
+              setSelectedRoomId(roomId);
+              track('room_select', {
+                studio_id: id,
+                studio_name: name,
+                room_id: roomId,
+              });
+            }}
+          />
+          <div className="room-detail" aria-live="polite">
+            <RoomRow
+              key={selectedRoom.room.id}
+              room={selectedRoom}
+              sharedEquipment={studio.studio.equipment ?? []}
+              studioId={id}
+              studioName={name}
+            />
+          </div>
+        </>
+      )}
+
+      {/* 즐겨찾기·공유는 방 선택과 분리된 합주실 단위 보조 액션이다. */}
+      <div className="studio-actions studio-actions-compact">
         <button
           type="button"
           className={`fav-button${isFav ? ' on' : ''}`}
@@ -587,20 +648,6 @@ export const StudioRow = memo(function StudioRow({ studio }: StudioRowProps) {
           <ShareIcon />
         </button>
       </div>
-
-      {expanded && (
-        <div className="room-list">
-          {studio.rooms.map((room) => (
-            <RoomRow
-              key={room.room.id}
-              room={room}
-              sharedEquipment={studio.studio.equipment ?? []}
-              studioId={id}
-              studioName={name}
-            />
-          ))}
-        </div>
-      )}
     </div>
   );
 });
