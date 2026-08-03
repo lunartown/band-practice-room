@@ -51,8 +51,7 @@ function ClockIcon() {
   );
 }
 
-// 카드/방행 전체가 예약 링크라는 어포던스. 큰 솔리드 버튼 대신 우측 셰브론 하나로
-// "탭하면 예약 페이지로 넘어간다"를 알린다.
+// 방 상세 행 전체가 예약 링크라는 점을 우측 셰브론으로 알린다.
 function BookChevron() {
   return (
     <svg className="book-chevron" width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden>
@@ -550,7 +549,7 @@ export const StudioRow = memo(function StudioRow({ studio }: StudioRowProps) {
   return (
     <div className="studio-row">
       {/* 카드 본문(헤더+예약 가능 시간) 전체가 단 하나의 주 액션 = 예약 링크.
-          우측 셰브론이 어포던스. 방별 토글·방별 링크는 중첩될 수 없으므로 형제로 분리한다. */}
+          방 선택·방별 링크는 중첩될 수 없으므로 형제로 분리한다. */}
       <a
         className="studio-main"
         href={studio.bookingUrl ?? '#'}
@@ -578,7 +577,6 @@ export const StudioRow = memo(function StudioRow({ studio }: StudioRowProps) {
             </div>
           </div>
           <div className="studio-price">{studio.priceLabel}</div>
-          <BookChevron />
         </div>
 
         <StudioPhotos images={studio.studio.images} name={name} />

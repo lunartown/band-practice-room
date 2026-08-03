@@ -1081,9 +1081,9 @@ button {
 .studio-price {
   flex: 0 0 auto;
   align-self: center;
-  color: var(--text-2);
-  font-size: var(--fs-sm);
-  font-weight: var(--fw-semibold);
+  color: var(--text-1);
+  font-size: var(--fs-xl);
+  font-weight: var(--fw-bold);
   white-space: nowrap;
 }
 
@@ -1253,7 +1253,7 @@ button {
 }
 
 /* 예약 = 카드당 단 하나의 주(主) 액션. 큰 솔리드 버튼 대신 카드 본문(헤더+비는시간)
-   전체가 링크가 되고, 우측 셰브론 하나로 어포던스를 준다. 탭 영역을 카드 밖으로
+   전체가 링크가 된다. 탭 영역을 카드 밖으로
    살짝 넓혀(negative margin) 행 전체가 눌리는 느낌을 주고, 호버/탭 시 옅게 깔린다. */
 .studio-main {
   display: block;
