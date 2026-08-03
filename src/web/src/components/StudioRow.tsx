@@ -380,7 +380,7 @@ function RoomSelector({
   onSelect,
 }: {
   rooms: RoomAvailability[];
-  selectedRoomId: number;
+  selectedRoomId: number | null;
   studioName: string;
   onSelect: (roomId: number) => void;
 }) {
@@ -536,12 +536,15 @@ export const StudioRow = memo(function StudioRow({ studio }: StudioRowProps) {
   const { id, name, reviewCount, reviewKeywords } = studio.studio;
   const badges = toReviewBadges(reviewKeywords, reviewCount);
   const isFav = useFavorite(id);
-  const [selectedRoomId, setSelectedRoomId] = useState(studio.rooms[0]?.room.id ?? 0);
-  const selectedRoom = studio.rooms.find((room) => room.room.id === selectedRoomId) ?? studio.rooms[0];
+  const [selectedRoomId, setSelectedRoomId] = useState<number | null>(null);
+  const selectedRoom = selectedRoomId == null
+    ? undefined
+    : studio.rooms.find((room) => room.room.id === selectedRoomId);
 
   useEffect(() => {
+    if (selectedRoomId == null) return;
     if (studio.rooms.some((room) => room.room.id === selectedRoomId)) return;
-    setSelectedRoomId(studio.rooms[0]?.room.id ?? 0);
+    setSelectedRoomId(null);
   }, [selectedRoomId, studio.rooms]);
 
   return (
@@ -601,31 +604,30 @@ export const StudioRow = memo(function StudioRow({ studio }: StudioRowProps) {
         </div>
       </a>
 
+      <RoomSelector
+        rooms={studio.rooms}
+        selectedRoomId={selectedRoomId}
+        studioName={name}
+        onSelect={(roomId) => {
+          setSelectedRoomId(roomId);
+          track('room_select', {
+            studio_id: id,
+            studio_name: name,
+            room_id: roomId,
+          });
+        }}
+      />
+
       {selectedRoom && (
-        <>
-          <RoomSelector
-            rooms={studio.rooms}
-            selectedRoomId={selectedRoom.room.id}
+        <div className="room-detail" aria-live="polite">
+          <RoomRow
+            key={selectedRoom.room.id}
+            room={selectedRoom}
+            sharedEquipment={studio.studio.equipment ?? []}
+            studioId={id}
             studioName={name}
-            onSelect={(roomId) => {
-              setSelectedRoomId(roomId);
-              track('room_select', {
-                studio_id: id,
-                studio_name: name,
-                room_id: roomId,
-              });
-            }}
           />
-          <div className="room-detail" aria-live="polite">
-            <RoomRow
-              key={selectedRoom.room.id}
-              room={selectedRoom}
-              sharedEquipment={studio.studio.equipment ?? []}
-              studioId={id}
-              studioName={name}
-            />
-          </div>
-        </>
+        </div>
       )}
 
       {/* 즐겨찾기·공유는 방 선택과 분리된 합주실 단위 보조 액션이다. */}
