@@ -32,7 +32,7 @@ if (Capacitor.isNativePlatform()) {
   }
 }
 
-// 이벤트 계측(PostHog). 키가 없으면 무동작이라 로컬 개발에는 영향이 없다.
+// 이벤트 계측(PostHog · GA4). 키가 없으면 무동작이라 로컬 개발에는 영향이 없다.
 // 관리자 화면(/admin)은 운영자용이라 계측하지 않는다.
 if (!window.location.pathname.startsWith('/admin')) {
   void initAnalytics();
