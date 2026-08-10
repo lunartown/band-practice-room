@@ -60,3 +60,10 @@ data/
 _local/*
 !_local/.gitkeep
 
+# Vercel CLI 로컬 링크 정보 (vercel link 가 자동 생성)
+.vercel
+
+# 개인 작업용 Claude 스킬. 프로젝트 공용 스킬만 예외로 커밋한다.
+.claude/skills/*
+!.claude/skills/db-audit/
+
