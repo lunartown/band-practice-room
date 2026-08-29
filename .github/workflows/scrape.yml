@@ -96,6 +96,13 @@ jobs:
 
       # 스크랩으로 새로 '예약 가능'으로 바뀐 슬롯을 구독과 매칭해 푸시 발송.
       # 스크랩이 일부 실패해도 수집된 변동분은 알리도록 cancelled 가 아니면 항상 실행한다.
+      # 오래된 슬롯·처리 끝난 이벤트 정리. 지우는 코드가 없어 계속 쌓이기만 했고,
+      # Render Postgres 스토리지가 1GB 라 방치하면 한도에 닿는다.
+      - name: Prune old slots and events
+        if: ${{ !cancelled() }}
+        working-directory: src/api
+        run: npm run db:prune
+
       - name: Dispatch availability notifications
         if: ${{ !cancelled() }}
         working-directory: src/api

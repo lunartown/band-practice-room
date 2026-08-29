@@ -169,23 +169,45 @@ async function provisionJobs() {
   );
 }
 
+// 워커가 잡을 RUNNING 으로 바꾼 뒤 죽으면(크래시, Actions 타임아웃, 프로세스 kill)
+// 되돌리는 경로가 없어 그 합주실이 큐에서 영구히 사라진다. 조용히 실패해서
+// 알아채기 어렵다 — 실제로 3곳이 한 달 넘게 수집에서 빠져 있었다.
+// 그래서 오래 멈춰 있는 RUNNING 잡도 회수 대상에 넣는다.
+// 정상 수집은 몇 초면 끝나고 Actions 타임아웃도 30분이라, 1시간이면
+// 살아 있는 워커의 잡을 빼앗지 않으면서 죽은 잡만 되살릴 수 있다.
+const STALE_RUNNING_MINUTES = Number(process.env.STALE_RUNNING_MINUTES ?? 60);
+
 async function claimJob(): Promise<JobRow | null> {
-  const result = await query<JobRow>(`
+  const result = await query<JobRow>(
+    `
     UPDATE scrape_jobs
     SET
       status = 'RUNNING',
       attempts = attempts + 1,
+      -- 클레임 시점 기준으로 창을 다시 맞춘다. 회수한 RUNNING 잡은 멈춘 날짜를
+      -- 그대로 들고 있어(예: 7월) 놔두면 과거를 긁는다. 정상 잡도 requeue 이후
+      -- 날짜가 바뀌었을 수 있어, 여기서 맞추면 항상 오늘 기준으로 수집한다.
+      date_from = (NOW() AT TIME ZONE 'Asia/Seoul')::date,
+      date_to = (NOW() AT TIME ZONE 'Asia/Seoul')::date + $2::integer,
       updated_at = NOW()
     WHERE id = (
       SELECT id FROM scrape_jobs
-      WHERE status = 'PENDING'
-        AND (run_after IS NULL OR run_after <= NOW())
+      WHERE (
+          status = 'PENDING'
+          AND (run_after IS NULL OR run_after <= NOW())
+        )
+        OR (
+          status = 'RUNNING'
+          AND updated_at < NOW() - ($1 || ' minutes')::interval
+        )
       ORDER BY priority DESC, run_after ASC NULLS FIRST
       LIMIT 1
       FOR UPDATE SKIP LOCKED
     )
     RETURNING id, studio_source_id, date_from::text, date_to::text, attempts
-  `);
+  `,
+    [STALE_RUNNING_MINUTES, JOB_DATE_SPAN_DAYS],
+  );
   return result.rows[0] ?? null;
 }
 
