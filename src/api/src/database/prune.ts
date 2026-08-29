@@ -4,6 +4,9 @@
 // 두 테이블 모두 지우는 코드가 없어 계속 누적되기만 했다. Render Postgres 는
 // 스토리지가 1GB 인데 하루 약 5,900 행(1.6MB)씩 늘어, 방치하면 1년 반쯤 뒤
 // 한도에 닿는다. 서비스는 오늘 이후만 조회하므로 과거 슬롯은 통계용 보관분이다.
+//
+// 알림 이벤트는 (1) 처리 끝난 지 오래된 것과 (2) 슬롯 시각이 지나 영영 소비되지
+// 않을 미처리분을 지운다. 아직 시각이 남은 미처리 이벤트는 발송 대상이라 남긴다.
 import pg from 'pg';
 import { databasePoolConfig } from './database.service.js';
 
@@ -43,7 +46,6 @@ async function main() {
       [SLOT_RETENTION_DAYS],
     );
 
-    // 처리 끝난 이벤트만. 미처리 이벤트는 아직 발송 대상이라 건드리지 않는다.
     await deleteInBatches(
       pool,
       `알림 이벤트(${EVENT_RETENTION_DAYS}일 이전 처리분)`,
@@ -54,6 +56,25 @@ async function main() {
          LIMIT ${DELETE_BATCH_SIZE}
        )`,
       [EVENT_RETENTION_DAYS],
+    );
+
+    // 슬롯 시각이 지나버린 미처리 이벤트. dispatcher 는 지나간 전이를 알리지 않으므로
+    // (dispatcher.service.ts 의 ev CTE) 이대로 두면 영영 소비되지 않고 쌓이기만 한다.
+    // 아직 시각이 남은 미처리 이벤트는 발송 대상이라 건드리지 않는다.
+    await deleteInBatches(
+      pool,
+      '알림 이벤트(시각 지난 미처리분)',
+      `DELETE FROM slot_available_events WHERE id IN (
+         SELECT id FROM slot_available_events
+         WHERE processed_at IS NULL
+           AND (
+             slot_date < (NOW() AT TIME ZONE 'Asia/Seoul')::date
+             OR (slot_date = (NOW() AT TIME ZONE 'Asia/Seoul')::date
+                 AND slot_start_time <= (NOW() AT TIME ZONE 'Asia/Seoul')::time)
+           )
+         LIMIT ${DELETE_BATCH_SIZE}
+       )`,
+      [],
     );
 
     const size = await pool.query<{ size: string }>(
