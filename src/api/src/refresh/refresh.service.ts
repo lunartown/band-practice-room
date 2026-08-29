@@ -13,7 +13,7 @@ const CONCURRENCY = Math.max(1, Math.floor(Number(process.env.MANUAL_SCRAPE_CONC
 // 소스 1건 스크랩 타임아웃(ms). 넘으면 실패로 처리하고 응답을 막지 않는다.
 const TIMEOUT_MS = Math.max(1000, Math.floor(Number(process.env.MANUAL_SCRAPE_TIMEOUT_MS) || 20000));
 // 수집 날짜 범위(오늘 포함 N일). cron 워커(JOB_DATE_SPAN_DAYS)와 맞춰 데이터 일관성 유지.
-const DATE_SPAN_DAYS = 6;
+const DATE_SPAN_DAYS = 29;
 
 export type SkipReason = 'fresh' | 'cooldown' | 'capped';
 

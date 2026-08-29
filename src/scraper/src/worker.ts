@@ -8,7 +8,7 @@ const SUCCESS_REQUEUE_MINUTES = Number(process.env.SUCCESS_REQUEUE_MINUTES ?? 60
 const FAILURE_RETRY_MINUTES = 15;
 
 // 한 Job당 스크래핑 날짜 범위 (오늘 포함 N일)
-const JOB_DATE_SPAN_DAYS = 6; // 7일 (0~6)
+const JOB_DATE_SPAN_DAYS = 29; // 30일 (0~29)
 
 interface JobRow {
   id: string;

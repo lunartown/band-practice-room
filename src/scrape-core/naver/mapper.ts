@@ -45,10 +45,14 @@ function pickPrice(prices: NaverHourlyUnit['prices']): number | null {
  * 네이버 hourly 단위 배열을 우리 슬롯 모델로 변환한다(순수함수).
  * - isUnitBusinessDay=false 인 영업외 시간은 슬롯으로 만들지 않는다.
  * - 가용성: 판매일이고 (unitStock - unitBookingCount) > 0 이면 available.
+ * - [dateFrom, dateTo] 를 주면 범위 밖의 날은 버린다(client 가 마지막 날 누락을
+ *   피하려고 하루 더 요청하기 때문). 생략하면 받은 그대로 변환한다.
  */
 export function toAvailabilitySlots(
   hourly: NaverHourlyUnit[],
   roomName: string,
+  dateFrom?: string,
+  dateTo?: string,
 ): AvailabilitySlot[] {
   const slots: AvailabilitySlot[] = [];
 
@@ -56,6 +60,8 @@ export function toAvailabilitySlots(
     if (!unit.isUnitBusinessDay) continue;
 
     const { date, minutes } = toKst(unit.unitStartDateTime);
+    if (dateFrom && date < dateFrom) continue;
+    if (dateTo && date > dateTo) continue;
     const remaining = (unit.unitStock ?? 1) - (unit.unitBookingCount ?? 0);
     const status = unit.isUnitSaleDay && remaining > 0 ? 'available' : 'unavailable';
 

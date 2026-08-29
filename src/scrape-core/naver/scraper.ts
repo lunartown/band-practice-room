@@ -35,7 +35,7 @@ export class NaverReservationScraper {
           dateFrom,
           dateTo,
         });
-        const slots = toAvailabilitySlots(hourly, room.roomName);
+        const slots = toAvailabilitySlots(hourly, room.roomName, dateFrom, dateTo);
         rooms.push({ roomName: room.roomName, slots });
 
         if (this.debug) {

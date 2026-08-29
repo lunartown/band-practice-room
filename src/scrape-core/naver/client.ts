@@ -26,10 +26,22 @@ type ScheduleResponse = {
   schedule: { bizItemSchedule: { hourly: NaverHourlyUnit[] | null } | null } | null;
 };
 
+// 'YYYY-MM-DD' 에 하루를 더한다(UTC 기준 계산이라 서머타임 영향 없음).
+function nextDate(date: string): string {
+  const d = new Date(`${date}T00:00:00.000Z`);
+  d.setUTCDate(d.getUTCDate() + 1);
+  return d.toISOString().slice(0, 10);
+}
+
 /**
  * 한 방(bizItem)의 [from, to] 기간 시간별 스케줄을 받는다.
  * 날짜 범위를 한 번에 요청할 수 있어 방당 1콜이면 충분하다.
  * 날짜는 KST 기준 'YYYY-MM-DD'.
+ *
+ * endDateTime 은 dateTo 하루 뒤로 보낸다(중요). 네이버는 요청한 마지막 날을
+ * 응답에 포함하지 않아, dateTo 를 그대로 주면 항상 하루가 빈다. 실측상 span 을
+ * 6/7/29/30/45/60 으로 바꿔도 예외 없이 '요청일 - 1일'까지만 돌아온다.
+ * 넉넉히 요청하는 대신 범위 밖 날짜는 매퍼가 잘라낸다.
  */
 export async function fetchHourlySchedule(params: {
   businessId: string;
@@ -48,7 +60,7 @@ export async function fetchHourlySchedule(params: {
         businessTypeId: params.businessTypeId,
         bizItemId: params.bizItemId,
         startDateTime: `${params.dateFrom}T00:00:00`,
-        endDateTime: `${params.dateTo}T23:59:59`,
+        endDateTime: `${nextDate(params.dateTo)}T23:59:59`,
       },
     },
   });
