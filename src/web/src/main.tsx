@@ -5,7 +5,9 @@ import { StatusBar, Style } from '@capacitor/status-bar';
 import { Analytics } from '@vercel/analytics/react';
 import { AdminApp } from './AdminApp';
 import { App } from './App';
+import { BookingRedirectScreen } from './components/BookingRedirectScreen';
 import { initAnalytics } from './lib/analytics';
+import { isBookingRedirectPath } from './lib/bookingRedirect';
 import { initFavorites } from './lib/favorites';
 import { notifyLiveUpdateReady } from './lib/liveUpdate';
 import { initPushDevice } from './lib/pushDevice';
@@ -51,7 +53,17 @@ void notifyLiveUpdateReady();
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
-    {window.location.pathname.startsWith('/admin') ? <AdminApp /> : <App />}
+    {window.location.pathname.startsWith('/admin') ? (
+      <AdminApp />
+    ) : isBookingRedirectPath(window.location.pathname) ? (
+      <main className="app-shell">
+        <section className="phone-app" aria-label="외부 예약 페이지 이동 안내">
+          <BookingRedirectScreen />
+        </section>
+      </main>
+    ) : (
+      <App />
+    )}
     <Analytics />
   </React.StrictMode>,
 );
