@@ -232,7 +232,17 @@ export class RefreshService {
       }
 
       const allSlots = okRooms.flatMap((r) => r.slots);
-      const slotCount = await this.repository.upsertSlots(allSlots, roomIdByName);
+      // 정상 응답한 방만 정리 대상. 실패한 방은 이번 결과를 신뢰할 수 없어 손대지 않는다.
+      const scrapedRoomIds = okRooms
+        .map((r) => roomIdByName.get(r.roomName))
+        .filter((id): id is string => Boolean(id));
+      const slotCount = await this.repository.upsertSlots(
+        allSlots,
+        roomIdByName,
+        scrapedRoomIds,
+        dateFrom,
+        dateTo,
+      );
       await this.repository.markManualUpdated(target.id);
 
       this.logger.log(

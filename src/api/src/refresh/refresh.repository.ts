@@ -89,6 +89,9 @@ export class RefreshRepository {
   async upsertSlots(
     slots: AvailabilitySlot[],
     roomIdByName: Map<string, string>,
+    scrapedRoomIds: string[],
+    dateFrom: string,
+    dateTo: string,
   ): Promise<number> {
     // 같은 (room_id, date, start_time) 가 한 배치에 중복되면 ON CONFLICT 가 에러나므로
     // 키 기준 중복 제거(마지막 값 우선).
@@ -108,13 +111,25 @@ export class RefreshRepository {
     }
 
     const rows = [...dedup.values()];
+    // 배치마다 NOW() 를 쓰면 시각이 미세하게 달라져 정리 기준으로 삼을 수 없다.
+    // 한 갱신의 모든 행이 같은 scraped_at 을 갖도록 호출 시점 값을 고정해 넘긴다.
+    const scrapedAt = new Date();
     for (let i = 0; i < rows.length; i += SLOT_BATCH_SIZE) {
       const batch = rows.slice(i, i + SLOT_BATCH_SIZE);
       const params: unknown[] = [];
       const tuples = batch.map((r, idx) => {
-        const b = idx * 7;
-        params.push(r.roomId, r.date, r.startTime, r.endTime, r.status, r.price, r.priceSource);
-        return `($${b + 1}, $${b + 2}, $${b + 3}, $${b + 4}, $${b + 5}, $${b + 6}, $${b + 7}, NOW())`;
+        const b = idx * 8;
+        params.push(
+          r.roomId,
+          r.date,
+          r.startTime,
+          r.endTime,
+          r.status,
+          r.price,
+          r.priceSource,
+          scrapedAt,
+        );
+        return `($${b + 1}, $${b + 2}, $${b + 3}, $${b + 4}, $${b + 5}, $${b + 6}, $${b + 7}, $${b + 8})`;
       });
       await this.database.query(
         `
@@ -128,6 +143,20 @@ export class RefreshRepository {
           scraped_at = EXCLUDED.scraped_at
       `,
         params,
+      );
+    }
+
+    if (scrapedRoomIds.length > 0) {
+      // 이번 갱신이 건드리지 않은(= 소스가 더 이상 주지 않는) 같은 기간 슬롯을 지운다.
+      // 크론 워커(upsertSlots)와 같은 규칙을 써서 두 경로가 다른 상태를 남기지 않게 한다.
+      await this.database.query(
+        `
+        DELETE FROM slots
+        WHERE room_id = ANY($1::bigint[])
+          AND date BETWEEN $2::date AND $3::date
+          AND scraped_at < $4
+      `,
+        [scrapedRoomIds, dateFrom, dateTo, scrapedAt],
       );
     }
     return rows.length;

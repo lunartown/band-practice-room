@@ -20,7 +20,11 @@ on:
           - prod
           - dev
   schedule:
-    - cron: '0 * * * *' # 매시 정각(UTC)
+    # 정각(0분)은 GitHub 전체에서 가장 혼잡해 스케줄 실행이 지연되거나 통째로 버려진다.
+    # 실제로 '0 * * * *' 로 두었더니 하루 20회 남짓 돌던 것이 1~2회로 떨어져,
+    # 데이터가 최대 13시간까지 묵고 "빈자리인 줄 알고 갔더니 차 있음"이 생겼다.
+    # 붐비지 않는 분으로 옮기고 30분 간격으로 돌린다.
+    - cron: '7,37 * * * *'
 
 concurrency:
   group: scrape
@@ -37,6 +41,9 @@ jobs:
       # 스페이스클라우드 가용성 API 가 개인 토큰을 요구하면 시크릿으로 주입(없으면 토큰 없이 시도).
       SPACECLOUD_API_TOKEN: ${{ secrets.SPACECLOUD_API_TOKEN }}
       RUN_ONCE: 'true'
+      # 크론 간격(30분)과 맞춘다. 이 값이 크론보다 길면 잡이 아직 잠겨 있어
+      # 실행만 자주 하고 데이터는 그만큼 자주 갱신되지 않는다.
+      SUCCESS_REQUEUE_MINUTES: '30'
       # FCM 서비스 계정(JSON 또는 base64 JSON). 없으면 알림 단계는 dry-run(발송 없이 매칭만).
       FCM_SERVICE_ACCOUNT: ${{ secrets.FCM_SERVICE_ACCOUNT }}
     steps:

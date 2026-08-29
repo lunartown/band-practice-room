@@ -88,14 +88,18 @@ export async function runOnce(): Promise<boolean> {
     let totalSlots = 0;
     let roomsWithSlots = 0;
     const allSlots: AvailabilitySlot[] = [];
+    // 정상 응답한 방만 정리 대상. 실패한 방은 이번 결과를 신뢰할 수 없어 손대지 않는다.
+    const scrapedRoomIds: string[] = [];
     for (const roomResult of result.rooms) {
       if (roomResult.error) continue;
       if (roomResult.slots.length > 0) roomsWithSlots++;
       allSlots.push(...roomResult.slots);
       totalSlots += roomResult.slots.length;
+      const roomId = roomIdByName.get(roomResult.roomName);
+      if (roomId) scrapedRoomIds.push(roomId);
     }
 
-    await upsertSlots(allSlots, roomIdByName);
+    await upsertSlots(allSlots, roomIdByName, scrapedRoomIds, job.date_from, job.date_to);
 
     const status = erroredRooms.length > 0 ? 'PARTIAL' : 'SUCCESS';
     await createScrapeRun({
@@ -257,10 +261,27 @@ interface SlotRow {
   priceSource: string;
 }
 
+/**
+ * 이번 수집 결과를 반영하고, 같은 방·같은 기간에서 이번에 오지 않은 슬롯은 지운다.
+ *
+ * upsert 만 하면 소스가 더 이상 보고하지 않는 슬롯이 마지막 상태로 영원히 남는다.
+ * 그 대부분이 'AVAILABLE' 이라, 실제로는 없는 빈자리를 계속 보여주게 된다
+ * (실제로 한 합주실의 어떤 방이 하루 24시간 내내 예약 가능으로 남아 있었다).
+ *
+ * 수집에 실패한 방은 대상에서 뺀다. 실패를 '슬롯 없음'으로 해석해 지워버리면
+ * 일시적 오류에 멀쩡한 데이터가 날아간다. 반대로 방이 정상 응답했는데 슬롯이
+ * 0건이면 그 기간에 정말 없는 것이므로 지우는 게 맞다.
+ */
 async function upsertSlots(
   slots: AvailabilitySlot[],
   roomIdByName: Map<string, string>,
+  scrapedRoomIds: string[],
+  dateFrom: string,
+  dateTo: string,
 ): Promise<void> {
+  // 배치마다 NOW() 를 쓰면 시각이 미세하게 달라져 정리 기준으로 삼을 수 없다.
+  // 한 수집의 모든 행이 같은 scraped_at 을 갖도록 호출 시점 값을 고정해 넘긴다.
+  const scrapedAt = new Date();
   // 같은 (room_id, date, start_time) 가 한 배치에 두 번 들어가면 ON CONFLICT DO UPDATE 가
   // "한 행을 두 번 갱신할 수 없다" 에러를 내므로, 키 기준 중복 제거(마지막 값 우선).
   const dedup = new Map<string, SlotRow>();
@@ -284,9 +305,18 @@ async function upsertSlots(
     const batch = rows.slice(i, i + SLOT_BATCH_SIZE);
     const params: unknown[] = [];
     const tuples = batch.map((r, idx) => {
-      const b = idx * 7;
-      params.push(r.roomId, r.date, r.startTime, r.endTime, r.status, r.price, r.priceSource);
-      return `($${b + 1}, $${b + 2}, $${b + 3}, $${b + 4}, $${b + 5}, $${b + 6}, $${b + 7}, NOW())`;
+      const b = idx * 8;
+      params.push(
+        r.roomId,
+        r.date,
+        r.startTime,
+        r.endTime,
+        r.status,
+        r.price,
+        r.priceSource,
+        scrapedAt,
+      );
+      return `($${b + 1}, $${b + 2}, $${b + 3}, $${b + 4}, $${b + 5}, $${b + 6}, $${b + 7}, $${b + 8})`;
     });
     await query(
       `
@@ -301,6 +331,22 @@ async function upsertSlots(
     `,
       params,
     );
+  }
+
+  if (scrapedRoomIds.length === 0) return;
+
+  // 이번 수집이 건드리지 않은(= 소스가 더 이상 주지 않는) 같은 기간 슬롯을 지운다.
+  const deleted = await query(
+    `
+    DELETE FROM slots
+    WHERE room_id = ANY($1::bigint[])
+      AND date BETWEEN $2::date AND $3::date
+      AND scraped_at < $4
+  `,
+    [scrapedRoomIds, dateFrom, dateTo, scrapedAt],
+  );
+  if (deleted.rowCount) {
+    console.log(`[worker] 사라진 슬롯 ${deleted.rowCount}건 정리`);
   }
 }
 
