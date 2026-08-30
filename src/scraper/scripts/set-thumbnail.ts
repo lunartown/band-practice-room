@@ -2,14 +2,14 @@
  * 합주실 썸네일을 "혼자서" 한 방에 추가/교체하는 도구.
  *
  * 하는 일(순서대로):
- *   1) 이미지(로컬 파일 또는 URL)를 정사각으로 중앙 크롭 + 리사이즈 + webp 압축
+ *   1) 이미지(로컬 파일 또는 URL)를 정사각으로 리사이즈 + webp 압축
  *   2) src/web/public/studios/<name>.webp 로 저장 (Vercel 정적 서빙)
  *   3) 시드 003_studio_visuals.sql 의 "관리 블록"에 UPDATE 한 줄을 upsert (재시드 영속)
  *   4) DATABASE_URL 이 있으면 DB 에도 즉시 반영 (없으면 다음 재시드 때 적용)
  *
  * 사용:
  *   cd src/scraper
- *   npm run thumbnail -- --slug '<studio slug>' --image <파일|URL> [--name <영문파일명>] [--size 256]
+ *   npm run thumbnail -- --slug '<studio slug>' --image <파일|URL> [--name <영문파일명>] [--size 256] [--fit cover|contain]
  *
  * 예:
  *   npm run thumbnail -- --slug 'studio-강동/송파-브라더-강동' \
@@ -95,11 +95,12 @@ async function main() {
   const image = args.image?.trim();
   if (!slug || !image) {
     console.error(
-      "사용법: npm run thumbnail -- --slug '<studio slug>' --image <파일|URL> [--name <영문파일명>] [--size 256]",
+      "사용법: npm run thumbnail -- --slug '<studio slug>' --image <파일|URL> [--name <영문파일명>] [--size 256] [--fit cover|contain]",
     );
     process.exit(1);
   }
   const size = Number(args.size) || 256;
+  const fit = args.fit === 'contain' ? 'contain' : 'cover';
   const name = (args.name?.trim() || defaultName(slug)).replace(/\.(webp|jpe?g|png)$/i, '');
   const fileName = `${name}.webp`;
   const webPath = `/studios/${fileName}`;
@@ -108,7 +109,11 @@ async function main() {
   const input = await loadImage(image);
   await mkdir(STUDIOS_DIR, { recursive: true });
   const info = await sharp(input)
-    .resize(size, size, { fit: 'cover', position: 'attention' })
+    .resize(size, size, {
+      fit,
+      position: 'attention',
+      background: { r: 255, g: 255, b: 255, alpha: 1 },
+    })
     .webp({ quality: 80 })
     .toFile(resolve(STUDIOS_DIR, fileName));
   console.log(`[1/3] 이미지 저장: src/web/public/studios/${fileName} (${size}², ${Math.round(info.size / 1024)}KB)`);
