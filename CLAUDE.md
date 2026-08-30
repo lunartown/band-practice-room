@@ -37,6 +37,15 @@
 - 로컬에서 프론트만 prod 데이터로 확인할 때는 기본 proxy(Render prod API)를 쓴다. 백엔드/dev DB까지 확인할 때만 `VITE_DEV_API_PROXY_TARGET=https://hapjusil-api-dev.onrender.com` 또는 `http://127.0.0.1:3000`으로 덮어쓴다. `localhost`는 Node에서 IPv6 `::1`로 해석될 수 있으므로 로컬 API 타깃에는 `127.0.0.1`을 쓴다.
 - 배포 환경은 `main=prod 프론트→prod API/DB`, `dev=dev 프론트→dev API/DB`, `stg=stg 프론트→prod API/DB`로 둔다. Vercel 무료 플랜 rate limit 때문에 기능 브랜치는 Vercel에 올리지 말고 로컬에서 확인한 뒤 `dev`로 PR한다. 설정 근거는 [docs/04_개발/03_배포_전략.md](docs/04_개발/03_배포_전략.md) "프리뷰 배포 필터" 참고.
 
+## 로컬 전용 파일 (`_local/`)
+
+- 저장소에 커밋하면 안 되는 로컬 자산은 전부 `_local/`에 둔다. `.gitignore`에서 `_local/*`로 통째로 제외한다(`.gitkeep`만 예외).
+- 새 자격증명이 생기면 **여기에 넣는다.** `.git/` 안이나 홈 디렉터리에 별도 자리를 만들지 않는다.
+- 운영 API 키는 `_local/ops.env`에 `export KEY=value` 형식으로 모은다. 셸에서 쓸 때는 `set -a; source _local/ops.env; set +a`.
+- 서비스 계정 키·인증서·키스토어는 파일 그대로 둔다(`ga4-admin-sa.json`, `AuthKey_*.p8`, `hapjusil-release.keystore` 등). 권한은 `600`을 유지한다.
+- 예외는 Render DB 접속 정보뿐이다. 이쪽은 worktree 간 공유가 필요해 Git 공용 디렉터리를 쓴다(아래 "Render DB 로컬 접속" 참고).
+- 키 값을 로그·응답·커밋 메시지에 출력하지 않는다.
+
 ## Render DB 로컬 접속
 
 - Render prod/dev 접속 정보는 Git 공용 디렉터리의 `$(git rev-parse --git-common-dir)/render-db.env`에 로컬로 저장한다. 이 파일은 저장소에 커밋하지 않으며 권한은 `600`으로 유지한다.
