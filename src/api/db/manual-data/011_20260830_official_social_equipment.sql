@@ -74,7 +74,7 @@ INSERT INTO equipment_evidence (
 SELECT row.evidence_prefix || ':' || row.equipment_slug,
        'ROOM', NULL, r.id, ei.id, NULL, re.id, row.source_kind,
        row.source_url, row.source_title, ei.name, row.note, left(row.note, 192),
-       NULL, false, row.confidence, '2026-08-30T20:30:00+09:00'::timestamptz
+       NULL, false, row.confidence, '2026-08-30T17:10:00+09:00'::timestamptz
 FROM manual_20260830_social_equipment_rows row
 JOIN studios s ON s.slug = row.studio_slug
 JOIN rooms r ON r.studio_id = s.id AND r.name = row.room_name
