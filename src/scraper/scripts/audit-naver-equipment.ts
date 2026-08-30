@@ -71,13 +71,18 @@ async function audit(row: RoomRow): Promise<AuditResult> {
       businessTypeId,
       bizItemId: row.itemId,
     });
-    const hasSignal = EQUIPMENT_PATTERN.test(item.description);
+    const description = [
+      item.description,
+      ...item.additionalDescriptions.map((additional) =>
+        [additional.title, additional.context].filter(Boolean).join('\n')),
+    ].filter(Boolean).join('\n\n');
+    const hasSignal = EQUIPMENT_PATTERN.test(description);
     const status: AuditResult['status'] = !hasSignal
       ? 'no-signal'
-      : MODEL_LIKE_PATTERN.test(item.description)
+      : MODEL_LIKE_PATTERN.test(description)
         ? 'candidate'
         : 'generic-only';
-    return { ...row, url, status, itemName: item.name, description: item.description };
+    return { ...row, url, status, itemName: item.name, description };
   } catch (error) {
     return { ...row, url, status: 'fetch-error', error: error instanceof Error ? error.message : String(error) };
   }

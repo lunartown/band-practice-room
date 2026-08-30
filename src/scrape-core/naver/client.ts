@@ -23,7 +23,7 @@ const BIZ_ITEMS_QUERY = `query bizItems($input: BizItemsParams) {
 }`;
 
 const BIZ_ITEM_QUERY = `query bizItem($input: BizItemParams) {
-  bizItem(input: $input) { id name desc }
+  bizItem(input: $input) { id name desc extraDescJson }
 }`;
 
 type ScheduleResponse = {
@@ -153,7 +153,12 @@ export async function fetchBusinessImages(params: {
 
 export type NaverBizItem = { bizItemId: string; name: string; bookingTimeUnitCode: string };
 
-export type NaverBizItemDetail = { bizItemId: string; name: string; description: string };
+export type NaverBizItemDetail = {
+  bizItemId: string;
+  name: string;
+  description: string;
+  additionalDescriptions: Array<{ title: string; context: string }>;
+};
 
 /** 공개 예약 상품의 현재 이름과 설명. 장비 근거 감사처럼 상품 본문이 필요할 때 쓴다. */
 export async function fetchBizItemDetail(params: {
@@ -162,7 +167,12 @@ export async function fetchBizItemDetail(params: {
   bizItemId: string;
 }): Promise<NaverBizItemDetail> {
   const data = await naverGraphql<{
-    bizItem: { id: string; name: string; desc: string | null } | null;
+    bizItem: {
+      id: string;
+      name: string;
+      desc: string | null;
+      extraDescJson: Array<{ title?: string | null; context?: string | null }> | null;
+    } | null;
   }>({
     operationName: 'bizItem',
     query: BIZ_ITEM_QUERY,
@@ -181,6 +191,9 @@ export async function fetchBizItemDetail(params: {
     bizItemId: String(data.bizItem.id).split('_')[0],
     name: data.bizItem.name,
     description: data.bizItem.desc ?? '',
+    additionalDescriptions: (data.bizItem.extraDescJson ?? [])
+      .map((item) => ({ title: item.title ?? '', context: item.context ?? '' }))
+      .filter((item) => item.title || item.context),
   };
 }
 
