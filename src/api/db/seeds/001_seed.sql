@@ -14,7 +14,8 @@ ON CONFLICT (id) DO UPDATE SET
 
 INSERT INTO studios (id, slug, name, description, primary_area_id, address, is_active)
 VALUES
-  (1, 'ground-hongdae', '그라운드합주실 홍대 본점', NULL, 1, '서울 마포구 동교로 162-5', true)
+  -- 002_studios.sql의 최신 네이버 카탈로그 항목과 중복되므로 레거시 샘플 행은 비활성으로 둔다.
+  (1, 'ground-hongdae', '그라운드합주실 홍대 본점', NULL, 1, '서울 마포구 동교로 162-5', false)
 ON CONFLICT (id) DO UPDATE SET
   slug = EXCLUDED.slug,
   name = EXCLUDED.name,
