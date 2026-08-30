@@ -132,7 +132,9 @@ function parseApolloState(html: string): Record<string, unknown> {
   const start = html.indexOf(marker);
   if (start < 0) return {};
   const jsonStart = start + marker.length;
-  const end = html.indexOf(';</script>', jsonStart);
+  // 이 대입문 뒤 같은 <script> 안에 다른 코드가 계속되므로 </script>를
+  // 종점으로 삼을 수 없다. JSON 대입을 끝내는 첫 `;\n`까지만 자른다.
+  const end = html.indexOf(';\n', jsonStart);
   if (end < 0) return {};
   return JSON.parse(html.slice(jsonStart, end)) as Record<string, unknown>;
 }
@@ -172,7 +174,11 @@ async function loadExisting(): Promise<Map<string, Candidate>> {
 async function main(): Promise<void> {
   await mkdir(resolve(REPO_ROOT, '_local'), { recursive: true });
   const candidates = await loadExisting();
-  const queries = AREAS.flatMap((area) => TERMS.map((term) => `${area} ${term}`));
+  const limitArgIndex = process.argv.indexOf('--limit');
+  const requestedLimit = limitArgIndex >= 0 ? Number(process.argv[limitArgIndex + 1]) : Number.POSITIVE_INFINITY;
+  const queries = AREAS
+    .flatMap((area) => TERMS.map((term) => `${area} ${term}`))
+    .slice(0, Number.isFinite(requestedLimit) ? Math.max(0, requestedLimit) : undefined);
   let searched = 0;
   let failed = 0;
 
