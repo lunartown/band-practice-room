@@ -9,19 +9,17 @@ import { todayKst } from './date';
 
 // 마지막 조건은 같은 실행 세션에서 최근에 다시 들어온 경우에만 복원한다.
 // 앱을 완전히 종료/재실행하거나 웹을 새 탭으로 열면 sessionStorage가 비므로
-// 저장된 localStorage 필터를 무시하고 기본 필터 + 오픈 화면으로 시작한다.
+// 저장된 localStorage 필터를 무시하고 기본 필터(전체 지역)로 시작한다.
 // 네이티브 앱은 부팅 시 저장 필터를 복원하지 않는다. warm resume은 JS/React 상태가
 // 그대로 살아있고, 콜드스타트는 WebView 저장소 상태와 무관하게 기본 필터로 시작한다.
 const KEY = 'hapjusil:prefs:v1';
-// 같은 세션 안에서, 마지막 방문 후 이 시간이 지나면 오픈 화면을 다시 띄운다.
+// 같은 세션 안에서, 마지막 방문 후 이 시간이 지나면 조건을 복원하지 않는다.
 const FRESH_TTL_MS = 6 * 60 * 60 * 1000;
-// 이번 실행(세션)에서 이미 진입했는지 표시. WebView/탭이 살아있는 동안만 유지된다.
+// 이번 실행(세션)에서 이미 방문했는지 표시. WebView/탭이 살아있는 동안만 유지된다.
 const SESSION_KEY = 'hapjusil:entered-session';
 
 export interface SavedPrefs {
   filters: FilterState;
-  // true면 오픈 화면을 건너뛰고 바로 결과로 진입한다(최근 방문 + 같은 실행 세션).
-  fresh: boolean;
 }
 
 function enteredThisSession(): boolean {
@@ -32,7 +30,7 @@ function enteredThisSession(): boolean {
   }
 }
 
-// 진입 상태가 되면 호출해 "이번 실행에서 진입함"을 기록한다.
+// "이번 실행에서 방문함"을 기록한다.
 export function markEntered() {
   try {
     sessionStorage.setItem(SESSION_KEY, '1');
@@ -78,7 +76,7 @@ export function loadFilters(): SavedPrefs | null {
       minHourlyPrice: readMinHourlyPrice(f.minHourlyPrice),
       maxHourlyPrice: readMaxHourlyPrice(f.maxHourlyPrice),
     };
-    return { filters, fresh: true };
+    return { filters };
   } catch {
     return null;
   }
