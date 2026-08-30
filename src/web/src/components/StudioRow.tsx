@@ -115,7 +115,6 @@ function StudioAvatar({ studio }: { studio: Pick<Studio, 'imageUrl'> }) {
           ref={markLoadedIfComplete}
           src={sourceImgSrc}
           alt=""
-          loading="lazy"
           referrerPolicy="no-referrer"
           style={{ opacity: loadedSrc === sourceImgSrc ? 1 : 0 }}
           onLoad={(event) => setLoadedSrc(event.currentTarget.getAttribute('src'))}
