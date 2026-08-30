@@ -105,6 +105,10 @@ const MANUAL_ITEM_OVERRIDES: Record<string, string[]> = {
   '1062791': ['5592935', '5606830', '5606836'], // 호랑이 합주실: 숫자로 구분한 세 개 룸
 };
 
+const MANUAL_STUDIO_OVERRIDES: Record<string, string> = {
+  '1374245': 'studio-사당/이수-톤', // 같은 예약 사업장이 중복 등록되어 기존 활성 스튜디오를 유지
+};
+
 function naverBusinessId(url: string | undefined | null): string | null {
   return url?.match(/\/bizes\/(\d+)/)?.[1] ?? null;
 }
@@ -263,11 +267,15 @@ async function main(): Promise<void> {
     candidates: VerifiedCandidate[];
   };
   const catalog = JSON.parse(await readFile(CATALOG_PATH, 'utf8')) as Catalog;
-  const existingByBusinessId = new Map(
-    catalog.studios
-      .map((studio) => [naverBusinessId(studio.naverUrl), studio] as const)
-      .filter((entry): entry is [string, CatalogStudio] => !!entry[0]),
-  );
+  const existingByBusinessId = new Map<string, CatalogStudio>();
+  for (const studio of catalog.studios) {
+    const businessId = naverBusinessId(studio.naverUrl);
+    if (!businessId) continue;
+    const preferredStudioId = MANUAL_STUDIO_OVERRIDES[businessId];
+    if (!existingByBusinessId.has(businessId) || studio.id === preferredStudioId) {
+      existingByBusinessId.set(businessId, studio);
+    }
+  }
 
   const selections: Selection[] = verified.candidates
     .filter((candidate) => !candidate.error)
@@ -311,6 +319,12 @@ async function main(): Promise<void> {
   console.log(`[catalog] 제외 ${rejected.length}곳, 검토 파일 ${REVIEW_PATH}`);
 
   if (!process.argv.includes('--apply')) return;
+
+  catalog.studios = catalog.studios.filter((studio) => {
+    const businessId = naverBusinessId(studio.naverUrl);
+    const preferredStudioId = businessId ? MANUAL_STUDIO_OVERRIDES[businessId] : undefined;
+    return !preferredStudioId || studio.id === preferredStudioId;
+  });
 
   for (const selection of accepted) {
     const existing = existingByBusinessId.get(selection.bookingBusinessId ?? '');
