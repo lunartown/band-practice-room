@@ -22,6 +22,10 @@ const BIZ_ITEMS_QUERY = `query bizItems($input: BizItemsParams) {
   bizItems(input: $input) { id name bookingTimeUnitCode }
 }`;
 
+const BIZ_ITEM_QUERY = `query bizItem($input: BizItemParams) {
+  bizItem(input: $input) { id name desc }
+}`;
+
 type ScheduleResponse = {
   schedule: { bizItemSchedule: { hourly: NaverHourlyUnit[] | null } | null } | null;
 };
@@ -148,6 +152,37 @@ export async function fetchBusinessImages(params: {
 }
 
 export type NaverBizItem = { bizItemId: string; name: string; bookingTimeUnitCode: string };
+
+export type NaverBizItemDetail = { bizItemId: string; name: string; description: string };
+
+/** 공개 예약 상품의 현재 이름과 설명. 장비 근거 감사처럼 상품 본문이 필요할 때 쓴다. */
+export async function fetchBizItemDetail(params: {
+  businessId: string;
+  businessTypeId: number;
+  bizItemId: string;
+}): Promise<NaverBizItemDetail> {
+  const data = await naverGraphql<{
+    bizItem: { id: string; name: string; desc: string | null } | null;
+  }>({
+    operationName: 'bizItem',
+    query: BIZ_ITEM_QUERY,
+    referer: bookingReferer(params.businessTypeId, params.businessId),
+    variables: {
+      input: {
+        businessId: params.businessId,
+        bizItemId: params.bizItemId,
+        lang: 'ko',
+        projections: 'RESOURCE,MIN_MAX_PRICE,BIZ_ITEM_DETAIL',
+      },
+    },
+  });
+  if (!data.bizItem) throw new Error(`네이버 예약 상품 없음 (${params.bizItemId})`);
+  return {
+    bizItemId: String(data.bizItem.id).split('_')[0],
+    name: data.bizItem.name,
+    description: data.bizItem.desc ?? '',
+  };
+}
 
 /** 비즈니스의 방(bizItem) 목록. 매핑 부트스트랩/점검용. */
 export async function fetchBizItems(params: {
