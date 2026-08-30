@@ -9,7 +9,6 @@ import { FilterSheet, defaultFilters } from './components/FilterSheet';
 import type { FilterState } from './components/FilterSheet';
 import { SearchConditionSheet } from './components/SearchConditionSheet';
 import { contiguousSpan } from './components/TimeWindowPicker';
-import { OpenScreen } from './components/OpenScreen';
 import { AreaSheet } from './components/AreaSheet';
 import { SORT_OPTIONS, SortSheet } from './components/SortSheet';
 import { MenuSheet } from './components/MenuSheet';
@@ -68,9 +67,8 @@ export function App() {
   const [searchSlots, setSearchSlots] = useState<RawSlot[]>([]);
   const [searchResponseDates, setSearchResponseDates] = useState<string[]>([]);
   const [filters, setFilters] = useState<FilterState>(savedPrefs?.filters ?? defaultFilters);
-  // 같은 실행 세션에서 최근(TTL 이내) 방문한 경우에만 조건을 복원하고 결과로 바로 진입한다.
-  // 콜드스타트나 오랜만의 방문은 오픈 화면 + 기본 필터로 다시 시작한다.
-  const [entered, setEntered] = useState(savedPrefs?.fresh ?? false);
+  // 같은 실행 세션에서 최근(TTL 이내) 방문한 경우에만 조건을 복원한다.
+  // 콜드스타트나 오랜만의 방문은 기본 필터(전체 지역)로 다시 시작한다.
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [isConditionOpen, setIsConditionOpen] = useState(false);
   const [isAreaSheetOpen, setIsAreaSheetOpen] = useState(false);
@@ -159,20 +157,17 @@ export function App() {
         dates: date ? [date] : f.dates,
         studioIds: target.studioId != null ? [target.studioId] : f.studioIds,
       }));
-      setEntered(true);
     });
   }, []);
 
   useEffect(() => {
-    if (!entered) return;
-    // 이번 실행에서 진입했음을 기록한다. 같은 세션 안에서의 새로고침은
+    // 이번 실행에서 방문했음을 기록한다. 같은 세션 안에서의 새로고침은
     // 조건을 복원하지만, 콜드스타트(앱 재실행/새 탭)면 기본 필터로 다시 시작한다.
     markEntered();
     saveFilters(filters);
-  }, [filters, entered]);
+  }, [filters]);
 
   useEffect(() => {
-    if (!entered) return;
     let canceled = false;
     setError(null);
     setLoading(true);
@@ -194,7 +189,6 @@ export function App() {
       canceled = true;
     };
   }, [
-    entered,
     filters.areaIds,
     filters.dates,
     filters.minDuration,
@@ -204,7 +198,7 @@ export function App() {
   ]);
 
   useEffect(() => {
-    if (!entered || !isStudioSearchOpen) return;
+    if (!isStudioSearchOpen) return;
     let canceled = false;
     setSearchLoading(true);
     getSlots(buildSlotsQuery(filters, { includeSelectedStudio: false }))
@@ -226,7 +220,6 @@ export function App() {
       canceled = true;
     };
   }, [
-    entered,
     isStudioSearchOpen,
     filters.areaIds,
     filters.dates,
@@ -236,12 +229,12 @@ export function App() {
   ]);
 
   useEffect(() => {
-    if (!entered || isStudioSearchOpen || filters.studioIds.length === 0) return;
+    if (isStudioSearchOpen || filters.studioIds.length === 0) return;
     const hasUnrecordedSelection = filters.studioIds.some((studioId) => !recentStudioIds.includes(studioId));
     if (hasUnrecordedSelection) {
       rememberRecentStudioSelections(filters.studioIds);
     }
-  }, [entered, filters.studioIds, isStudioSearchOpen, recentStudioIds, rememberRecentStudioSelections]);
+  }, [filters.studioIds, isStudioSearchOpen, recentStudioIds, rememberRecentStudioSelections]);
 
   // 세션 시작. 이 시각이 ms_since_open 의 기준점이 된다(lib/analytics.ts).
   const openTracked = useRef(false);
@@ -249,8 +242,8 @@ export function App() {
     if (openTracked.current) return;
     openTracked.current = true;
     track('app_open', {
-      // 조건이 복원돼 오픈 화면을 건너뛴 재방문인지. 첫 진입과 탐색 시간을 같이 놓고 보면 안 된다.
-      restored: savedPrefs?.fresh ?? false,
+      // 조건이 복원된 재방문인지. 첫 진입과 탐색 시간을 같이 놓고 보면 안 된다.
+      restored: savedPrefs != null,
     });
   }, [savedPrefs]);
 
@@ -280,12 +273,6 @@ export function App() {
     });
   }, [filters]);
 
-  function enterWithAreas(areaIds: number[]) {
-    track('area_select', { area_count: areaIds.length, all_areas: areaIds.length === 0 });
-    setFilters((f) => ({ ...f, areaIds }));
-    setEntered(true);
-  }
-
   function openStudioSearch() {
     setIsSortOpen(false);
     setIsFilterOpen(false);
@@ -306,6 +293,9 @@ export function App() {
   }
 
   function selectArea(areaId: number | null) {
+    // 지역은 더 이상 진입 조건이 아니라 선택 사항이다. 결과를 본 사람 중 실제로 지역을
+    // 좁히는 비율을 계속 보려고 여기서 센다.
+    track('area_select', { area_count: areaId == null ? 0 : 1, all_areas: areaId == null });
     setFilters((f) => ({ ...f, areaIds: areaId == null ? [] : [areaId] }));
   }
 
@@ -480,7 +470,7 @@ export function App() {
   // 작동하는지 판단하는 근거가 된다. 로딩 중 깜빡임은 세지 않고, 같은 결과 반복도 접는다.
   const lastResult = useRef<string | null>(null);
   useEffect(() => {
-    if (!entered || loading) return;
+    if (loading) return;
 
     const signature = `${totalStudios}:${visibleGroups.length}:${favOnly}`;
     if (lastResult.current === signature) return;
@@ -492,7 +482,7 @@ export function App() {
       empty: totalStudios === 0,
       fav_only: favOnly,
     });
-  }, [entered, loading, totalStudios, visibleGroups.length, favOnly]);
+  }, [loading, totalStudios, visibleGroups.length, favOnly]);
 
   const areaChipLabel = buildAreaChipLabel(areas, filters.areaIds);
   const areaNameById = useMemo(
@@ -604,11 +594,10 @@ export function App() {
   useEffect(() => {
     // 앱을 보는 중 알림이 오면(iOS 배너와 별개로) 새 빈자리가 바로 보이게 슬롯을 갱신한다.
     // 방금 서버에서 변동이 감지된 것이므로 재수집 요청 없이 재조회만 한다.
-    if (!entered) return;
     return onForegroundNotification(() => {
       void reloadSlots();
     });
-  }, [entered, reloadSlots]);
+  }, [reloadSlots]);
 
   useEffect(() => {
     if (!Capacitor.isNativePlatform() || Capacitor.getPlatform() !== 'android') return;
@@ -680,16 +669,6 @@ export function App() {
     onRefresh: handlePullRefresh,
     disabled: loading,
   });
-
-  if (!entered) {
-    return (
-      <main className="app-shell">
-        <section className="phone-app" aria-label="합주실닷컴">
-          <OpenScreen areas={areas} error={areasError} onRetry={loadAreas} onPick={enterWithAreas} />
-        </section>
-      </main>
-    );
-  }
 
   return (
     <main className="app-shell">
@@ -993,6 +972,8 @@ export function App() {
           <AreaSheet
             areas={areas}
             selectedAreaId={filters.areaIds[0] ?? null}
+            error={areasError}
+            onRetry={loadAreas}
             onClose={() => setIsAreaSheetOpen(false)}
             onSelect={selectArea}
           />

@@ -1814,142 +1814,6 @@ button {
 }
 
 /* ============================================================
-   Open screen (landing / area picker)
-   ============================================================ */
-.open-screen {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  gap: var(--sp-8);
-  padding: var(--sp-8) var(--gutter) calc(var(--sp-8) + var(--sp-6));
-  text-align: center;
-}
-
-.open-brand {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: var(--sp-1);
-}
-
-.open-logo {
-  width: 88px;
-  height: 88px;
-  object-fit: contain;
-}
-
-.open-wordmark {
-  margin: var(--sp-2) 0 0;
-  font-size: 34px;
-  line-height: 1.1;
-  font-weight: var(--fw-extrabold);
-  letter-spacing: -0.04em;
-  color: var(--text-1);
-}
-
-.open-dot {
-  color: var(--accent-strong);
-}
-
-.open-tagline {
-  margin: var(--sp-1) 0 0;
-  font-size: var(--fs-md);
-  color: var(--text-3);
-  font-weight: var(--fw-medium);
-}
-
-.open-pick {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: var(--sp-4);
-}
-
-.open-prompt {
-  margin: 0;
-  font-size: var(--fs-lg);
-  font-weight: var(--fw-bold);
-  color: var(--text-2);
-}
-
-.open-areas {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: var(--sp-2);
-}
-
-.open-area {
-  min-height: var(--tap-chip);
-  border-radius: var(--r-pill);
-  padding: var(--sp-2) var(--sp-4);
-  background: var(--surface);
-  box-shadow: inset 0 0 0 1px var(--border);
-  color: var(--text-1);
-  font-size: var(--fs-sm);
-  font-weight: var(--fw-bold);
-  transition: background 0.12s, box-shadow 0.12s, color 0.12s;
-}
-
-.open-area:hover,
-.open-area:active {
-  background: var(--accent-soft);
-  box-shadow: inset 0 0 0 1px var(--accent-border);
-  color: var(--accent-strong);
-}
-
-.open-area-skeleton {
-  width: 64px;
-  height: var(--tap-chip);
-  border-radius: var(--r-pill);
-}
-
-.open-all {
-  margin-top: var(--sp-1);
-  min-height: var(--tap);
-  padding: 0 var(--sp-3);
-  background: transparent;
-  color: var(--text-3);
-  font-size: var(--fs-sm);
-  font-weight: var(--fw-semibold);
-  text-decoration: underline;
-  text-underline-offset: 3px;
-}
-
-.open-areas-error {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: var(--sp-2);
-}
-
-.open-areas-error p {
-  margin: 0;
-  font-size: var(--fs-sm);
-  color: var(--text-3);
-}
-
-.open-retry {
-  min-height: var(--tap-chip);
-  border-radius: var(--r-pill);
-  padding: var(--sp-2) var(--sp-4);
-  background: var(--surface);
-  box-shadow: inset 0 0 0 1px var(--border);
-  color: var(--text-1);
-  font-size: var(--fs-sm);
-  font-weight: var(--fw-bold);
-  transition: background 0.12s, box-shadow 0.12s, color 0.12s;
-}
-
-.open-retry:hover,
-.open-retry:active {
-  background: var(--accent-soft);
-  box-shadow: inset 0 0 0 1px var(--accent-border);
-  color: var(--accent-strong);
-}
-
-/* ============================================================
    Error banner
    ============================================================ */
 .error-banner {
@@ -2495,6 +2359,39 @@ button {
 
 .area-sheet-row.selected {
   font-weight: var(--fw-bold);
+}
+
+.area-sheet-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-6) var(--sp-4);
+}
+
+.area-sheet-error p {
+  margin: 0;
+  font-size: var(--fs-sm);
+  color: var(--text-3);
+}
+
+.area-sheet-retry {
+  min-height: var(--tap-chip);
+  border-radius: var(--r-pill);
+  padding: var(--sp-2) var(--sp-4);
+  background: var(--surface);
+  box-shadow: inset 0 0 0 1px var(--border);
+  color: var(--text-1);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-bold);
+  transition: background 0.12s, box-shadow 0.12s, color 0.12s;
+}
+
+.area-sheet-retry:hover,
+.area-sheet-retry:active {
+  background: var(--accent-soft);
+  box-shadow: inset 0 0 0 1px var(--accent-border);
+  color: var(--accent-strong);
 }
 
 /* ============================================================
@@ -3503,11 +3400,6 @@ button {
   :root.is-android .studio-search-top,
   :root.is-android .alerts-top {
     padding-top: calc(var(--sp-5) + var(--safe-area-top));
-  }
-
-  :root.is-android .open-screen {
-    padding-top: calc(var(--sp-8) + var(--safe-area-top));
-    padding-bottom: calc(var(--sp-8) + var(--sp-6) + var(--safe-area-bottom));
   }
 
   :root.is-android .result-list,
