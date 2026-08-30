@@ -54,6 +54,12 @@
 - 로컬 도구와 GitHub Actions에는 외부 연결 문자열인 `DATABASE_URL`, `DATABASE_URL_PROD`, `DATABASE_URL_DEV`를 사용한다. `RENDER_DATABASE_URL_*_INTERNAL`은 Render 서비스 내부에서만 사용한다.
 - 접속 문자열을 로그나 응답에 출력하지 않는다. 폐기된 Neon 접속 문자열은 다시 사용하지 않는다.
 
+## 알려진 실패 (무시)
+
+- `main`에 푸시하면 **`ota.yml`(OTA deploy · Capgo)이 실패한다.** 요금 미납으로 Capgo 배포가 막혀 있기 때문이다. 당분간 무시하고, 이 실패를 고치려 들거나 릴리스가 실패했다고 보고하지 않는다.
+- 웹(Vercel) 배포와 무관하다. 릴리스 성공 여부는 Vercel 배포와 `hapjusil.com` 응답으로 판단한다.
+- 이 기간에 앱(iOS·Android)에 웹 변경을 반영하려면 스토어 재빌드·재제출뿐이다. 배경은 [앱 스토어 출시](docs/04_개발/04_앱_스토어_출시.md) 참고.
+
 ## 커밋 규칙
 
 **핵심: prefix는 대문자 + 콜론, 괄호(scope) 붙이지 않는다. front/back 구분도 하지 않는다.**
