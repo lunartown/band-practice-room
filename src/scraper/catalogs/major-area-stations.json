@@ -1,0 +1,1519 @@
+{
+  "generatedAt": "2026-08-30T06:55:30.120Z",
+  "dataAsOf": "2026-06-30",
+  "source": {
+    "name": "국가철도공단 도시광역철도 역사정보",
+    "pageUrl": "https://data.kric.go.kr/rips/M_01_01/detail.do?id=32",
+    "downloadUrl": "https://data.kric.go.kr/rips/dataset/download.file?type=filedata&id=32&operation=1"
+  },
+  "count": 61,
+  "areas": [
+    {
+      "slug": "hapjeong-hongdae",
+      "name": "합정/홍대",
+      "stationIds": [
+        "hongik-univ",
+        "hapjeong",
+        "sangsu",
+        "gwangheungchang",
+        "mangwon"
+      ]
+    },
+    {
+      "slug": "sinchon",
+      "name": "신촌",
+      "stationIds": [
+        "sinchon-line-2",
+        "ewha-womans-univ",
+        "seogang-univ",
+        "daeheung"
+      ]
+    },
+    {
+      "slug": "sadang-isu",
+      "name": "사당/이수",
+      "stationIds": [
+        "sadang",
+        "isu",
+        "namseong",
+        "bangbae"
+      ]
+    },
+    {
+      "slug": "sindorim-yeongdeungpo",
+      "name": "신도림/영등포구청",
+      "stationIds": [
+        "sindorim",
+        "guro-digital-complex",
+        "daerim",
+        "mullae",
+        "yeongdeungpo-gu-office",
+        "yeongdeungpo-market",
+        "gasan-digital-complex",
+        "sinpung"
+      ]
+    },
+    {
+      "slug": "mangwon",
+      "name": "망원",
+      "stationIds": [
+        "mangwon"
+      ]
+    },
+    {
+      "slug": "sangdo-chungang",
+      "name": "상도/중앙대",
+      "stationIds": [
+        "heukseok",
+        "sangdo",
+        "jangseungbaegi",
+        "soongsil-univ"
+      ]
+    },
+    {
+      "slug": "seoul-nat-univ",
+      "name": "서울대입구",
+      "stationIds": [
+        "seoul-nat-univ",
+        "bongcheon",
+        "nakseongdae"
+      ]
+    },
+    {
+      "slug": "bangbae",
+      "name": "방배",
+      "stationIds": [
+        "bangbae",
+        "naebang",
+        "nambu-bus-terminal"
+      ]
+    },
+    {
+      "slug": "hyehwa-ssuniv",
+      "name": "혜화/성신여대",
+      "stationIds": [
+        "hyehwa",
+        "hansung-univ",
+        "sungshin-womens-univ",
+        "bomun",
+        "anam",
+        "korea-univ"
+      ]
+    },
+    {
+      "slug": "gangnam",
+      "name": "강남",
+      "stationIds": [
+        "gangnam",
+        "yeoksam",
+        "sinnonhyeon",
+        "yangjae",
+        "maebong",
+        "guryong",
+        "gaepo-dong",
+        "daemosan-entrance",
+        "nonhyeon"
+      ]
+    },
+    {
+      "slug": "gangdong-songpa",
+      "name": "강동/송파",
+      "stationIds": [
+        "jamsil",
+        "jamsilsaenae",
+        "sports-complex",
+        "seokchon-gobun",
+        "seokchon",
+        "songpa",
+        "garak-market",
+        "bangi",
+        "olympic-park",
+        "dunchon-dong",
+        "gangdong-gu-office",
+        "cheonho",
+        "amsa",
+        "mongchontoseong",
+        "ogeum",
+        "gaerong"
+      ]
+    }
+  ],
+  "stations": [
+    {
+      "id": "hongik-univ",
+      "name": "홍대입구역",
+      "latitude": 37.5573563,
+      "longitude": 126.9256566,
+      "areaSlugs": [
+        "hapjeong-hongdae"
+      ],
+      "lines": [
+        "인천국제공항선",
+        "2호선",
+        "경의중앙선"
+      ],
+      "sourceStations": [
+        {
+          "stationCode": "A03",
+          "stationName": "홍대입구",
+          "lineName": "인천국제공항선",
+          "operatorName": "공항철도주식회사"
+        },
+        {
+          "stationCode": "0239",
+          "stationName": "홍대입구",
+          "lineName": "2호선",
+          "operatorName": "서울교통공사"
+        },
+        {
+          "stationCode": "1264",
+          "stationName": "홍대입구역",
+          "lineName": "경의중앙선",
+          "operatorName": "한국철도공사"
+        }
+      ]
+    },
+    {
+      "id": "hapjeong",
+      "name": "합정역",
+      "latitude": 37.549529,
+      "longitude": 126.9140515,
+      "areaSlugs": [
+        "hapjeong-hongdae"
+      ],
+      "lines": [
+        "2호선",
+        "6호선"
+      ],
+      "sourceStations": [
+        {
+          "stationCode": "0238",
+          "stationName": "합정",
+          "lineName": "2호선",
+          "operatorName": "서울교통공사"
+        },
+        {
+          "stationCode": "0622",
+          "stationName": "합정",
+          "lineName": "6호선",
+          "operatorName": "서울교통공사"
+        }
+      ]
+    },
+    {
+      "id": "sangsu",
+      "name": "상수역",
+      "latitude": 37.547704,
+      "longitude": 126.92292,
+      "areaSlugs": [
+        "hapjeong-hongdae"
+      ],
+      "lines": [
+        "6호선"
+      ],
+      "sourceStations": [
+        {
+          "stationCode": "0623",
+          "stationName": "상수",
+          "lineName": "6호선",
+          "operatorName": "서울교통공사"
+        }
+      ]
+    },
+    {
+      "id": "gwangheungchang",
+      "name": "광흥창역",
+      "latitude": 37.547464,
+      "longitude": 126.931971,
+      "areaSlugs": [
+        "hapjeong-hongdae"
+      ],
+      "lines": [
+        "6호선"
+      ],
+      "sourceStations": [
+        {
+          "stationCode": "0624",
+          "stationName": "광흥창(서강)",
+          "lineName": "6호선",
+          "operatorName": "서울교통공사"
+        }
+      ]
+    },
+    {
+      "id": "mangwon",
+      "name": "망원역",
+      "latitude": 37.556031,
+      "longitude": 126.910129,
+      "areaSlugs": [
+        "mangwon",
+        "hapjeong-hongdae"
+      ],
+      "lines": [
+        "6호선"
+      ],
+      "sourceStations": [
+        {
+          "stationCode": "0621",
+          "stationName": "망원",
+          "lineName": "6호선",
+          "operatorName": "서울교통공사"
+        }
+      ]
+    },
+    {
+      "id": "sinchon-line-2",
+      "name": "신촌역",
+      "latitude": 37.555153,
+      "longitude": 126.93689,
+      "areaSlugs": [
+        "sinchon"
+      ],
+      "lines": [
+        "2호선"
+      ],
+      "sourceStations": [
+        {
+          "stationCode": "0240",
+          "stationName": "신촌(지하)",
+          "lineName": "2호선",
+          "operatorName": "서울교통공사"
+        }
+      ]
+    },
+    {
+      "id": "ewha-womans-univ",
+      "name": "이대역",
+      "latitude": 37.556734,
+      "longitude": 126.945897,
+      "areaSlugs": [
+        "sinchon"
+      ],
+      "lines": [
+        "2호선"
+      ],
+      "sourceStations": [
+        {
+          "stationCode": "0241",
+          "stationName": "이대",
+          "lineName": "2호선",
+          "operatorName": "서울교통공사"
+        }
+      ]
+    },
+    {
+      "id": "seogang-univ",
+      "name": "서강대역",
+      "latitude": 37.552132,
+      "longitude": 126.935389,
+      "areaSlugs": [
+        "sinchon"
+      ],
+      "lines": [
+        "경의중앙선"
+      ],
+      "sourceStations": [
+        {
+          "stationCode": "1263",
+          "stationName": "서강대역",
+          "lineName": "경의중앙선",
+          "operatorName": "한국철도공사"
+        }
+      ]
+    },
+    {
+      "id": "daeheung",
+      "name": "대흥역",
+      "latitude": 37.547732,
+      "longitude": 126.942214,
+      "areaSlugs": [
+        "sinchon"
+      ],
+      "lines": [
+        "6호선"
+      ],
+      "sourceStations": [
+        {
+          "stationCode": "0625",
+          "stationName": "대흥(서강대앞)",
+          "lineName": "6호선",
+          "operatorName": "서울교통공사"
+        }
+      ]
+    },
+    {
+      "id": "sadang",
+      "name": "사당역",
+      "latitude": 37.4763995,
+      "longitude": 126.9816335,
+      "areaSlugs": [
+        "sadang-isu"
+      ],
+      "lines": [
+        "2호선",
+        "4호선"
+      ],
+      "sourceStations": [
+        {
+          "stationCode": "0226",
+          "stationName": "사당",
+          "lineName": "2호선",
+          "operatorName": "서울교통공사"
+        },
+        {
+          "stationCode": "0433",
+          "stationName": "사당",
+          "lineName": "4호선",
+          "operatorName": "서울교통공사"
+        }
+      ]
+    },
+    {
+      "id": "isu",
+      "name": "이수역",
+      "latitude": 37.4863895,
+      "longitude": 126.9820375,
+      "areaSlugs": [
+        "sadang-isu"
+      ],
+      "lines": [
+        "4호선",
+        "7호선"
+      ],
+      "sourceStations": [
+        {
+          "stationCode": "0432",
+          "stationName": "총신대입구(이수)",
+          "lineName": "4호선",
+          "operatorName": "서울교통공사"
+        },
+        {
+          "stationCode": "0736",
+          "stationName": "총신대입구(이수)",
+          "lineName": "7호선",
+          "operatorName": "서울교통공사"
+        }
+      ]
+    },
+    {
+      "id": "namseong",
+      "name": "남성역",
+      "latitude": 37.484688,
+      "longitude": 126.971108,
+      "areaSlugs": [
+        "sadang-isu"
+      ],
+      "lines": [
+        "7호선"
+      ],
+      "sourceStations": [
+        {
+          "stationCode": "0737",
+          "stationName": "남성",
+          "lineName": "7호선",
+          "operatorName": "서울교통공사"
+        }
+      ]
+    },
+    {
+      "id": "sindorim",
+      "name": "신도림역",
+      "latitude": 37.508899,
+      "longitude": 126.8913675,
+      "areaSlugs": [
+        "sindorim-yeongdeungpo"
+      ],
+      "lines": [
+        "2호선",
+        "경부선"
+      ],
+      "sourceStations": [
+        {
+          "stationCode": "0234",
+          "stationName": "신도림",
+          "lineName": "2호선",
+          "operatorName": "서울교통공사"
+        },
+        {
+          "stationCode": "1007",
+          "stationName": "신도림역",
+          "lineName": "경부선",
+          "operatorName": "한국철도공사"
+        }
+      ]
+    },
+    {
+      "id": "guro-digital-complex",
+      "name": "구로디지털단지역",
+      "latitude": 37.4852931,
+      "longitude": 126.901456,
+      "areaSlugs": [
+        "sindorim-yeongdeungpo"
+      ],
+      "lines": [
+        "2호선"
+      ],
+      "sourceStations": [
+        {
+          "stationCode": "0232",
+          "stationName": "구로디지털단지",
+          "lineName": "2호선",
+          "operatorName": "서울교통공사"
+        }
+      ]
+    },
+    {
+      "id": "daerim",
+      "name": "대림역",
+      "latitude": 37.4931333,
+      "longitude": 126.8959881,
+      "areaSlugs": [
+        "sindorim-yeongdeungpo"
+      ],
+      "lines": [
+        "2호선",
+        "7호선"
+      ],
+      "sourceStations": [
+        {
+          "stationCode": "0233",
+          "stationName": "대림(구로구청)",
+          "lineName": "2호선",
+          "operatorName": "서울교통공사"
+        },
+        {
+          "stationCode": "0744",
+          "stationName": "대림(구로구청)",
+          "lineName": "7호선",
+          "operatorName": "서울교통공사"
+        }
+      ]
+    },
+    {
+      "id": "mullae",
+      "name": "문래역",
+      "latitude": 37.517993,
+      "longitude": 126.894766,
+      "areaSlugs": [
+        "sindorim-yeongdeungpo"
+      ],
+      "lines": [
+        "2호선"
+      ],
+      "sourceStations": [
+        {
+          "stationCode": "0235",
+          "stationName": "문래",
+          "lineName": "2호선",
+          "operatorName": "서울교통공사"
+        }
+      ]
+    },
+    {
+      "id": "yeongdeungpo-gu-office",
+      "name": "영등포구청역",
+      "latitude": 37.5249875,
+      "longitude": 126.8958245,
+      "areaSlugs": [
+        "sindorim-yeongdeungpo"
+      ],
+      "lines": [
+        "2호선",
+        "5호선"
+      ],
+      "sourceStations": [
+        {
+          "stationCode": "0236",
+          "stationName": "영등포구청",
+          "lineName": "2호선",
+          "operatorName": "서울교통공사"
+        },
+        {
+          "stationCode": "0523",
+          "stationName": "영등포구청",
+          "lineName": "5호선",
+          "operatorName": "서울교통공사"
+        }
+      ]
+    },
+    {
+      "id": "yeongdeungpo-market",
+      "name": "영등포시장역",
+      "latitude": 37.52276,
+      "longitude": 126.905143,
+      "areaSlugs": [
+        "sindorim-yeongdeungpo"
+      ],
+      "lines": [
+        "5호선"
+      ],
+      "sourceStations": [
+        {
+          "stationCode": "0524",
+          "stationName": "영등포시장",
+          "lineName": "5호선",
+          "operatorName": "서울교통공사"
+        }
+      ]
+    },
+    {
+      "id": "gasan-digital-complex",
+      "name": "가산디지털단지역",
+      "latitude": 37.480972,
+      "longitude": 126.882666,
+      "areaSlugs": [
+        "sindorim-yeongdeungpo"
+      ],
+      "lines": [
+        "7호선",
+        "경부선"
+      ],
+      "sourceStations": [
+        {
+          "stationCode": "0746",
+          "stationName": "가산디지털단지",
+          "lineName": "7호선",
+          "operatorName": "서울교통공사"
+        },
+        {
+          "stationCode": "1702",
+          "stationName": "가산디지털단지역",
+          "lineName": "경부선",
+          "operatorName": "한국철도공사"
+        }
+      ]
+    },
+    {
+      "id": "sinpung",
+      "name": "신풍역",
+      "latitude": 37.500107,
+      "longitude": 126.909806,
+      "areaSlugs": [
+        "sindorim-yeongdeungpo"
+      ],
+      "lines": [
+        "7호선"
+      ],
+      "sourceStations": [
+        {
+          "stationCode": "0743",
+          "stationName": "신풍",
+          "lineName": "7호선",
+          "operatorName": "서울교통공사"
+        }
+      ]
+    },
+    {
+      "id": "heukseok",
+      "name": "흑석역",
+      "latitude": 37.508889,
+      "longitude": 126.963611,
+      "areaSlugs": [
+        "sangdo-chungang"
+      ],
+      "lines": [
+        "서울 도시철도 9호선"
+      ],
+      "sourceStations": [
+        {
+          "stationCode": "4119",
+          "stationName": "흑석(중앙대입구)",
+          "lineName": "서울 도시철도 9호선",
+          "operatorName": "서울특별시 서울시메트로9호선㈜"
+        }
+      ]
+    },
+    {
+      "id": "sangdo",
+      "name": "상도역",
+      "latitude": 37.50279,
+      "longitude": 126.947949,
+      "areaSlugs": [
+        "sangdo-chungang"
+      ],
+      "lines": [
+        "7호선"
+      ],
+      "sourceStations": [
+        {
+          "stationCode": "0739",
+          "stationName": "상도",
+          "lineName": "7호선",
+          "operatorName": "서울교통공사"
+        }
+      ]
+    },
+    {
+      "id": "jangseungbaegi",
+      "name": "장승배기역",
+      "latitude": 37.504845,
+      "longitude": 126.939025,
+      "areaSlugs": [
+        "sangdo-chungang"
+      ],
+      "lines": [
+        "7호선"
+      ],
+      "sourceStations": [
+        {
+          "stationCode": "0740",
+          "stationName": "장승배기",
+          "lineName": "7호선",
+          "operatorName": "서울교통공사"
+        }
+      ]
+    },
+    {
+      "id": "soongsil-univ",
+      "name": "숭실대입구역",
+      "latitude": 37.496258,
+      "longitude": 126.953649,
+      "areaSlugs": [
+        "sangdo-chungang"
+      ],
+      "lines": [
+        "7호선"
+      ],
+      "sourceStations": [
+        {
+          "stationCode": "0738",
+          "stationName": "숭실대입구(살피재)",
+          "lineName": "7호선",
+          "operatorName": "서울교통공사"
+        }
+      ]
+    },
+    {
+      "id": "seoul-nat-univ",
+      "name": "서울대입구역",
+      "latitude": 37.481233,
+      "longitude": 126.952745,
+      "areaSlugs": [
+        "seoul-nat-univ"
+      ],
+      "lines": [
+        "2호선"
+      ],
+      "sourceStations": [
+        {
+          "stationCode": "0228",
+          "stationName": "서울대입구(관악구청)",
+          "lineName": "2호선",
+          "operatorName": "서울교통공사"
+        }
+      ]
+    },
+    {
+      "id": "bongcheon",
+      "name": "봉천역",
+      "latitude": 37.482416,
+      "longitude": 126.941696,
+      "areaSlugs": [
+        "seoul-nat-univ"
+      ],
+      "lines": [
+        "2호선"
+      ],
+      "sourceStations": [
+        {
+          "stationCode": "0229",
+          "stationName": "봉천",
+          "lineName": "2호선",
+          "operatorName": "서울교통공사"
+        }
+      ]
+    },
+    {
+      "id": "nakseongdae",
+      "name": "낙성대역",
+      "latitude": 37.47713,
+      "longitude": 126.963583,
+      "areaSlugs": [
+        "seoul-nat-univ"
+      ],
+      "lines": [
+        "2호선"
+      ],
+      "sourceStations": [
+        {
+          "stationCode": "0227",
+          "stationName": "낙성대(강감찬)",
+          "lineName": "2호선",
+          "operatorName": "서울교통공사"
+        }
+      ]
+    },
+    {
+      "id": "bangbae",
+      "name": "방배역",
+      "latitude": 37.481469,
+      "longitude": 126.997627,
+      "areaSlugs": [
+        "bangbae",
+        "sadang-isu"
+      ],
+      "lines": [
+        "2호선"
+      ],
+      "sourceStations": [
+        {
+          "stationCode": "0225",
+          "stationName": "방배",
+          "lineName": "2호선",
+          "operatorName": "서울교통공사"
+        }
+      ]
+    },
+    {
+      "id": "naebang",
+      "name": "내방역",
+      "latitude": 37.48764,
+      "longitude": 126.993541,
+      "areaSlugs": [
+        "bangbae"
+      ],
+      "lines": [
+        "7호선"
+      ],
+      "sourceStations": [
+        {
+          "stationCode": "0735",
+          "stationName": "내방",
+          "lineName": "7호선",
+          "operatorName": "서울교통공사"
+        }
+      ]
+    },
+    {
+      "id": "nambu-bus-terminal",
+      "name": "남부터미널역",
+      "latitude": 37.48494,
+      "longitude": 127.016289,
+      "areaSlugs": [
+        "bangbae"
+      ],
+      "lines": [
+        "3호선"
+      ],
+      "sourceStations": [
+        {
+          "stationCode": "0341",
+          "stationName": "남부터미널(예술의전당)",
+          "lineName": "3호선",
+          "operatorName": "서울교통공사"
+        }
+      ]
+    },
+    {
+      "id": "hyehwa",
+      "name": "혜화역",
+      "latitude": 37.582116,
+      "longitude": 127.001929,
+      "areaSlugs": [
+        "hyehwa-ssuniv"
+      ],
+      "lines": [
+        "4호선"
+      ],
+      "sourceStations": [
+        {
+          "stationCode": "0420",
+          "stationName": "혜화",
+          "lineName": "4호선",
+          "operatorName": "서울교통공사"
+        }
+      ]
+    },
+    {
+      "id": "hansung-univ",
+      "name": "한성대입구역",
+      "latitude": 37.58838,
+      "longitude": 127.005951,
+      "areaSlugs": [
+        "hyehwa-ssuniv"
+      ],
+      "lines": [
+        "4호선"
+      ],
+      "sourceStations": [
+        {
+          "stationCode": "0419",
+          "stationName": "한성대입구(삼선교)",
+          "lineName": "4호선",
+          "operatorName": "서울교통공사"
+        }
+      ]
+    },
+    {
+      "id": "sungshin-womens-univ",
+      "name": "성신여대입구역",
+      "latitude": 37.592676,
+      "longitude": 127.016734,
+      "areaSlugs": [
+        "hyehwa-ssuniv"
+      ],
+      "lines": [
+        "4호선",
+        "우이신설선"
+      ],
+      "sourceStations": [
+        {
+          "stationCode": "0418",
+          "stationName": "성신여대입구(돈암)",
+          "lineName": "4호선",
+          "operatorName": "서울교통공사"
+        },
+        {
+          "stationCode": "S120",
+          "stationName": "성신여대입구",
+          "lineName": "우이신설선",
+          "operatorName": "우이신설경전철운영㈜"
+        }
+      ]
+    },
+    {
+      "id": "bomun",
+      "name": "보문역",
+      "latitude": 37.585468,
+      "longitude": 127.019556,
+      "areaSlugs": [
+        "hyehwa-ssuniv"
+      ],
+      "lines": [
+        "6호선",
+        "우이신설선"
+      ],
+      "sourceStations": [
+        {
+          "stationCode": "0638",
+          "stationName": "보문",
+          "lineName": "6호선",
+          "operatorName": "서울교통공사"
+        },
+        {
+          "stationCode": "S121",
+          "stationName": "보문",
+          "lineName": "우이신설선",
+          "operatorName": "우이신설경전철운영㈜"
+        }
+      ]
+    },
+    {
+      "id": "anam",
+      "name": "안암역",
+      "latitude": 37.586261,
+      "longitude": 127.02903,
+      "areaSlugs": [
+        "hyehwa-ssuniv"
+      ],
+      "lines": [
+        "6호선"
+      ],
+      "sourceStations": [
+        {
+          "stationCode": "0639",
+          "stationName": "안암(고대병원앞)",
+          "lineName": "6호선",
+          "operatorName": "서울교통공사"
+        }
+      ]
+    },
+    {
+      "id": "korea-univ",
+      "name": "고려대역",
+      "latitude": 37.59034,
+      "longitude": 127.03626,
+      "areaSlugs": [
+        "hyehwa-ssuniv"
+      ],
+      "lines": [
+        "6호선"
+      ],
+      "sourceStations": [
+        {
+          "stationCode": "0640",
+          "stationName": "고려대(종암)",
+          "lineName": "6호선",
+          "operatorName": "서울교통공사"
+        }
+      ]
+    },
+    {
+      "id": "gangnam",
+      "name": "강남역",
+      "latitude": 37.4977177,
+      "longitude": 127.0279145,
+      "areaSlugs": [
+        "gangnam"
+      ],
+      "lines": [
+        "신분당선",
+        "2호선"
+      ],
+      "sourceStations": [
+        {
+          "stationCode": "D007",
+          "stationName": "강남",
+          "lineName": "신분당선",
+          "operatorName": "경기도 신분당선"
+        },
+        {
+          "stationCode": "0222",
+          "stationName": "강남",
+          "lineName": "2호선",
+          "operatorName": "서울교통공사"
+        }
+      ]
+    },
+    {
+      "id": "yeoksam",
+      "name": "역삼역",
+      "latitude": 37.500658,
+      "longitude": 127.03643,
+      "areaSlugs": [
+        "gangnam"
+      ],
+      "lines": [
+        "2호선"
+      ],
+      "sourceStations": [
+        {
+          "stationCode": "0221",
+          "stationName": "역삼",
+          "lineName": "2호선",
+          "operatorName": "서울교통공사"
+        }
+      ]
+    },
+    {
+      "id": "sinnonhyeon",
+      "name": "신논현역",
+      "latitude": 37.5044997,
+      "longitude": 127.0244738,
+      "areaSlugs": [
+        "gangnam"
+      ],
+      "lines": [
+        "신분당선",
+        "서울 도시철도 9호선"
+      ],
+      "sourceStations": [
+        {
+          "stationCode": "D006",
+          "stationName": "신논현",
+          "lineName": "신분당선",
+          "operatorName": "경기도 신분당선"
+        },
+        {
+          "stationCode": "4125",
+          "stationName": "신논현",
+          "lineName": "서울 도시철도 9호선",
+          "operatorName": "서울특별시 서울시메트로9호선㈜"
+        }
+      ]
+    },
+    {
+      "id": "yangjae",
+      "name": "양재역",
+      "latitude": 37.4845168,
+      "longitude": 127.0341647,
+      "areaSlugs": [
+        "gangnam"
+      ],
+      "lines": [
+        "신분당선",
+        "3호선"
+      ],
+      "sourceStations": [
+        {
+          "stationCode": "D008",
+          "stationName": "양재(서초구청)",
+          "lineName": "신분당선",
+          "operatorName": "경기도 신분당선"
+        },
+        {
+          "stationCode": "0342",
+          "stationName": "양재(서초구청)",
+          "lineName": "3호선",
+          "operatorName": "서울교통공사"
+        }
+      ]
+    },
+    {
+      "id": "maebong",
+      "name": "매봉역",
+      "latitude": 37.487114,
+      "longitude": 127.046907,
+      "areaSlugs": [
+        "gangnam"
+      ],
+      "lines": [
+        "3호선"
+      ],
+      "sourceStations": [
+        {
+          "stationCode": "0343",
+          "stationName": "매봉",
+          "lineName": "3호선",
+          "operatorName": "서울교통공사"
+        }
+      ]
+    },
+    {
+      "id": "guryong",
+      "name": "구룡역",
+      "latitude": 37.486985,
+      "longitude": 127.059496,
+      "areaSlugs": [
+        "gangnam"
+      ],
+      "lines": [
+        "분당선"
+      ],
+      "sourceStations": [
+        {
+          "stationCode": "1026",
+          "stationName": "구룡역",
+          "lineName": "분당선",
+          "operatorName": "한국철도공사"
+        }
+      ]
+    },
+    {
+      "id": "gaepo-dong",
+      "name": "개포동역",
+      "latitude": 37.489112,
+      "longitude": 127.066027,
+      "areaSlugs": [
+        "gangnam"
+      ],
+      "lines": [
+        "분당선"
+      ],
+      "sourceStations": [
+        {
+          "stationCode": "1027",
+          "stationName": "개포동역",
+          "lineName": "분당선",
+          "operatorName": "한국철도공사"
+        }
+      ]
+    },
+    {
+      "id": "daemosan-entrance",
+      "name": "대모산입구역",
+      "latitude": 37.491347,
+      "longitude": 127.072702,
+      "areaSlugs": [
+        "gangnam"
+      ],
+      "lines": [
+        "분당선"
+      ],
+      "sourceStations": [
+        {
+          "stationCode": "1028",
+          "stationName": "대모산입구역",
+          "lineName": "분당선",
+          "operatorName": "한국철도공사"
+        }
+      ]
+    },
+    {
+      "id": "nonhyeon",
+      "name": "논현역",
+      "latitude": 37.5111117,
+      "longitude": 127.0213754,
+      "areaSlugs": [
+        "gangnam"
+      ],
+      "lines": [
+        "신분당선",
+        "7호선"
+      ],
+      "sourceStations": [
+        {
+          "stationCode": "D005",
+          "stationName": "논현",
+          "lineName": "신분당선",
+          "operatorName": "경기도 신분당선"
+        },
+        {
+          "stationCode": "0732",
+          "stationName": "논현",
+          "lineName": "7호선",
+          "operatorName": "서울교통공사"
+        }
+      ]
+    },
+    {
+      "id": "jamsil",
+      "name": "잠실역",
+      "latitude": 37.513977,
+      "longitude": 127.102198,
+      "areaSlugs": [
+        "gangdong-songpa"
+      ],
+      "lines": [
+        "2호선",
+        "8호선"
+      ],
+      "sourceStations": [
+        {
+          "stationCode": "0216",
+          "stationName": "잠실(송파구청)",
+          "lineName": "2호선",
+          "operatorName": "서울교통공사"
+        },
+        {
+          "stationCode": "0814",
+          "stationName": "잠실(송파구청)",
+          "lineName": "8호선",
+          "operatorName": "서울교통공사"
+        }
+      ]
+    },
+    {
+      "id": "jamsilsaenae",
+      "name": "잠실새내역",
+      "latitude": 37.511653,
+      "longitude": 127.086224,
+      "areaSlugs": [
+        "gangdong-songpa"
+      ],
+      "lines": [
+        "2호선"
+      ],
+      "sourceStations": [
+        {
+          "stationCode": "0217",
+          "stationName": "잠실새내",
+          "lineName": "2호선",
+          "operatorName": "서울교통공사"
+        }
+      ]
+    },
+    {
+      "id": "sports-complex",
+      "name": "종합운동장역",
+      "latitude": 37.511142,
+      "longitude": 127.075379,
+      "areaSlugs": [
+        "gangdong-songpa"
+      ],
+      "lines": [
+        "2호선",
+        "수도권  도시철도 9호선"
+      ],
+      "sourceStations": [
+        {
+          "stationCode": "0218",
+          "stationName": "종합운동장",
+          "lineName": "2호선",
+          "operatorName": "서울교통공사"
+        },
+        {
+          "stationCode": "4130",
+          "stationName": "종합운동장",
+          "lineName": "수도권  도시철도 9호선",
+          "operatorName": "서울시메트로9호선㈜"
+        }
+      ]
+    },
+    {
+      "id": "seokchon-gobun",
+      "name": "석촌고분역",
+      "latitude": 37.502439,
+      "longitude": 127.096611,
+      "areaSlugs": [
+        "gangdong-songpa"
+      ],
+      "lines": [
+        "수도권  도시철도 9호선"
+      ],
+      "sourceStations": [
+        {
+          "stationCode": "4132",
+          "stationName": "석촌고분",
+          "lineName": "수도권  도시철도 9호선",
+          "operatorName": "서울시메트로9호선㈜"
+        }
+      ]
+    },
+    {
+      "id": "seokchon",
+      "name": "석촌역",
+      "latitude": 37.505237,
+      "longitude": 127.1069695,
+      "areaSlugs": [
+        "gangdong-songpa"
+      ],
+      "lines": [
+        "8호선",
+        "수도권  도시철도 9호선"
+      ],
+      "sourceStations": [
+        {
+          "stationCode": "0815",
+          "stationName": "석촌",
+          "lineName": "8호선",
+          "operatorName": "서울교통공사"
+        },
+        {
+          "stationCode": "4133",
+          "stationName": "석촌",
+          "lineName": "수도권  도시철도 9호선",
+          "operatorName": "서울시메트로9호선㈜"
+        }
+      ]
+    },
+    {
+      "id": "songpa",
+      "name": "송파역",
+      "latitude": 37.49978,
+      "longitude": 127.11212,
+      "areaSlugs": [
+        "gangdong-songpa"
+      ],
+      "lines": [
+        "8호선"
+      ],
+      "sourceStations": [
+        {
+          "stationCode": "0816",
+          "stationName": "송파",
+          "lineName": "8호선",
+          "operatorName": "서울교통공사"
+        }
+      ]
+    },
+    {
+      "id": "garak-market",
+      "name": "가락시장역",
+      "latitude": 37.492661,
+      "longitude": 127.1179895,
+      "areaSlugs": [
+        "gangdong-songpa"
+      ],
+      "lines": [
+        "3호선",
+        "8호선"
+      ],
+      "sourceStations": [
+        {
+          "stationCode": "0350",
+          "stationName": "가락시장",
+          "lineName": "3호선",
+          "operatorName": "서울교통공사"
+        },
+        {
+          "stationCode": "0817",
+          "stationName": "가락시장",
+          "lineName": "8호선",
+          "operatorName": "서울교통공사"
+        }
+      ]
+    },
+    {
+      "id": "bangi",
+      "name": "방이역",
+      "latitude": 37.508752,
+      "longitude": 127.126054,
+      "areaSlugs": [
+        "gangdong-songpa"
+      ],
+      "lines": [
+        "5호선"
+      ],
+      "sourceStations": [
+        {
+          "stationCode": "P551",
+          "stationName": "방이",
+          "lineName": "5호선",
+          "operatorName": "서울교통공사"
+        }
+      ]
+    },
+    {
+      "id": "olympic-park",
+      "name": "올림픽공원역",
+      "latitude": 37.516164,
+      "longitude": 127.130645,
+      "areaSlugs": [
+        "gangdong-songpa"
+      ],
+      "lines": [
+        "5호선",
+        "수도권  도시철도 9호선"
+      ],
+      "sourceStations": [
+        {
+          "stationCode": "P550",
+          "stationName": "올림픽공원(한국체대)",
+          "lineName": "5호선",
+          "operatorName": "서울교통공사"
+        },
+        {
+          "stationCode": "4136",
+          "stationName": "올림픽공원(한국체대)",
+          "lineName": "수도권  도시철도 9호선",
+          "operatorName": "서울시메트로9호선㈜"
+        }
+      ]
+    },
+    {
+      "id": "dunchon-dong",
+      "name": "둔촌동역",
+      "latitude": 37.527787,
+      "longitude": 127.136219,
+      "areaSlugs": [
+        "gangdong-songpa"
+      ],
+      "lines": [
+        "5호선"
+      ],
+      "sourceStations": [
+        {
+          "stationCode": "P549",
+          "stationName": "둔촌동",
+          "lineName": "5호선",
+          "operatorName": "서울교통공사"
+        }
+      ]
+    },
+    {
+      "id": "gangdong-gu-office",
+      "name": "강동구청역",
+      "latitude": 37.530348,
+      "longitude": 127.120461,
+      "areaSlugs": [
+        "gangdong-songpa"
+      ],
+      "lines": [
+        "8호선"
+      ],
+      "sourceStations": [
+        {
+          "stationCode": "0812",
+          "stationName": "강동구청",
+          "lineName": "8호선",
+          "operatorName": "서울교통공사"
+        }
+      ]
+    },
+    {
+      "id": "cheonho",
+      "name": "천호역",
+      "latitude": 37.538243,
+      "longitude": 127.123359,
+      "areaSlugs": [
+        "gangdong-songpa"
+      ],
+      "lines": [
+        "5호선",
+        "8호선"
+      ],
+      "sourceStations": [
+        {
+          "stationCode": "0547",
+          "stationName": "천호(풍납토성)",
+          "lineName": "5호선",
+          "operatorName": "서울교통공사"
+        },
+        {
+          "stationCode": "0811",
+          "stationName": "천호(풍납토성)",
+          "lineName": "8호선",
+          "operatorName": "서울교통공사"
+        }
+      ]
+    },
+    {
+      "id": "amsa",
+      "name": "암사역",
+      "latitude": 37.550127,
+      "longitude": 127.127521,
+      "areaSlugs": [
+        "gangdong-songpa"
+      ],
+      "lines": [
+        "8호선"
+      ],
+      "sourceStations": [
+        {
+          "stationCode": "0810",
+          "stationName": "암사",
+          "lineName": "8호선",
+          "operatorName": "서울교통공사"
+        }
+      ]
+    },
+    {
+      "id": "mongchontoseong",
+      "name": "몽촌토성역",
+      "latitude": 37.517692,
+      "longitude": 127.11274,
+      "areaSlugs": [
+        "gangdong-songpa"
+      ],
+      "lines": [
+        "8호선"
+      ],
+      "sourceStations": [
+        {
+          "stationCode": "0813",
+          "stationName": "몽촌토성(평화의문)",
+          "lineName": "8호선",
+          "operatorName": "서울교통공사"
+        }
+      ]
+    },
+    {
+      "id": "ogeum",
+      "name": "오금역",
+      "latitude": 37.502258,
+      "longitude": 127.1280225,
+      "areaSlugs": [
+        "gangdong-songpa"
+      ],
+      "lines": [
+        "3호선",
+        "5호선"
+      ],
+      "sourceStations": [
+        {
+          "stationCode": "0352",
+          "stationName": "오금",
+          "lineName": "3호선",
+          "operatorName": "서울교통공사"
+        },
+        {
+          "stationCode": "P552",
+          "stationName": "오금",
+          "lineName": "5호선",
+          "operatorName": "서울교통공사"
+        }
+      ]
+    },
+    {
+      "id": "gaerong",
+      "name": "개롱역",
+      "latitude": 37.498097,
+      "longitude": 127.134817,
+      "areaSlugs": [
+        "gangdong-songpa"
+      ],
+      "lines": [
+        "5호선"
+      ],
+      "sourceStations": [
+        {
+          "stationCode": "P553",
+          "stationName": "개롱",
+          "lineName": "5호선",
+          "operatorName": "서울교통공사"
+        }
+      ]
+    }
+  ]
+}

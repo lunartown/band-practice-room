@@ -4,6 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "collect:stations": "tsx scripts/collect-major-area-stations.ts",
     "dev": "tsx watch src/main.ts",
     "start": "tsx src/main.ts",
     "thumbnail": "tsx scripts/set-thumbnail.ts",
