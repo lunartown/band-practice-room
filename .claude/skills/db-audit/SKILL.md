@@ -37,6 +37,16 @@ SQL
 - `psql`이 없으면 `src/scraper`에서 `pg`로 throwaway 스크립트를 쓰되, `pool.query`로 **SELECT만** 던진다.
 - 진단 종료 후 임시 스크립트는 커밋하지 말고 폐기한다.
 
+### 클라우드/CI에서 실행 (5432 직결이 막힌 환경)
+
+클라우드 샌드박스는 아웃바운드가 HTTP(S) 프록시라 Postgres 5432 직결이 막힌다.
+이때는 GitHub Actions 워크플로 `DB audit`(`.github/workflows/db-audit.yml`, `workflow_dispatch`,
+입력 `database: prod|dev`)를 트리거하고 실행 로그로 결과를 회수한다. 워크플로는
+`src/scraper/scripts/db-audit.ts`(SELECT only, 세션 read-only 고정, per-check 격리)를 돌리고,
+로그의 `===DB_AUDIT_JSON_BEGIN===` … `===DB_AUDIT_JSON_END===` 사이에 JSON 원자료를 남긴다.
+그 JSON 을 파싱해 아래 판정 기준으로 해석한다. 실행용 SQL 단일 소스는
+`src/scraper/scripts/db-audit-queries.ts`이며, 아래 항목과 동일하게 유지한다.
+
 ## 스키마 참조 (실제 마이그레이션 기준)
 
 `src/api/db/migrations/` 기준 실제 컬럼:
