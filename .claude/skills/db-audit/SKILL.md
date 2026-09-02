@@ -88,11 +88,13 @@ FROM slots sl JOIN rooms r ON r.id = sl.room_id JOIN studios s ON s.id = r.studi
 GROUP BY s.name, r.name ORDER BY last_scraped ASC NULLS FIRST LIMIT 30;
 
 -- mapping ACTIVE + 활성 방인데 수집이 3시간+ 오래된(또는 한 번도 없는) 방
+-- 부모 studio·source 가 비활성이면 provisionJobs 가 잡을 안 만들어 수집이 멈추는 게 정상이므로 제외한다.
 SELECT s.name AS studio, r.name AS room, rs.mapping_status,
        MAX(sl.scraped_at) AS last_scraped, now() - MAX(sl.scraped_at) AS age
 FROM room_sources rs JOIN rooms r ON r.id = rs.room_id JOIN studios s ON s.id = r.studio_id
+JOIN sources src ON src.id = rs.source_id
 LEFT JOIN slots sl ON sl.room_id = r.id
-WHERE rs.mapping_status = 'ACTIVE' AND r.is_active
+WHERE rs.mapping_status = 'ACTIVE' AND r.is_active AND s.is_active AND src.is_active
 GROUP BY s.name, r.name, rs.mapping_status
 HAVING MAX(sl.scraped_at) IS NULL OR MAX(sl.scraped_at) < now() - INTERVAL '3 hours'
 ORDER BY last_scraped ASC NULLS FIRST;
