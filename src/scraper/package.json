@@ -4,6 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "audit:db": "tsx scripts/db-audit.ts",
     "audit:equipment": "tsx scripts/audit-naver-equipment.ts",
     "collect:stations": "tsx scripts/collect-major-area-stations.ts",
     "dev": "tsx watch src/main.ts",

@@ -1,0 +1,44 @@
+name: DB audit
+
+# 공유 Postgres 의 데이터 정합성 점검(db-audit)을 읽기 전용(SELECT only)으로 실행한다.
+# 클라우드 세션·루틴이 workflow_dispatch 로 트리거하고, 실행 로그로 결과(JSON)를 회수한다.
+# 서비스(Render API)와 격리된 CI 러너에서 돌아 사용자 트래픽에 영향을 주지 않는다.
+#
+# 사전 준비(이미 등록됨 — scrape.yml / enrich.yml 과 동일 시크릿 재사용):
+#   DATABASE_URL     = Render Postgres prod 외부 연결 문자열
+#   DATABASE_URL_DEV = Render Postgres dev 외부 연결 문자열(수동 실행에서 dev 대상 선택 시 사용)
+
+on:
+  workflow_dispatch:
+    inputs:
+      database:
+        description: '대상 DB'
+        type: choice
+        options:
+          - prod
+          - dev
+        default: prod
+
+concurrency:
+  group: db-audit
+  cancel-in-progress: false
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      # 수동 실행에서 dev 를 고르면 dev DB(DATABASE_URL_DEV), 그 외는 prod.
+      DATABASE_URL: ${{ inputs.database == 'dev' && secrets.DATABASE_URL_DEV || secrets.DATABASE_URL }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Run db-audit (read-only)
+        working-directory: src/scraper
+        run: |
+          npm ci
+          npm run audit:db
