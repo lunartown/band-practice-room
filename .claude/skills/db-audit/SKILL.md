@@ -37,16 +37,6 @@ SQL
 - `psql`이 없으면 `src/scraper`에서 `pg`로 throwaway 스크립트를 쓰되, `pool.query`로 **SELECT만** 던진다.
 - 진단 종료 후 임시 스크립트는 커밋하지 말고 폐기한다.
 
-### 클라우드/CI에서 실행 (5432 직결이 막힌 환경)
-
-클라우드 샌드박스는 아웃바운드가 HTTP(S) 프록시라 Postgres 5432 직결이 막힌다.
-이때는 GitHub Actions 워크플로 `DB audit`(`.github/workflows/db-audit.yml`, `workflow_dispatch`,
-입력 `database: prod|dev`)를 트리거하고 실행 로그로 결과를 회수한다. 워크플로는
-`src/scraper/scripts/db-audit.ts`(SELECT only, 세션 read-only 고정, per-check 격리)를 돌리고,
-로그의 `===DB_AUDIT_JSON_BEGIN===` … `===DB_AUDIT_JSON_END===` 사이에 JSON 원자료를 남긴다.
-그 JSON 을 파싱해 아래 판정 기준으로 해석한다. 실행용 SQL 단일 소스는
-`src/scraper/scripts/db-audit-queries.ts`이며, 아래 항목과 동일하게 유지한다.
-
 ## 스키마 참조 (실제 마이그레이션 기준)
 
 `src/api/db/migrations/` 기준 실제 컬럼:
@@ -88,13 +78,11 @@ FROM slots sl JOIN rooms r ON r.id = sl.room_id JOIN studios s ON s.id = r.studi
 GROUP BY s.name, r.name ORDER BY last_scraped ASC NULLS FIRST LIMIT 30;
 
 -- mapping ACTIVE + 활성 방인데 수집이 3시간+ 오래된(또는 한 번도 없는) 방
--- 부모 studio·source 가 비활성이면 provisionJobs 가 잡을 안 만들어 수집이 멈추는 게 정상이므로 제외한다.
 SELECT s.name AS studio, r.name AS room, rs.mapping_status,
        MAX(sl.scraped_at) AS last_scraped, now() - MAX(sl.scraped_at) AS age
 FROM room_sources rs JOIN rooms r ON r.id = rs.room_id JOIN studios s ON s.id = r.studio_id
-JOIN sources src ON src.id = rs.source_id
 LEFT JOIN slots sl ON sl.room_id = r.id
-WHERE rs.mapping_status = 'ACTIVE' AND r.is_active AND s.is_active AND src.is_active
+WHERE rs.mapping_status = 'ACTIVE' AND r.is_active
 GROUP BY s.name, r.name, rs.mapping_status
 HAVING MAX(sl.scraped_at) IS NULL OR MAX(sl.scraped_at) < now() - INTERVAL '3 hours'
 ORDER BY last_scraped ASC NULLS FIRST;

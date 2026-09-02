@@ -31,12 +31,6 @@ export function query<T extends pg.QueryResultRow = pg.QueryResultRow>(
   return pool.query<T>(text, params);
 }
 
-// 세션 GUC(예: read-only 고정)를 여러 쿼리에 걸쳐 유지해야 할 때 쓴다.
-// pool.query 는 호출마다 임의의 커넥션을 잡으므로 세션 설정이 유지되지 않는다.
-export function getClient(): Promise<pg.PoolClient> {
-  return pool.connect();
-}
-
 export async function end() {
   await pool.end();
 }
