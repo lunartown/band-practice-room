@@ -62,6 +62,7 @@ export function App() {
   const savedPrefs = useMemo(() => loadFilters(), []);
   const [areas, setAreas] = useState<Area[]>([]);
   const [studios, setStudios] = useState<Studio[]>([]);
+  const [studiosLoaded, setStudiosLoaded] = useState(false);
   const [slots, setSlots] = useState<RawSlot[]>([]);
   const [responseDates, setResponseDates] = useState<string[]>([]);
   const [searchSlots, setSearchSlots] = useState<RawSlot[]>([]);
@@ -118,7 +119,8 @@ export function App() {
   function loadStudios() {
     getStudios()
       .then((r) => setStudios(r.studios))
-      .catch(() => setStudios([]));
+      .catch(() => setStudios([]))
+      .finally(() => setStudiosLoaded(true));
   }
 
   useEffect(() => {
@@ -470,7 +472,7 @@ export function App() {
   // 작동하는지 판단하는 근거가 된다. 로딩 중 깜빡임은 세지 않고, 같은 결과 반복도 접는다.
   const lastResult = useRef<string | null>(null);
   useEffect(() => {
-    if (loading) return;
+    if (loading || !studiosLoaded) return;
 
     const signature = `${totalStudios}:${visibleGroups.length}:${favOnly}`;
     if (lastResult.current === signature) return;
@@ -482,7 +484,7 @@ export function App() {
       empty: totalStudios === 0,
       fav_only: favOnly,
     });
-  }, [loading, totalStudios, visibleGroups.length, favOnly]);
+  }, [loading, studiosLoaded, totalStudios, visibleGroups.length, favOnly]);
 
   const areaChipLabel = buildAreaChipLabel(areas, filters.areaIds);
   const areaNameById = useMemo(
