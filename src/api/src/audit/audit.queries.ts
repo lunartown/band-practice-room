@@ -192,13 +192,24 @@ WHERE r.is_active AND s.is_active AND NOT EXISTS (
 ORDER BY studio, room LIMIT 200`,
       },
       {
+        id: 'room_date_coverage',
+        title: '방별·날짜별 슬롯 수 (향후 7일, 요일/날짜 구멍 패턴)',
+        sql: `SELECT s.id AS studio_id, s.name AS studio, r.id AS room_id, r.name AS room,
+       sl.date, count(*)::int AS slots
+FROM slots sl JOIN rooms r ON r.id = sl.room_id JOIN studios s ON s.id = r.studio_id
+WHERE sl.date BETWEEN (now() AT TIME ZONE 'Asia/Seoul')::date
+                  AND (now() AT TIME ZONE 'Asia/Seoul')::date + 7
+GROUP BY s.id, s.name, r.id, r.name, sl.date
+ORDER BY studio, room, sl.date LIMIT 3000`,
+      },
+      {
         id: 'studio_future_slots',
         title: '스튜디오별 미래 슬롯 수 (outlier 탐지)',
-        sql: `SELECT s.name AS studio, count(*)::int AS future_slots,
+        sql: `SELECT s.id AS studio_id, s.name AS studio, count(*)::int AS future_slots,
        count(*) FILTER (WHERE sl.status = 'AVAILABLE')::int AS available
 FROM slots sl JOIN rooms r ON r.id = sl.room_id JOIN studios s ON s.id = r.studio_id
 WHERE sl.date >= (now() AT TIME ZONE 'Asia/Seoul')::date
-GROUP BY s.name ORDER BY future_slots ASC`,
+GROUP BY s.id, s.name ORDER BY future_slots ASC`,
       },
     ],
   },

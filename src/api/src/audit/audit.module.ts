@@ -2,11 +2,12 @@ import { Module } from '@nestjs/common';
 import { DatabaseModule } from '../database/database.module.js';
 import { AuditTokenGuard } from './audit-token.guard.js';
 import { AuditController } from './audit.controller.js';
+import { AuditRepository } from './audit.repository.js';
 import { AuditService } from './audit.service.js';
 
 @Module({
   imports: [DatabaseModule],
   controllers: [AuditController],
-  providers: [AuditService, AuditTokenGuard],
+  providers: [AuditService, AuditRepository, AuditTokenGuard],
 })
 export class AuditModule {}
