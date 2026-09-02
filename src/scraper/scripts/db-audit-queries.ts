@@ -23,11 +23,15 @@ export const AUDIT_SECTIONS: AuditSection[] = [
       {
         id: 'stale_active_rooms',
         title: 'mapping ACTIVE + 활성 방인데 수집이 3시간+ 밀린(또는 없는) 방',
+        // provisionJobs(worker.ts)는 studios/sources 가 비활성이면 잡을 만들지 않으므로,
+        // 그런 방은 수집이 안 되는 게 정상이다. 부모 studio·source 활성 조건을 함께 걸어
+        // 의도적으로 제외된 방을 거짓 stale 로 잡지 않는다.
         sql: `SELECT s.name AS studio, r.name AS room, rs.mapping_status,
        MAX(sl.scraped_at) AS last_scraped, now() - MAX(sl.scraped_at) AS age
 FROM room_sources rs JOIN rooms r ON r.id = rs.room_id JOIN studios s ON s.id = r.studio_id
+JOIN sources src ON src.id = rs.source_id
 LEFT JOIN slots sl ON sl.room_id = r.id
-WHERE rs.mapping_status = 'ACTIVE' AND r.is_active
+WHERE rs.mapping_status = 'ACTIVE' AND r.is_active AND s.is_active AND src.is_active
 GROUP BY s.name, r.name, rs.mapping_status
 HAVING MAX(sl.scraped_at) IS NULL OR MAX(sl.scraped_at) < now() - INTERVAL '3 hours'
 ORDER BY last_scraped ASC NULLS FIRST

@@ -28,14 +28,38 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     env:
-      # 수동 실행에서 dev 를 고르면 dev DB(DATABASE_URL_DEV), 그 외는 prod.
-      DATABASE_URL: ${{ inputs.database == 'dev' && secrets.DATABASE_URL_DEV || secrets.DATABASE_URL }}
+      DATABASE_TARGET: ${{ inputs.database || 'prod' }}
+      PROD_DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      DATABASE_URL_DEV: ${{ secrets.DATABASE_URL_DEV }}
     steps:
       - uses: actions/checkout@v4
 
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+
+      # 선택한 대상을 명시적으로 해석하고, 해당 시크릿이 비어 있으면 실패한다.
+      # `a && b || c` 표현식은 dev 시크릿이 없을 때 조용히 prod 로 폴백해
+      # dev 점검이 prod 를 조회하는 사고가 나므로 쓰지 않는다(scrape.yml 과 동일 패턴).
+      - name: Resolve database target
+        run: |
+          set -euo pipefail
+          TARGET="${DATABASE_TARGET:-prod}"
+          case "$TARGET" in
+            prod) RESOLVED_DATABASE_URL="$PROD_DATABASE_URL" ;;
+            dev)  RESOLVED_DATABASE_URL="$DATABASE_URL_DEV" ;;
+            *)
+              echo "::error::database는 prod/dev 중 하나여야 합니다: $TARGET"
+              exit 1
+              ;;
+          esac
+          if [ -z "$RESOLVED_DATABASE_URL" ]; then
+            echo "::error::${TARGET} DATABASE_URL 시크릿이 없습니다."
+            exit 1
+          fi
+          echo "::add-mask::$RESOLVED_DATABASE_URL"
+          echo "DATABASE_URL=$RESOLVED_DATABASE_URL" >> "$GITHUB_ENV"
+          echo "DB target: $TARGET"
 
       - name: Run db-audit (read-only)
         working-directory: src/scraper
