@@ -143,14 +143,8 @@ function StudioPhoto({
   const [src, setSrc] = useState(galleryImageUrl(url) ?? url);
   const [triedOriginal, setTriedOriginal] = useState(false);
   const [failed, setFailed] = useState(false);
-  const [loaded, setLoaded] = useState(false);
 
   if (failed) return null;
-
-  // 아바타와 동일한 캐시 레이스 대비: 마운트 시 이미 로드됐으면 즉시 반영한다.
-  const markLoadedIfComplete = (img: HTMLImageElement | null) => {
-    if (img && img.complete && img.naturalWidth > 0) setLoaded(true);
-  };
 
   return (
     <div
@@ -160,14 +154,11 @@ function StudioPhoto({
       aria-label={`${total}장 중 ${index + 1}번째`}
     >
       <img
-        ref={markLoadedIfComplete}
         src={src}
         alt={`${name} 사진 ${index + 1}`}
         draggable={false}
         loading="lazy"
         referrerPolicy="no-referrer"
-        style={{ opacity: loaded ? 1 : 0 }}
-        onLoad={() => setLoaded(true)}
         onError={() => {
           if (!triedOriginal && src !== url) {
             setTriedOriginal(true);
