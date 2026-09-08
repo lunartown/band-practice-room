@@ -12,6 +12,7 @@ import { formatTimeLabel, formatTimeRangeLabel } from '../lib/timeFormat';
 interface StudioRowProps {
   studio: StudioAvailability;
   imageRoot: Element | null;
+  prioritizeImage?: boolean;
 }
 
 // 브라우저의 loading="lazy"는 중첩 스크롤 컨테이너에서 초기 이미지를 누락한
@@ -170,12 +171,14 @@ function StudioPhoto({
   name,
   index,
   total,
+  priority,
   onFailure,
 }: {
   url: string;
   name: string;
   index: number;
   total: number;
+  priority: boolean;
   onFailure: (url: string) => void;
 }) {
   const [src, setSrc] = useState(galleryImageUrl(url) ?? url);
@@ -195,7 +198,8 @@ function StudioPhoto({
         src={src}
         alt={`${name} 사진 ${index + 1}`}
         draggable={false}
-        loading="lazy"
+        loading={priority ? 'eager' : 'lazy'}
+        fetchPriority={priority ? 'high' : 'auto'}
         referrerPolicy="no-referrer"
         onError={() => {
           if (!triedOriginal && src !== url) {
@@ -217,10 +221,12 @@ function StudioPhotos({
   images,
   name,
   loadImages,
+  prioritizeFirstImage = false,
 }: {
   images?: string[];
   name: string;
   loadImages: boolean;
+  prioritizeFirstImage?: boolean;
 }) {
   const sourceUrls = [...new Set((images ?? []).filter((url): url is string => Boolean(url)))];
   const sourceKey = sourceUrls.join('\n');
@@ -291,6 +297,7 @@ function StudioPhotos({
             name={name}
             index={index}
             total={displayUrls.length}
+            priority={prioritizeFirstImage && index === 0}
             onFailure={(failedUrl) => setFailedUrls((current) => new Set(current).add(failedUrl))}
           />
         ))}
@@ -571,7 +578,7 @@ function BellIcon() {
   );
 }
 
-export const StudioRow = memo(function StudioRow({ studio, imageRoot }: StudioRowProps) {
+export const StudioRow = memo(function StudioRow({ studio, imageRoot, prioritizeImage = false }: StudioRowProps) {
   const { id, name, reviewCount, reviewKeywords } = studio.studio;
   const badges = toReviewBadges(reviewKeywords, reviewCount);
   const isFav = useFavorite(id);
@@ -607,7 +614,7 @@ export const StudioRow = memo(function StudioRow({ studio, imageRoot }: StudioRo
         }
       >
         <div className="studio-head">
-          <StudioAvatar studio={studio.studio} loadImage={nearViewport} />
+          <StudioAvatar studio={studio.studio} loadImage={nearViewport || prioritizeImage} />
           <div className="studio-name-area">
             <div className="studio-name">{name}</div>
             <div className="studio-meta">
@@ -620,7 +627,12 @@ export const StudioRow = memo(function StudioRow({ studio, imageRoot }: StudioRo
           <div className="studio-price">{studio.priceLabel}</div>
         </div>
 
-        <StudioPhotos images={studio.studio.images} name={name} loadImages={nearViewport} />
+        <StudioPhotos
+          images={studio.studio.images}
+          name={name}
+          loadImages={nearViewport || prioritizeImage}
+          prioritizeFirstImage={prioritizeImage}
+        />
 
         {/* 리뷰 배지: 신원(아바타+이름) 헤더 밖, 예약 칩과 같은 게터 라인에 둔다 */}
         {badges.length > 0 && (
