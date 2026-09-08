@@ -2,7 +2,7 @@ import { memo, useEffect, useRef, useState } from 'react';
 import type { EquipmentAssignment, Studio } from '../api/types';
 import type { AvailabilityChip, RoomAvailability, StudioAvailability } from '../lib/availability';
 import { toReviewBadges } from '../lib/reviewKeywords';
-import { galleryImageUrl, thumbnailUrl } from '../lib/imageUrl';
+import { STUDIO_FALLBACK_IMAGE_URL, galleryImageUrl, thumbnailUrl } from '../lib/imageUrl';
 import { useFavorite } from '../lib/useFavorites';
 import { toggleFavorite } from '../lib/favorites';
 import { shareStudio } from '../lib/share';
@@ -111,11 +111,10 @@ function StudioAvatar({
   studio,
   loadImage,
 }: {
-  studio: Pick<Studio, 'imageUrl' | 'name'>;
+  studio: Pick<Studio, 'imageUrl'>;
   loadImage: boolean;
 }) {
   const { imageUrl } = studio;
-  const fallbackLabel = studio.name.trim().charAt(0) || '합';
   const [imgFailed, setImgFailed] = useState(false);
   const [loadedSrc, setLoadedSrc] = useState<string | null>(null);
   const [useOriginal, setUseOriginal] = useState(false);
@@ -146,7 +145,10 @@ function StudioAvatar({
   return (
     <div className={`studio-avatar${showFallback ? ' is-fallback' : ''}`} aria-hidden>
       {showFallback && (
-        <span className="studio-fallback-image">{fallbackLabel}</span>
+        <span
+          className="studio-fallback-image"
+          style={{ backgroundImage: `url(${STUDIO_FALLBACK_IMAGE_URL})` }}
+        />
       )}
       {showSourceImg && sourceImgSrc ? (
         <img
@@ -172,7 +174,6 @@ function StudioPhoto({
   index,
   total,
   priority,
-  onFailure,
 }: {
   url: string;
   sourceUrl: string;
@@ -180,13 +181,22 @@ function StudioPhoto({
   index: number;
   total: number;
   priority: boolean;
-  onFailure: (url: string) => void;
 }) {
-  const [src, setSrc] = useState(galleryImageUrl(url) ?? url);
-  const [triedOriginal, setTriedOriginal] = useState(false);
+  const candidates = [...new Set([
+    galleryImageUrl(url) ?? url,
+    galleryImageUrl(sourceUrl) ?? sourceUrl,
+    sourceUrl,
+  ])];
+  const [candidateIndex, setCandidateIndex] = useState(0);
+  const [loadedSrc, setLoadedSrc] = useState<string | null>(null);
   const [failed, setFailed] = useState(false);
+  const src = candidates[Math.min(candidateIndex, candidates.length - 1)];
 
-  if (failed) return null;
+  useEffect(() => {
+    setCandidateIndex(0);
+    setLoadedSrc(null);
+    setFailed(false);
+  }, [sourceUrl, url]);
 
   return (
     <div
@@ -195,23 +205,31 @@ function StudioPhoto({
       aria-roledescription="슬라이드"
       aria-label={`${total}장 중 ${index + 1}번째`}
     >
-      <img
-        src={src}
-        alt={`${name} 사진 ${index + 1}`}
-        draggable={false}
-        loading={priority ? 'eager' : 'lazy'}
-        fetchPriority={priority ? 'high' : 'auto'}
-        referrerPolicy="no-referrer"
-        onError={() => {
-          if (!triedOriginal && src !== url) {
-            setTriedOriginal(true);
-            setSrc(url);
-          } else {
-            setFailed(true);
-            onFailure(sourceUrl);
-          }
-        }}
+      <span
+        className="studio-photo-fallback"
+        style={{ backgroundImage: `url(${STUDIO_FALLBACK_IMAGE_URL})` }}
+        aria-hidden
       />
+      {!failed && (
+        <img
+          src={src}
+          alt={`${name} 사진 ${index + 1}`}
+          draggable={false}
+          loading={priority ? 'eager' : 'lazy'}
+          fetchPriority={priority ? 'high' : 'auto'}
+          referrerPolicy="no-referrer"
+          style={{ opacity: loadedSrc === src ? 1 : 0 }}
+          onLoad={() => setLoadedSrc(src)}
+          onError={() => {
+            setLoadedSrc(null);
+            if (candidateIndex < candidates.length - 1) {
+              setCandidateIndex((current) => current + 1);
+            } else {
+              setFailed(true);
+            }
+          }}
+        />
+      )}
     </div>
   );
 }
@@ -233,7 +251,6 @@ function StudioPhotos({
 }) {
   const sourceUrls = [...new Set((images ?? []).filter((url): url is string => Boolean(url)))];
   const sourceKey = sourceUrls.join('\n');
-  const [failedUrls, setFailedUrls] = useState<Set<string>>(() => new Set());
   const [activeIndex, setActiveIndex] = useState(0);
   const [loadedThroughIndex, setLoadedThroughIndex] = useState(0);
   const scrollerRef = useRef<HTMLDivElement>(null);
@@ -241,12 +258,11 @@ function StudioPhotos({
   const dragged = useRef(false);
 
   useEffect(() => {
-    setFailedUrls(new Set());
     setActiveIndex(0);
     setLoadedThroughIndex(0);
   }, [sourceKey]);
 
-  const displayUrls = sourceUrls.filter((url) => !failedUrls.has(url));
+  const displayUrls = sourceUrls;
 
   useEffect(() => {
     if (activeIndex >= displayUrls.length) {
@@ -316,7 +332,6 @@ function StudioPhotos({
               index={index}
               total={displayUrls.length}
               priority={prioritizeFirstImage && index === 0}
-              onFailure={(failedUrl) => setFailedUrls((current) => new Set(current).add(failedUrl))}
             />
           );
         })}

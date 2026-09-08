@@ -12,6 +12,8 @@ const NAVER_CDN = 'pstatic.net';
 const THUMB_W = 176; // 44px 아바타의 레티나(최대 ~4x) 대응.
 const GALLERY_W = 480; // 가로 스크롤 갤러리 카드(~160px)의 레티나 대응.
 
+export const STUDIO_FALLBACK_IMAGE_URL = '/studios/fallback-drum.jpg';
+
 // 네이버 phinf CDN URL 에 width 리사이즈 파라미터를 붙인다(그 외 호스트는 원본 그대로).
 // 호출부는 리사이즈 URL 로드 실패 시 원본 URL 로 폴백한다.
 function resizedNaverUrl(url: string, width: number): string {
