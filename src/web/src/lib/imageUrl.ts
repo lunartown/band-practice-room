@@ -9,7 +9,6 @@
 // - 그 외(로컬 /studios/*.webp 등): 그대로 둔다.
 
 const NAVER_CDN = 'pstatic.net';
-const NAVER_CDN_WITHOUT_RESIZE = 'ldb-phinf.pstatic.net';
 const THUMB_W = 176; // 44px 아바타의 레티나(최대 ~4x) 대응.
 const GALLERY_W = 480; // 가로 스크롤 갤러리 카드(~160px)의 레티나 대응.
 
@@ -37,13 +36,5 @@ export function thumbnailUrl(url: string | null | undefined): string | null {
 /** 갤러리(가로 스크롤 사진 스트립)용 리사이즈 URL. 아바타보다 큰 폭을 받는다. */
 export function galleryImageUrl(url: string | null | undefined): string | null {
   if (!url) return null;
-  try {
-    const parsed = new URL(url, 'https://_');
-    // 구형 ldb-phinf는 type=w480을 404로 응답한다. 여기서 원본 URL을 반환하면
-    // 수 MB 사진을 받게 되므로 호출부가 작은 자체 대표 이미지로 대체하게 한다.
-    if (parsed.hostname === NAVER_CDN_WITHOUT_RESIZE) return null;
-  } catch {
-    return null;
-  }
   return resizedNaverUrl(url, GALLERY_W);
 }
