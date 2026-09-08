@@ -8,6 +8,7 @@ import { toggleFavorite } from '../lib/favorites';
 import { shareStudio } from '../lib/share';
 import { track } from '../lib/analytics';
 import { formatTimeLabel, formatTimeRangeLabel } from '../lib/timeFormat';
+import { localGalleryCoverUrl } from '../generated/galleryCovers';
 
 interface StudioRowProps {
   studio: StudioAvailability;
@@ -168,6 +169,7 @@ function StudioAvatar({
 // referrerPolicy="no-referrer" 로 외부 CDN 의 핫링크 보호에 걸리지 않게 한다.
 function StudioPhoto({
   url,
+  sourceUrl,
   name,
   index,
   total,
@@ -175,6 +177,7 @@ function StudioPhoto({
   onFailure,
 }: {
   url: string;
+  sourceUrl: string;
   name: string;
   index: number;
   total: number;
@@ -207,7 +210,7 @@ function StudioPhoto({
             setSrc(url);
           } else {
             setFailed(true);
-            onFailure(url);
+            onFailure(sourceUrl);
           }
         }}
       />
@@ -218,11 +221,13 @@ function StudioPhoto({
 // 카드 폭을 채우는 1장 단위 캐러셀. 합주실 로고(imageUrl)와 섞지 않고 실제
 // 갤러리 사진(images)만 보여준다. 가로 드래그 직후 상위 예약 링크가 열리지 않게 막는다.
 function StudioPhotos({
+  studioId,
   images,
   name,
   loadImages,
   prioritizeFirstImage = false,
 }: {
+  studioId: number;
   images?: string[];
   name: string;
   loadImages: boolean;
@@ -232,6 +237,7 @@ function StudioPhotos({
   const sourceKey = sourceUrls.join('\n');
   const [failedUrls, setFailedUrls] = useState<Set<string>>(() => new Set());
   const [activeIndex, setActiveIndex] = useState(0);
+  const [loadedThroughIndex, setLoadedThroughIndex] = useState(0);
   const scrollerRef = useRef<HTMLDivElement>(null);
   const pointerStartX = useRef<number | null>(null);
   const dragged = useRef(false);
@@ -239,6 +245,7 @@ function StudioPhotos({
   useEffect(() => {
     setFailedUrls(new Set());
     setActiveIndex(0);
+    setLoadedThroughIndex(0);
   }, [sourceKey]);
 
   const displayUrls = sourceUrls.filter((url) => !failedUrls.has(url));
@@ -260,6 +267,7 @@ function StudioPhotos({
       Math.max(0, Math.round(scroller.scrollLeft / scroller.clientWidth)),
     );
     setActiveIndex((current) => current === nextIndex ? current : nextIndex);
+    setLoadedThroughIndex((current) => Math.max(current, nextIndex));
   };
 
   return (
@@ -269,6 +277,10 @@ function StudioPhotos({
       aria-roledescription="캐러셀"
       aria-label={`${name} 사진`}
       onPointerDown={(event) => {
+        setLoadedThroughIndex((current) => Math.max(
+          current,
+          Math.min(displayUrls.length - 1, activeIndex + 1),
+        ));
         pointerStartX.current = event.clientX;
         dragged.current = false;
       }}
@@ -290,17 +302,26 @@ function StudioPhotos({
       }}
     >
       <div className="studio-photos" ref={scrollerRef} onScroll={handleScroll}>
-        {displayUrls.map((url, index) => (
-          <StudioPhoto
-            key={url}
-            url={url}
-            name={name}
-            index={index}
-            total={displayUrls.length}
-            priority={prioritizeFirstImage && index === 0}
-            onFailure={(failedUrl) => setFailedUrls((current) => new Set(current).add(failedUrl))}
-          />
-        ))}
+        {displayUrls.map((sourceUrl, index) => {
+          if (index > loadedThroughIndex) {
+            return <div key={sourceUrl} className="studio-photo" aria-hidden />;
+          }
+          const url = index === 0
+            ? localGalleryCoverUrl(studioId, sourceUrl) ?? sourceUrl
+            : sourceUrl;
+          return (
+            <StudioPhoto
+              key={sourceUrl}
+              url={url}
+              sourceUrl={sourceUrl}
+              name={name}
+              index={index}
+              total={displayUrls.length}
+              priority={prioritizeFirstImage && index === 0}
+              onFailure={(failedUrl) => setFailedUrls((current) => new Set(current).add(failedUrl))}
+            />
+          );
+        })}
       </div>
       {displayUrls.length > 1 && (
         <div className="studio-photo-pages" aria-hidden>
@@ -495,7 +516,7 @@ export function SelectedStudioEmptyRow({
           </div>
         </div>
 
-        <StudioPhotos images={studio.images} name={name} loadImages={nearViewport} />
+        <StudioPhotos studioId={studio.id} images={studio.images} name={name} loadImages={nearViewport} />
 
         {badges.length > 0 && (
           <div className="review-badges">
@@ -628,6 +649,7 @@ export const StudioRow = memo(function StudioRow({ studio, imageRoot, prioritize
         </div>
 
         <StudioPhotos
+          studioId={studio.studio.id}
           images={studio.studio.images}
           name={name}
           loadImages={nearViewport || prioritizeImage}
