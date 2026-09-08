@@ -24,9 +24,9 @@ import {
   replaceAlert,
 } from './lib/notificationsApi';
 import { ensurePushReady, onForegroundNotification, onNotificationTap } from './lib/pushDevice';
-import { track } from './lib/analytics';
+import { markResultsReadyForAnalytics, track } from './lib/analytics';
 import { buildAvailability, sortDateAvailabilityGroups } from './lib/availability';
-import type { StudioSortOption } from './lib/availability';
+import type { DateAvailability, StudioSortOption } from './lib/availability';
 import { todayKst } from './lib/date';
 import { formatTimeRangeLabel } from './lib/timeFormat';
 import { loadFilters, saveFilters, markEntered } from './lib/prefs';
@@ -57,6 +57,9 @@ interface NativeBackState {
   isAlertsOpen: boolean;
   studioIds: number[];
 }
+
+const INITIAL_RENDERED_STUDIOS = 12;
+const RENDERED_STUDIOS_BATCH = 12;
 
 export function App() {
   const savedPrefs = useMemo(() => loadFilters(), []);
@@ -468,6 +471,39 @@ export function App() {
   const totalStudios = visibleGroups.reduce((sum, g) => sum + g.studios.length, 0);
   const hasFavorites = favorites.size > 0;
 
+  // 전국 결과를 한 번에 DOM 으로 만들면 노드가 4만 개를 넘고 이미지 요청과
+  // 세션 리플레이 스냅샷도 함께 폭증한다. 첫 화면에 필요한 만큼만 렌더하고
+  // 리스트 끝에 가까워질 때 다음 묶음을 붙인다.
+  const resultRenderKey = [
+    updatedAt?.getTime() ?? 0,
+    filters.areaIds.join(','),
+    filters.studioIds.join(','),
+    filters.dates.join(','),
+    filters.timeWindows.map((window) => `${window.from}-${window.to}`).join(','),
+    filters.minDuration,
+    filters.people,
+    filters.minHourlyPrice,
+    filters.maxHourlyPrice,
+    favOnly,
+    sortOption,
+  ].join(':');
+  const [renderWindow, setRenderWindow] = useState({ key: resultRenderKey, limit: INITIAL_RENDERED_STUDIOS });
+  const renderedStudioLimit = renderWindow.key === resultRenderKey
+    ? renderWindow.limit
+    : INITIAL_RENDERED_STUDIOS;
+  const renderedGroups = useMemo(
+    () => limitStudioGroups(visibleGroups, renderedStudioLimit),
+    [visibleGroups, renderedStudioLimit],
+  );
+  const renderedStudioCount = renderedGroups.reduce((sum, group) => sum + group.studios.length, 0);
+  const hasMoreStudios = renderedStudioCount < totalStudios;
+
+  useEffect(() => {
+    setRenderWindow((current) => current.key === resultRenderKey
+      ? current
+      : { key: resultRenderKey, limit: INITIAL_RENDERED_STUDIOS });
+  }, [resultRenderKey]);
+
   // 결과 노출. empty=true 비율이 곧 "결과 없음 도달률"이고, 조건 완화 유도 설계가
   // 작동하는지 판단하는 근거가 된다. 로딩 중 깜빡임은 세지 않고, 같은 결과 반복도 접는다.
   const lastResult = useRef<string | null>(null);
@@ -484,6 +520,7 @@ export function App() {
       empty: totalStudios === 0,
       fav_only: favOnly,
     });
+    markResultsReadyForAnalytics();
   }, [loading, studiosLoaded, totalStudios, visibleGroups.length, favOnly]);
 
   const areaChipLabel = buildAreaChipLabel(areas, filters.areaIds);
@@ -671,6 +708,35 @@ export function App() {
     onRefresh: handlePullRefresh,
     disabled: loading,
   });
+  const loadMoreSentinelRef = useRef<HTMLDivElement>(null);
+  const loadMoreStudios = useCallback(() => {
+    setRenderWindow((current) => ({
+      key: resultRenderKey,
+      limit: (current.key === resultRenderKey ? current.limit : INITIAL_RENDERED_STUDIOS)
+        + RENDERED_STUDIOS_BATCH,
+    }));
+  }, [resultRenderKey]);
+
+  useEffect(() => {
+    if (!hasMoreStudios) return;
+    if (typeof IntersectionObserver === 'undefined') {
+      setRenderWindow({ key: resultRenderKey, limit: totalStudios });
+      return;
+    }
+    const sentinel = loadMoreSentinelRef.current;
+    const root = resultListRef.current;
+    if (!sentinel || !root) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (!entries.some((entry) => entry.isIntersecting)) return;
+        loadMoreStudios();
+      },
+      { root, rootMargin: '600px 0px' },
+    );
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, [hasMoreStudios, loadMoreStudios, renderedStudioCount, resultListRef, resultRenderKey, totalStudios]);
 
   return (
     <main className="app-shell">
@@ -892,7 +958,7 @@ export function App() {
                       setFilters={setFilters}
                     />
                   ) : (
-                    visibleGroups.map((group) => {
+                    renderedGroups.map((group) => {
                       const selectedEmptyItems = studioActive
                         ? buildSelectedStudioEmptyItems({
                             selectedStudios,
@@ -906,13 +972,18 @@ export function App() {
                       return (
                         <section className="date-section" key={group.date}>
                           {group.studios.map((studio) => (
-                            <StudioRow key={studio.studio.id} studio={studio} />
+                            <StudioRow
+                              key={studio.studio.id}
+                              studio={studio}
+                              imageRoot={resultListRef.current}
+                            />
                           ))}
                           {selectedEmptyItems.map((item) => (
                             <SelectedStudioEmptyRow
                               key={item.studio.id}
                               studio={item.studio}
                               areaName={item.areaName}
+                              imageRoot={resultListRef.current}
                               onCreateAlert={(studio) => openStudioAlert(studio, group.date)}
                               onRemove={removeStudioSelection}
                             />
@@ -937,6 +1008,13 @@ export function App() {
                         </section>
                       );
                     })
+                  )}
+                  {hasMoreStudios && (
+                    <div ref={loadMoreSentinelRef} className="result-load-sentinel">
+                      <button type="button" className="result-load-more" onClick={loadMoreStudios}>
+                        결과 더 보기
+                      </button>
+                    </div>
                   )}
                 </>
               )}
@@ -1279,4 +1357,24 @@ function formatUpdatedAt(date: Date) {
   const h = date.getHours();
   const m = String(date.getMinutes()).padStart(2, '0');
   return `${h}:${m} 업데이트`;
+}
+
+function limitStudioGroups(groups: DateAvailability[], limit: number): DateAvailability[] {
+  const limited: DateAvailability[] = [];
+  let remaining = limit;
+
+  for (const group of groups) {
+    if (group.studios.length === 0) {
+      limited.push(group);
+      continue;
+    }
+    if (remaining <= 0) break;
+
+    const studios = group.studios.slice(0, remaining);
+    limited.push({ ...group, studios });
+    remaining -= studios.length;
+    if (studios.length < group.studios.length) break;
+  }
+
+  return limited;
 }

@@ -848,6 +848,23 @@ button {
   overscroll-behavior-y: contain;
 }
 
+.result-load-sentinel {
+  display: flex;
+  justify-content: center;
+  padding: var(--sp-5) var(--gutter);
+}
+
+.result-load-more {
+  min-height: 44px;
+  padding: var(--sp-2) var(--sp-5);
+  border: 1px solid var(--border);
+  border-radius: var(--r-full);
+  background: var(--surface);
+  color: var(--text-2);
+  font: inherit;
+  font-weight: var(--fw-semibold);
+}
+
 /* 당겨서 새로고침: 리스트 맨 위에서 늘어나는 영역 + 스피너. */
 .ptr-indicator {
   display: flex;
@@ -1149,6 +1166,13 @@ button {
   background: var(--surface-sunken);
 }
 
+.studio-photo-placeholder {
+  margin: var(--sp-2) 0 0;
+  aspect-ratio: 16 / 9;
+  border-radius: var(--r-lg);
+  background: var(--surface-sunken);
+}
+
 .studio-photos {
   display: flex;
   overflow-x: auto;
@@ -1179,6 +1203,8 @@ button {
   display: block;
   user-select: none;
   -webkit-user-drag: none;
+  /* 리사이즈 URL 실패 후 원본으로 교체되는 순간 alt 텍스트가 LCP 후보가 되지 않게 한다. */
+  color: transparent;
 }
 
 .studio-photo-pages {

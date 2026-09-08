@@ -59,6 +59,9 @@ let filterChanges = 0;
 const expectedSinks = (POSTHOG_KEY ? 1 : 0) + (GA_ID ? 1 : 0) + (metaPixelId ? 1 : 0);
 const sinks: Sink[] = [];
 let pending: { event: string; props: Props }[] = [];
+let posthogInstance: PostHog | null = null;
+let resultsReady = false;
+let sessionRecordingScheduled = false;
 
 function addSink(sink: Sink): void {
   for (const item of pending) sink(item.event, item.props);
@@ -68,6 +71,26 @@ function addSink(sink: Sink): void {
 
 export async function initAnalytics(): Promise<void> {
   await Promise.all([initPostHog(), initGa(), initMetaPixel()]);
+}
+
+// 결과가 처음 그려지기 전에 세션 리플레이가 큰 DOM 을 스냅샷으로 만들면 LCP 와
+// 입력을 막는다. 이벤트 수집은 즉시 유지하고, 녹화만 결과 표시 후 유휴 시점에 켠다.
+export function markResultsReadyForAnalytics(): void {
+  resultsReady = true;
+  scheduleSessionRecording();
+}
+
+function scheduleSessionRecording(): void {
+  if (!resultsReady || !posthogInstance || sessionRecordingScheduled) return;
+  sessionRecordingScheduled = true;
+
+  const start = () => posthogInstance?.startSessionRecording();
+  const idleWindow = window as Window & { requestIdleCallback?: typeof window.requestIdleCallback };
+  if (typeof idleWindow.requestIdleCallback === 'function') {
+    idleWindow.requestIdleCallback(start, { timeout: 3000 });
+  } else {
+    globalThis.setTimeout(start, 1000);
+  }
 }
 
 async function initPostHog(): Promise<void> {
@@ -81,16 +104,18 @@ async function initPostHog(): Promise<void> {
     // 클릭 자동 수집은 끈다. 필요한 건 아래 track() 으로 직접 심은 이벤트뿐이고,
     // 수집 범위가 개인정보처리방침(public/privacy.html)에 적은 내용과 어긋나면 안 된다.
     autocapture: false,
-    // 세션 리플레이는 켠다. 사용자가 어디서 막히는지는 이벤트 수치만으로는 안 보인다.
-    // 다만 입력값은 전부 가린다 — 합주실 검색어 등이 녹화에 남을 이유가 없다.
-    disable_session_recording: false,
+    // 이벤트는 즉시 수집하되 세션 리플레이는 첫 결과 표시 뒤에 별도로 시작한다.
+    // 거대한 초기 DOM 스냅샷이 LCP 를 막지 않으면서 이후 행동 리플레이는 유지한다.
+    disable_session_recording: true,
     session_recording: {
       maskAllInputs: true,
       maskTextSelector: '[data-private]',
     },
   });
 
+  posthogInstance = posthog;
   addSink((event, props) => posthog.capture(event, props));
+  scheduleSessionRecording();
 }
 
 async function initGa(): Promise<void> {
