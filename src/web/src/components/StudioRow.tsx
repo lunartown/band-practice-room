@@ -11,6 +11,38 @@ import { formatTimeLabel, formatTimeRangeLabel } from '../lib/timeFormat';
 
 interface StudioRowProps {
   studio: StudioAvailability;
+  imageRoot: Element | null;
+}
+
+// 브라우저의 loading="lazy"는 중첩 스크롤 컨테이너에서 초기 이미지를 누락한
+// 적이 있어 사용하지 않는다. 실제 결과 리스트를 root로 직접 관찰해 화면 근처의
+// 행만 이미지를 만들고, 한 번 진입한 행은 다시 스크롤 밖으로 나가도 유지한다.
+function useNearImageViewport(root: Element | null) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [nearViewport, setNearViewport] = useState(false);
+
+  useEffect(() => {
+    if (nearViewport) return;
+    const node = ref.current;
+    if (!node) return;
+    if (typeof IntersectionObserver === 'undefined') {
+      setNearViewport(true);
+      return;
+    }
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (!entries.some((entry) => entry.isIntersecting)) return;
+        setNearViewport(true);
+        observer.disconnect();
+      },
+      { root, rootMargin: '500px 0px' },
+    );
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, [nearViewport, root]);
+
+  return { ref, nearViewport };
 }
 
 function chipLabel(chip: AvailabilityChip): string {
@@ -73,7 +105,13 @@ function HeartIcon({ filled }: { filled: boolean }) {
   );
 }
 
-function StudioAvatar({ studio }: { studio: Pick<Studio, 'imageUrl'> }) {
+function StudioAvatar({
+  studio,
+  loadImage,
+}: {
+  studio: Pick<Studio, 'imageUrl'>;
+  loadImage: boolean;
+}) {
   const { imageUrl } = studio;
   const [imgFailed, setImgFailed] = useState(false);
   const [loadedSrc, setLoadedSrc] = useState<string | null>(null);
@@ -87,7 +125,7 @@ function StudioAvatar({ studio }: { studio: Pick<Studio, 'imageUrl'> }) {
   }, [imageUrl]);
 
   const sourceImgSrc = !useOriginal && resized ? resized : imageUrl ?? null;
-  const showSourceImg = Boolean(sourceImgSrc) && !imgFailed;
+  const showSourceImg = loadImage && Boolean(sourceImgSrc) && !imgFailed;
   const showFallback = !showSourceImg || loadedSrc !== sourceImgSrc;
 
   const handleImgError = () => {
@@ -175,7 +213,15 @@ function StudioPhoto({
 
 // 카드 폭을 채우는 1장 단위 캐러셀. 합주실 로고(imageUrl)와 섞지 않고 실제
 // 갤러리 사진(images)만 보여준다. 가로 드래그 직후 상위 예약 링크가 열리지 않게 막는다.
-function StudioPhotos({ images, name }: { images?: string[]; name: string }) {
+function StudioPhotos({
+  images,
+  name,
+  loadImages,
+}: {
+  images?: string[];
+  name: string;
+  loadImages: boolean;
+}) {
   const sourceUrls = [...new Set((images ?? []).filter((url): url is string => Boolean(url)))];
   const sourceKey = sourceUrls.join('\n');
   const [failedUrls, setFailedUrls] = useState<Set<string>>(() => new Set());
@@ -198,6 +244,7 @@ function StudioPhotos({ images, name }: { images?: string[]; name: string }) {
   }, [activeIndex, displayUrls.length]);
 
   if (displayUrls.length === 0) return null;
+  if (!loadImages) return <div className="studio-photo-placeholder" aria-hidden />;
 
   const handleScroll = () => {
     const scroller = scrollerRef.current;
@@ -405,25 +452,28 @@ function RoomSelector({
 export function SelectedStudioEmptyRow({
   studio,
   areaName,
+  imageRoot,
   onRemove,
   onCreateAlert,
 }: {
   studio: Studio;
   areaName: string;
+  imageRoot: Element | null;
   onRemove: (studioId: number) => void;
   onCreateAlert: (studio: Studio) => void;
 }) {
   const { id, name, reviewCount, reviewKeywords } = studio;
   const badges = toReviewBadges(reviewKeywords, reviewCount);
   const isFav = useFavorite(id);
+  const { ref: rowRef, nearViewport } = useNearImageViewport(imageRoot);
   // 온라인 예약 소스가 없는 합주실: "빈 시간 없음"이 아니라 "전화예약"으로 안내.
   const phoneOnly = studio.hasOnlineBooking === false;
 
   return (
-    <div className="studio-row studio-row-empty">
+    <div ref={rowRef} className="studio-row studio-row-empty">
       <div className="studio-main studio-main-static">
         <div className="studio-head">
-          <StudioAvatar studio={studio} />
+          <StudioAvatar studio={studio} loadImage={nearViewport} />
           <div className="studio-name-area">
             <div className="studio-name">{name}</div>
             <div className="studio-meta">
@@ -438,7 +488,7 @@ export function SelectedStudioEmptyRow({
           </div>
         </div>
 
-        <StudioPhotos images={studio.images} name={name} />
+        <StudioPhotos images={studio.images} name={name} loadImages={nearViewport} />
 
         {badges.length > 0 && (
           <div className="review-badges">
@@ -521,10 +571,11 @@ function BellIcon() {
   );
 }
 
-export const StudioRow = memo(function StudioRow({ studio }: StudioRowProps) {
+export const StudioRow = memo(function StudioRow({ studio, imageRoot }: StudioRowProps) {
   const { id, name, reviewCount, reviewKeywords } = studio.studio;
   const badges = toReviewBadges(reviewKeywords, reviewCount);
   const isFav = useFavorite(id);
+  const { ref: rowRef, nearViewport } = useNearImageViewport(imageRoot);
   const [selectedRoomId, setSelectedRoomId] = useState<number | null>(null);
   const selectedRoom = selectedRoomId == null
     ? undefined
@@ -537,7 +588,7 @@ export const StudioRow = memo(function StudioRow({ studio }: StudioRowProps) {
   }, [selectedRoomId, studio.rooms]);
 
   return (
-    <div className="studio-row">
+    <div ref={rowRef} className="studio-row">
       {/* 카드 본문(헤더+예약 가능 시간) 전체가 단 하나의 주 액션 = 예약 링크.
           방 선택·방별 링크는 중첩될 수 없으므로 형제로 분리한다. */}
       <a
@@ -556,7 +607,7 @@ export const StudioRow = memo(function StudioRow({ studio }: StudioRowProps) {
         }
       >
         <div className="studio-head">
-          <StudioAvatar studio={studio.studio} />
+          <StudioAvatar studio={studio.studio} loadImage={nearViewport} />
           <div className="studio-name-area">
             <div className="studio-name">{name}</div>
             <div className="studio-meta">
@@ -569,7 +620,7 @@ export const StudioRow = memo(function StudioRow({ studio }: StudioRowProps) {
           <div className="studio-price">{studio.priceLabel}</div>
         </div>
 
-        <StudioPhotos images={studio.studio.images} name={name} />
+        <StudioPhotos images={studio.studio.images} name={name} loadImages={nearViewport} />
 
         {/* 리뷰 배지: 신원(아바타+이름) 헤더 밖, 예약 칩과 같은 게터 라인에 둔다 */}
         {badges.length > 0 && (
