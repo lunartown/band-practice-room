@@ -1076,7 +1076,7 @@ button {
 }
 
 .studio-avatar.is-fallback {
-  background: var(--surface-sunken);
+  background: var(--gray-100);
 }
 
 .studio-fallback-image {
@@ -1084,10 +1084,12 @@ button {
   inset: 0;
   width: 100%;
   height: 100%;
-  display: block;
-  background-position: center;
-  background-size: cover;
-  mix-blend-mode: multiply;
+  display: grid;
+  place-items: center;
+  color: var(--gray-500);
+  font-size: var(--fs-lg);
+  font-weight: var(--fw-bold);
+  line-height: 1;
 }
 
 .studio-name-area {

@@ -2,7 +2,7 @@ import { memo, useEffect, useRef, useState } from 'react';
 import type { EquipmentAssignment, Studio } from '../api/types';
 import type { AvailabilityChip, RoomAvailability, StudioAvailability } from '../lib/availability';
 import { toReviewBadges } from '../lib/reviewKeywords';
-import { STUDIO_FALLBACK_IMAGE_URL, galleryImageUrl, thumbnailUrl } from '../lib/imageUrl';
+import { galleryImageUrl, thumbnailUrl } from '../lib/imageUrl';
 import { useFavorite } from '../lib/useFavorites';
 import { toggleFavorite } from '../lib/favorites';
 import { shareStudio } from '../lib/share';
@@ -111,10 +111,11 @@ function StudioAvatar({
   studio,
   loadImage,
 }: {
-  studio: Pick<Studio, 'imageUrl'>;
+  studio: Pick<Studio, 'imageUrl' | 'name'>;
   loadImage: boolean;
 }) {
   const { imageUrl } = studio;
+  const fallbackLabel = studio.name.trim().charAt(0) || '합';
   const [imgFailed, setImgFailed] = useState(false);
   const [loadedSrc, setLoadedSrc] = useState<string | null>(null);
   const [useOriginal, setUseOriginal] = useState(false);
@@ -145,10 +146,7 @@ function StudioAvatar({
   return (
     <div className={`studio-avatar${showFallback ? ' is-fallback' : ''}`} aria-hidden>
       {showFallback && (
-        <span
-          className="studio-fallback-image"
-          style={{ backgroundImage: `url(${STUDIO_FALLBACK_IMAGE_URL})` }}
-        />
+        <span className="studio-fallback-image">{fallbackLabel}</span>
       )}
       {showSourceImg && sourceImgSrc ? (
         <img
