@@ -164,8 +164,7 @@ function StudioAvatar({
   );
 }
 
-// 갤러리 사진 한 장. 리사이즈 URL이 실패하면 원본 수 MB를 다시 받지 않고 숨긴다.
-// 갤러리 전체가 실패한 경우 StudioPhotos가 작은 자체 대표 이미지로 대체한다.
+// 갤러리 사진 한 장. 리사이즈 URL → 실패 시 원본 → 그래도 실패면 숨김(self-healing).
 // referrerPolicy="no-referrer" 로 외부 CDN 의 핫링크 보호에 걸리지 않게 한다.
 function StudioPhoto({
   url,
@@ -182,7 +181,8 @@ function StudioPhoto({
   priority: boolean;
   onFailure: (url: string) => void;
 }) {
-  const src = galleryImageUrl(url) ?? STUDIO_FALLBACK_IMAGE_URL;
+  const [src, setSrc] = useState(galleryImageUrl(url) ?? url);
+  const [triedOriginal, setTriedOriginal] = useState(false);
   const [failed, setFailed] = useState(false);
 
   if (failed) return null;
@@ -202,8 +202,13 @@ function StudioPhoto({
         fetchPriority={priority ? 'high' : 'auto'}
         referrerPolicy="no-referrer"
         onError={() => {
-          setFailed(true);
-          onFailure(url);
+          if (!triedOriginal && src !== url) {
+            setTriedOriginal(true);
+            setSrc(url);
+          } else {
+            setFailed(true);
+            onFailure(url);
+          }
         }}
       />
     </div>
@@ -214,13 +219,11 @@ function StudioPhoto({
 // 갤러리 사진(images)만 보여준다. 가로 드래그 직후 상위 예약 링크가 열리지 않게 막는다.
 function StudioPhotos({
   images,
-  fallbackImageUrl,
   name,
   loadImages,
   prioritizeFirstImage = false,
 }: {
   images?: string[];
-  fallbackImageUrl?: string | null;
   name: string;
   loadImages: boolean;
   prioritizeFirstImage?: boolean;
@@ -238,7 +241,7 @@ function StudioPhotos({
     setActiveIndex(0);
   }, [sourceKey]);
 
-  const displayUrls = sourceUrls.filter((url) => galleryImageUrl(url) && !failedUrls.has(url));
+  const displayUrls = sourceUrls.filter((url) => !failedUrls.has(url));
 
   useEffect(() => {
     if (activeIndex >= displayUrls.length) {
@@ -246,34 +249,8 @@ function StudioPhotos({
     }
   }, [activeIndex, displayUrls.length]);
 
-  if (sourceUrls.length === 0) return null;
+  if (displayUrls.length === 0) return null;
   if (!loadImages) return <div className="studio-photo-placeholder" aria-hidden />;
-
-  if (displayUrls.length === 0) {
-    const fallbackUrl = fallbackImageUrl?.startsWith('/')
-      ? fallbackImageUrl
-      : STUDIO_FALLBACK_IMAGE_URL;
-    return (
-      <div
-        className="studio-photo-carousel"
-        role="region"
-        aria-roledescription="캐러셀"
-        aria-label={`${name} 사진`}
-      >
-        <div className="studio-photos">
-          <StudioPhoto
-            key={fallbackUrl}
-            url={fallbackUrl}
-            name={name}
-            index={0}
-            total={1}
-            priority={prioritizeFirstImage}
-            onFailure={() => undefined}
-          />
-        </div>
-      </div>
-    );
-  }
 
   const handleScroll = () => {
     const scroller = scrollerRef.current;
@@ -518,12 +495,7 @@ export function SelectedStudioEmptyRow({
           </div>
         </div>
 
-        <StudioPhotos
-          images={studio.images}
-          fallbackImageUrl={studio.imageUrl}
-          name={name}
-          loadImages={nearViewport}
-        />
+        <StudioPhotos images={studio.images} name={name} loadImages={nearViewport} />
 
         {badges.length > 0 && (
           <div className="review-badges">
@@ -657,7 +629,6 @@ export const StudioRow = memo(function StudioRow({ studio, imageRoot, prioritize
 
         <StudioPhotos
           images={studio.studio.images}
-          fallbackImageUrl={studio.studio.imageUrl}
           name={name}
           loadImages={nearViewport || prioritizeImage}
           prioritizeFirstImage={prioritizeImage}
