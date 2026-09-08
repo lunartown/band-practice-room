@@ -10,6 +10,30 @@
     <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <link rel="manifest" href="/site.webmanifest" />
+    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css"
+      media="print"
+      onload="this.media='all'"
+    />
+    <noscript>
+      <link
+        rel="stylesheet"
+        href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css"
+      />
+    </noscript>
+    <script>
+      // API 요청보다 먼저 DNS·TLS 연결을 열어 첫 결과와 LCP 사진 발견을 앞당긴다.
+      const apiBaseUrl = '%VITE_API_BASE_URL%';
+      if (apiBaseUrl.startsWith('http')) {
+        const preconnect = document.createElement('link');
+        preconnect.rel = 'preconnect';
+        preconnect.href = new URL(apiBaseUrl).origin;
+        preconnect.crossOrigin = 'anonymous';
+        document.head.appendChild(preconnect);
+      }
+    </script>
 
     <!-- Meta 도메인 인증. 이 태그가 있어야 Meta 비즈니스에서 hapjusil.com 소유가 인정되고,
          iOS 사용자 전환을 집계하는 종합 이벤트 측정(AEM) 설정이 열린다. 지우면 인증이 풀린다. -->

@@ -1,15 +1,19 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { Capacitor } from '@capacitor/core';
-import { StatusBar, Style } from '@capacitor/status-bar';
 import { Analytics } from '@vercel/analytics/react';
-import { AdminApp } from './AdminApp';
 import { App } from './App';
 import { initAnalytics } from './lib/analytics';
 import { initFavorites } from './lib/favorites';
 import { notifyLiveUpdateReady } from './lib/liveUpdate';
 import { initPushDevice } from './lib/pushDevice';
 import './styles.css';
+
+const isAdmin = window.location.pathname.startsWith('/admin');
+const AdminApp = React.lazy(async () => {
+  const module = await import('./AdminApp');
+  return { default: module.AdminApp };
+});
 
 // 네이티브 앱(Capacitor)에서 상단 상태표시줄 처리. 플랫폼별 클래스(is-ios/is-android)도
 // 붙여 CSS에서 구분한다. 웹/PWA에는 어떤 클래스도 붙지 않아 기존 최소 여백을 그대로 쓴다.
@@ -24,18 +28,20 @@ if (Capacitor.isNativePlatform()) {
   // Android 15+ edge-to-edge 에서는 Capacitor SystemBars 가 주입하는 CSS 변수도
   // 함께 사용해 시스템바 침범을 막는다.
   if (platform === 'ios' || platform === 'android') {
-    StatusBar.setOverlaysWebView({ overlay: false }).catch(() => {});
-    // 상단바가 흰색(--surface)으로 이어지도록 상태표시줄도 흰 배경 + 어두운 아이콘.
-    // (Style.Light = 밝은 배경용 = 어두운 글자/아이콘.)
-    StatusBar.setBackgroundColor({ color: '#ffffff' }).catch(() => {});
-    StatusBar.setStyle({ style: Style.Light }).catch(() => {});
+    void import('@capacitor/status-bar').then(({ StatusBar, Style }) => {
+      StatusBar.setOverlaysWebView({ overlay: false }).catch(() => {});
+      // 상단바가 흰색(--surface)으로 이어지도록 상태표시줄도 흰 배경 + 어두운 아이콘.
+      // (Style.Light = 밝은 배경용 = 어두운 글자/아이콘.)
+      StatusBar.setBackgroundColor({ color: '#ffffff' }).catch(() => {});
+      StatusBar.setStyle({ style: Style.Light }).catch(() => {});
+    });
   }
 }
 
 // 이벤트 계측(PostHog · GA4 · Meta Pixel). 첫 화면과 분석 SDK 가 CPU를 경쟁하지 않도록
 // 실제 SDK 초기화는 결과 표시 8초 뒤 또는 첫 사용자 입력 시점까지 미룬다.
 // 관리자 화면(/admin)은 운영자용이라 계측하지 않는다.
-if (!window.location.pathname.startsWith('/admin')) {
+if (!isAdmin) {
   void initAnalytics();
 }
 
@@ -52,7 +58,11 @@ void notifyLiveUpdateReady();
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
-    {window.location.pathname.startsWith('/admin') ? <AdminApp /> : <App />}
+    {isAdmin ? (
+      <React.Suspense fallback={null}>
+        <AdminApp />
+      </React.Suspense>
+    ) : <App />}
     <Analytics />
   </React.StrictMode>,
 );
