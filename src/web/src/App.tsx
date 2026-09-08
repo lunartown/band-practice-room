@@ -976,6 +976,7 @@ export function App() {
                               key={studio.studio.id}
                               studio={studio}
                               imageRoot={resultListRef.current}
+                              prioritizeImage={studio === renderedGroups[0]?.studios[0]}
                             />
                           ))}
                           {selectedEmptyItems.map((item) => (
