@@ -62,6 +62,13 @@ let pending: { event: string; props: Props }[] = [];
 let posthogInstance: PostHog | null = null;
 let resultsReady = false;
 let sessionRecordingScheduled = false;
+let analyticsInitStarted = false;
+let analyticsFallbackTimer: number | undefined;
+
+// 첫 화면과 분석 SDK 다운로드·파싱이 경쟁하지 않게 한다. 사용자가 먼저 조작하면
+// 즉시 초기화를 시작하고, 조작이 없는 방문도 결과 표시 8초 뒤에는 큐를 전송한다.
+const ANALYTICS_FALLBACK_DELAY_MS = 8000;
+const ANALYTICS_INTERACTION_EVENTS = ['pointerdown', 'keydown'] as const;
 
 function addSink(sink: Sink): void {
   for (const item of pending) sink(item.event, item.props);
@@ -69,15 +76,48 @@ function addSink(sink: Sink): void {
   if (sinks.length >= expectedSinks) pending = [];
 }
 
-export async function initAnalytics(): Promise<void> {
-  await Promise.all([initPostHog(), initGa(), initMetaPixel()]);
+export function initAnalytics(): void {
+  if (expectedSinks === 0) return;
+
+  for (const event of ANALYTICS_INTERACTION_EVENTS) {
+    window.addEventListener(event, startAnalyticsOnInteraction, {
+      capture: true,
+      once: true,
+      passive: true,
+    });
+  }
 }
 
 // 결과가 처음 그려지기 전에 세션 리플레이가 큰 DOM 을 스냅샷으로 만들면 LCP 와
 // 입력을 막는다. 이벤트 수집은 즉시 유지하고, 녹화만 결과 표시 후 유휴 시점에 켠다.
 export function markResultsReadyForAnalytics(): void {
   resultsReady = true;
+  scheduleAnalyticsFallback();
   scheduleSessionRecording();
+}
+
+function startAnalyticsOnInteraction(): void {
+  startAnalytics();
+}
+
+function scheduleAnalyticsFallback(): void {
+  if (!resultsReady || analyticsInitStarted || analyticsFallbackTimer != null) return;
+  analyticsFallbackTimer = window.setTimeout(startAnalytics, ANALYTICS_FALLBACK_DELAY_MS);
+}
+
+function startAnalytics(): void {
+  if (analyticsInitStarted) return;
+  analyticsInitStarted = true;
+
+  if (analyticsFallbackTimer != null) {
+    window.clearTimeout(analyticsFallbackTimer);
+    analyticsFallbackTimer = undefined;
+  }
+  for (const event of ANALYTICS_INTERACTION_EVENTS) {
+    window.removeEventListener(event, startAnalyticsOnInteraction, true);
+  }
+
+  void Promise.all([initPostHog(), initGa(), initMetaPixel()]);
 }
 
 function scheduleSessionRecording(): void {
