@@ -39,7 +39,8 @@ if (Capacitor.isNativePlatform()) {
 }
 
 // 이벤트 계측(PostHog · GA4 · Meta Pixel). 첫 화면과 분석 SDK 가 CPU를 경쟁하지 않도록
-// 실제 SDK 초기화는 결과 표시 8초 뒤 또는 첫 사용자 입력 시점까지 미룬다.
+// 실제 SDK 초기화는 결과 표시 8초 뒤 또는 첫 사용자 입력 시점까지 미룬다. 그 전에 떠난
+// 방문은 쌓아둔 이벤트만 beacon 으로 PostHog 에 보낸다(lib/analytics.ts).
 // 관리자 화면(/admin)은 운영자용이라 계측하지 않는다.
 if (!isAdmin) {
   void initAnalytics();

@@ -17,6 +17,10 @@
 //
 // 키(VITE_POSTHOG_KEY / VITE_GA_MEASUREMENT_ID / VITE_META_PIXEL_ID)가 없는 쪽은
 // 아무것도 전송하지 않는다. 전부 없으면 완전 무동작이라 로컬 개발에는 영향이 없다.
+//
+// 개발·테스트 기기는 `?internal=1` 로 한 번 접속해 표시한다(해제는 `?internal=0`).
+// 표시된 기기의 이벤트에는 is_internal 이 붙고 PostHog 사람 속성 $internal_or_test_user 가
+// 켜져 대시보드의 테스트 계정 필터로 빠진다. 광고 학습을 오염시키지 않게 Meta Pixel 은 켜지 않는다.
 import { Capacitor } from '@capacitor/core';
 
 type Props = Record<string, unknown>;
@@ -47,8 +51,14 @@ const POSTHOG_HOST =
 const GA_ID = import.meta.env.VITE_GA_MEASUREMENT_ID as string | undefined;
 const META_PIXEL_ID = import.meta.env.VITE_META_PIXEL_ID as string | undefined;
 
-// 픽셀은 웹 전용이다. 위 주석 참고.
-const metaPixelId = Capacitor.isNativePlatform() ? undefined : META_PIXEL_ID;
+const INTERNAL_STORAGE_KEY = 'hapjusil.analytics-internal.v1';
+const isInternal = readInternalFlag();
+
+// beacon 이벤트에 광고 파라미터를 싣기 위해 진입 주소를 기억한다(internal 파라미터는 위에서 지운 뒤).
+const landingSearch = window.location.search;
+
+// 픽셀은 웹 전용이고 내부 기기에서는 켜지 않는다. 위 주석 참고.
+const metaPixelId = Capacitor.isNativePlatform() || isInternal ? undefined : META_PIXEL_ID;
 
 const openedAt = Date.now();
 let filterChanges = 0;
@@ -58,8 +68,17 @@ let filterChanges = 0;
 // 모든 sink 가 붙으면 pending 은 비운다.
 const expectedSinks = (POSTHOG_KEY ? 1 : 0) + (GA_ID ? 1 : 0) + (metaPixelId ? 1 : 0);
 const sinks: Sink[] = [];
-let pending: { event: string; props: Props }[] = [];
+interface PendingEvent {
+  event: string;
+  props: Props;
+  at: number;
+  // SDK 가 붙기 전에 beacon 으로 PostHog 에 이미 보낸 이벤트. 아래 beacon 절 참고.
+  sentByBeacon: boolean;
+}
+
+let pending: PendingEvent[] = [];
 let posthogInstance: PostHog | null = null;
+let posthogAttached = false;
 let resultsReady = false;
 let sessionRecordingScheduled = false;
 let analyticsInitStarted = false;
@@ -70,14 +89,22 @@ let analyticsFallbackTimer: number | undefined;
 const ANALYTICS_FALLBACK_DELAY_MS = 8000;
 const ANALYTICS_INTERACTION_EVENTS = ['pointerdown', 'keydown'] as const;
 
-function addSink(sink: Sink): void {
-  for (const item of pending) sink(item.event, item.props);
+function addSink(sink: Sink, skipSentByBeacon = false): void {
+  for (const item of pending) {
+    if (skipSentByBeacon && item.sentByBeacon) continue;
+    sink(item.event, item.props);
+  }
   sinks.push(sink);
   if (sinks.length >= expectedSinks) pending = [];
 }
 
 export function initAnalytics(): void {
   if (expectedSinks === 0) return;
+
+  if (POSTHOG_KEY) {
+    document.addEventListener('visibilitychange', flushPendingOnHide);
+    window.addEventListener('pagehide', flushPendingByBeacon);
+  }
 
   for (const event of ANALYTICS_INTERACTION_EVENTS) {
     window.addEventListener(event, startAnalyticsOnInteraction, {
@@ -151,11 +178,186 @@ async function initPostHog(): Promise<void> {
       maskAllInputs: true,
       maskTextSelector: '[data-private]',
     },
+    // beacon 을 보낸 뒤 돌아온 방문이면 같은 사람·세션으로 이어 붙인다. 저장된 익명 ID 가
+    // 있을 때 distinctID 를 넘기면 그 ID 를 덮어쓰므로, 새로 만든 경우에만 넘긴다.
+    ...(beaconIdentity?.used
+      ? {
+          bootstrap: {
+            sessionID: beaconIdentity.sessionId,
+            ...(beaconIdentity.newDistinctId ? { distinctID: beaconIdentity.distinctId } : {}),
+          },
+        }
+      : {}),
   });
 
+  if (isInternal) posthog.setPersonProperties({ $internal_or_test_user: true });
+
   posthogInstance = posthog;
-  addSink((event, props) => posthog.capture(event, props));
+  posthogAttached = true;
+  addSink((event, props) => posthog.capture(event, props), true);
   scheduleSessionRecording();
+}
+
+// --- SDK 가 붙기 전에 떠난 방문 (beacon) ---
+//
+// SDK 초기화를 첫 입력이나 결과 표시 8초 뒤로 미루면서, 그 전에 조작 없이 떠난 방문은
+// 이벤트가 하나도 전송되지 않았다. 가장 큰 이탈 구간이 통째로 빠지는 셈이라, 탭이 가려지거나
+// 페이지를 떠나는 순간 쌓아둔 이벤트만 PostHog 수집 API 로 직접 보낸다. SDK 를 더 일찍
+// 내려받지 않으므로 첫 화면 성능에는 영향이 없다.
+//
+// SDK 이벤트와 같은 사람·세션으로 묶이도록 저장된 PostHog 익명 ID 와 30분 이내 세션 ID 를
+// 재사용하고, 없으면 SDK 와 같은 UUIDv7 형식으로 만든다. 기기 속성은 SDK 만큼 자세하지 않고
+// 세션 리플레이도 없다.
+const SESSION_IDLE_MS = 30 * 60 * 1000;
+const CAMPAIGN_PARAMS = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term', 'fbclid', 'gclid'];
+
+interface BeaconIdentity {
+  distinctId: string;
+  sessionId: string;
+  newDistinctId: boolean;
+  used: boolean;
+}
+
+let beaconIdentity: BeaconIdentity | null = null;
+
+function flushPendingOnHide(): void {
+  if (document.visibilityState === 'hidden') flushPendingByBeacon();
+}
+
+function flushPendingByBeacon(): void {
+  if (!POSTHOG_KEY || posthogAttached || typeof navigator.sendBeacon !== 'function' || isLikelyBot()) return;
+
+  const unsent = pending.filter((item) => !item.sentByBeacon);
+  if (unsent.length === 0) return;
+
+  const identity = getBeaconIdentity(POSTHOG_KEY);
+  const base = beaconBaseProps(identity);
+  const body = JSON.stringify({
+    api_key: POSTHOG_KEY,
+    batch: unsent.map((item) => ({
+      event: item.event,
+      timestamp: new Date(item.at).toISOString(),
+      properties: { ...base, ...item.props, distinct_id: identity.distinctId },
+    })),
+  });
+
+  // text/plain 이라 CORS preflight 없이 나간다. PostHog 수집 API 는 본문을 JSON 으로 읽는다.
+  const queued = navigator.sendBeacon(`${POSTHOG_HOST}/batch/`, new Blob([body], { type: 'text/plain' }));
+  if (!queued) return;
+
+  identity.used = true;
+  for (const item of unsent) item.sentByBeacon = true;
+}
+
+function getBeaconIdentity(token: string): BeaconIdentity {
+  if (beaconIdentity) return beaconIdentity;
+
+  const stored = readPostHogPersistence(token);
+  const storedDistinctId = typeof stored?.distinct_id === 'string' ? stored.distinct_id : undefined;
+  // posthog-js 는 세션을 [마지막 활동 시각, 세션 ID, 시작 시각] 으로 저장한다.
+  const sesid = stored?.$sesid;
+  const storedSessionId =
+    Array.isArray(sesid) &&
+    typeof sesid[0] === 'number' &&
+    typeof sesid[1] === 'string' &&
+    Date.now() - sesid[0] < SESSION_IDLE_MS
+      ? sesid[1]
+      : undefined;
+
+  beaconIdentity = {
+    distinctId: storedDistinctId ?? createUuidV7(),
+    sessionId: storedSessionId ?? createUuidV7(),
+    newDistinctId: storedDistinctId == null,
+    used: false,
+  };
+  return beaconIdentity;
+}
+
+// posthog-js 기본 저장 방식(localStorage+cookie)의 키 이름을 따른다.
+function readPostHogPersistence(token: string): Record<string, unknown> | null {
+  const name = `ph_${token}_posthog`;
+  try {
+    const raw = localStorage.getItem(name) ?? readCookie(name);
+    const parsed: unknown = raw ? JSON.parse(raw) : null;
+    return parsed && typeof parsed === 'object' ? (parsed as Record<string, unknown>) : null;
+  } catch {
+    return null;
+  }
+}
+
+function readCookie(name: string): string | null {
+  const prefix = `${name}=`;
+  const found = document.cookie.split('; ').find((part) => part.startsWith(prefix));
+  return found ? decodeURIComponent(found.slice(prefix.length)) : null;
+}
+
+function beaconBaseProps(identity: BeaconIdentity): Props {
+  const params = new URLSearchParams(landingSearch);
+  const campaign: Props = {};
+  for (const key of CAMPAIGN_PARAMS) {
+    const value = params.get(key);
+    if (value) campaign[key] = value;
+  }
+
+  return {
+    ...campaign,
+    $session_id: identity.sessionId,
+    $current_url: window.location.href,
+    $host: window.location.host,
+    $pathname: window.location.pathname,
+    $referrer: document.referrer || '$direct',
+    $referring_domain: referringDomain(),
+    $raw_user_agent: navigator.userAgent,
+    $device_type: deviceType(),
+    $screen_width: window.screen.width,
+    $screen_height: window.screen.height,
+    // SDK 가 보낸 이벤트와 구분하기 위한 표시.
+    $lib: 'hapjusil-beacon',
+    // SDK 기본값(identified_only)처럼 익명 방문은 사람 프로필을 만들지 않는다.
+    $process_person_profile: isInternal,
+    ...(isInternal ? { $set: { $internal_or_test_user: true } } : {}),
+  };
+}
+
+function referringDomain(): string {
+  try {
+    return document.referrer ? new URL(document.referrer).host : '$direct';
+  } catch {
+    return '$direct';
+  }
+}
+
+// SDK 는 크롤러·자동화 브라우저의 이벤트를 버린다(사용자 에이전트·브랜드 목록·webdriver).
+// beacon 도 같은 방문을 보내지 않아야 "금방 떠난 방문"에 봇이 섞이지 않는다.
+const BOT_UA =
+  /bot|crawl|spider|slurp|headless|lighthouse|pagespeed|facebookexternalhit|bingpreview|google-inspectiontool|google web preview|google favicon|googleweblight|mediapartners-google|feedfetcher|chatgpt-user|cypress|vercel-screenshot|prerender|phantomjs|puppeteer|playwright/i;
+
+function isLikelyBot(): boolean {
+  if (navigator.webdriver || BOT_UA.test(navigator.userAgent)) return true;
+  const brands = (navigator as Navigator & { userAgentData?: { brands?: { brand: string }[] } }).userAgentData?.brands;
+  return brands?.some((item) => BOT_UA.test(item.brand)) ?? false;
+}
+
+function deviceType(): string {
+  const ua = navigator.userAgent;
+  if (/iPad|Tablet/i.test(ua)) return 'Tablet';
+  if (/Mobi|Android|iPhone|iPod/i.test(ua)) return 'Mobile';
+  return 'Desktop';
+}
+
+// SDK 가 만드는 ID 와 같은 UUIDv7(앞 48비트가 ms 타임스탬프).
+function createUuidV7(): string {
+  const bytes = new Uint8Array(16);
+  crypto.getRandomValues(bytes);
+  let ms = Date.now();
+  for (let i = 5; i >= 0; i -= 1) {
+    bytes[i] = ms % 256;
+    ms = Math.floor(ms / 256);
+  }
+  bytes[6] = (bytes[6] & 0x0f) | 0x70;
+  bytes[8] = (bytes[8] & 0x3f) | 0x80;
+  const hex = Array.from(bytes, (byte) => byte.toString(16).padStart(2, '0')).join('');
+  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
 }
 
 async function initGa(): Promise<void> {
@@ -286,8 +488,29 @@ export function track(event: string, props: Props = {}): void {
     platform: Capacitor.getPlatform(),
     ms_since_open: Date.now() - openedAt,
     filter_changes: filterChanges,
+    ...(isInternal ? { is_internal: true } : {}),
   };
 
-  if (sinks.length < expectedSinks) pending.push({ event, props: enriched });
+  if (sinks.length < expectedSinks) {
+    pending.push({ event, props: enriched, at: Date.now(), sentByBeacon: false });
+  }
   for (const sink of sinks) sink(event, enriched);
+}
+
+// `?internal=1` 이면 이 기기를 내부로 기억하고 `?internal=0` 이면 해제한다. 표시용 파라미터가
+// 공유 링크에 딸려 나가지 않도록 주소에서는 바로 지운다.
+function readInternalFlag(): boolean {
+  try {
+    const url = new URL(window.location.href);
+    const flag = url.searchParams.get('internal');
+    if (flag != null) {
+      if (flag === '1') localStorage.setItem(INTERNAL_STORAGE_KEY, '1');
+      if (flag === '0') localStorage.removeItem(INTERNAL_STORAGE_KEY);
+      url.searchParams.delete('internal');
+      window.history.replaceState(window.history.state, '', url.toString());
+    }
+    return flag === '1' || (flag !== '0' && localStorage.getItem(INTERNAL_STORAGE_KEY) === '1');
+  } catch {
+    return false;
+  }
 }
