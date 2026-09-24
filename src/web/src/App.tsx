@@ -32,6 +32,7 @@ import type { DateAvailability, StudioSortOption } from './lib/availability';
 import { todayKst } from './lib/date';
 import { formatTimeRangeLabel } from './lib/timeFormat';
 import { loadFilters, saveFilters, markEntered } from './lib/prefs';
+import { readEntrySearch } from './lib/entrySearch.js';
 import { loadRecentStudioIds, recordRecentStudioSelections } from './lib/recentStudios';
 import {
   buildAreaChipLabel,
@@ -64,7 +65,8 @@ const INITIAL_RENDERED_STUDIOS = 12;
 const RENDERED_STUDIOS_BATCH = 12;
 
 export function App() {
-  const savedPrefs = useMemo(() => loadFilters(), []);
+  const entryFilters = useMemo(() => readEntrySearch(window.location.search), []);
+  const savedPrefs = useMemo(() => entryFilters ? null : loadFilters(), [entryFilters]);
   const [areas, setAreas] = useState<Area[]>([]);
   const [studios, setStudios] = useState<Studio[]>([]);
   const [studiosLoaded, setStudiosLoaded] = useState(false);
@@ -72,9 +74,9 @@ export function App() {
   const [responseDates, setResponseDates] = useState<string[]>([]);
   const [searchSlots, setSearchSlots] = useState<RawSlot[]>([]);
   const [searchResponseDates, setSearchResponseDates] = useState<string[]>([]);
-  const [filters, setFilters] = useState<FilterState>(savedPrefs?.filters ?? defaultFilters);
-  // 같은 실행 세션에서 최근(TTL 이내) 방문한 경우에만 조건을 복원한다.
-  // 콜드스타트나 오랜만의 방문은 기본 필터(전체 지역)로 다시 시작한다.
+  const [filters, setFilters] = useState<FilterState>(entryFilters ?? savedPrefs?.filters ?? defaultFilters);
+  // URL 조건이 없으면 같은 세션의 최근(TTL 이내) 조건을 복원한다.
+  // 복원할 조건도 없으면 기본 필터(전체 지역)로 시작한다.
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [isConditionOpen, setIsConditionOpen] = useState(false);
   const [isAreaSheetOpen, setIsAreaSheetOpen] = useState(false);
