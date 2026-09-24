@@ -13,6 +13,7 @@ import { AreaSheet } from './components/AreaSheet';
 import { SORT_OPTIONS, SortSheet } from './components/SortSheet';
 import { MenuSheet } from './components/MenuSheet';
 import { AlertConfirmSheet } from './components/AlertConfirmSheet';
+import { BookingSurveySheet } from './components/BookingSurveySheet';
 import { AlertsScreen } from './components/AlertsScreen';
 import { alertConditionKey, buildAlertConditions, clearLegacyLocalAlerts } from './lib/alerts';
 import type { AlertDraft, SavedAlert } from './lib/alerts';
@@ -25,6 +26,7 @@ import {
 } from './lib/notificationsApi';
 import { ensurePushReady, onForegroundNotification, onNotificationTap } from './lib/pushDevice';
 import { markResultsReadyForAnalytics, track } from './lib/analytics';
+import { useBookingSurvey } from './lib/bookingSurvey';
 import { buildAvailability, sortDateAvailabilityGroups } from './lib/availability';
 import type { DateAvailability, StudioSortOption } from './lib/availability';
 import { todayKst } from './lib/date';
@@ -80,6 +82,7 @@ export function App() {
   const [isAlertsOpen, setIsAlertsOpen] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [alertDraft, setAlertDraft] = useState<AlertDraft | null>(null);
+  const [bookingSurvey, closeBookingSurvey] = useBookingSurvey();
   // 알림의 단일 소스는 서버 구독. 디바이스 등록이 끝나는 시점에 목록을 받아온다.
   const [alerts, setAlerts] = useState<SavedAlert[]>([]);
   const [favOnly, setFavOnly] = useState(false);
@@ -1075,6 +1078,9 @@ export function App() {
             onClose={() => setAlertDraft(null)}
             onConfirm={confirmAlertDraft}
           />
+        )}
+        {bookingSurvey && (
+          <BookingSurveySheet survey={bookingSurvey} onClose={closeBookingSurvey} />
         )}
       </section>
     </main>
