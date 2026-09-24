@@ -7,6 +7,7 @@ import { useFavorite } from '../lib/useFavorites';
 import { toggleFavorite } from '../lib/favorites';
 import { shareStudio } from '../lib/share';
 import { track } from '../lib/analytics';
+import { rememberBookingClick } from '../lib/bookingSurvey';
 import { formatTimeLabel, formatTimeRangeLabel } from '../lib/timeFormat';
 import { localGalleryCoverUrl } from '../generated/galleryCovers';
 
@@ -410,15 +411,18 @@ function RoomRow({
         target="_blank"
         rel="noreferrer"
         aria-label={`${room.room.name} 예약`}
-        onClick={() =>
+        onClick={() => {
           track('booking_click', {
             source: 'room',
             studio_id: studioId,
             studio_name: studioName,
             room_id: room.room.id,
             has_url: room.bookingUrl != null,
-          })
-        }
+          });
+          if (room.bookingUrl != null) {
+            rememberBookingClick({ source: 'room', studio_id: studioId, studio_name: studioName, room_id: room.room.id });
+          }
+        }}
       >
         <div className="room-info">
           <span className="room-name">{room.room.name}</span>
@@ -638,14 +642,17 @@ export const StudioRow = memo(function StudioRow({ studio, imageRoot, prioritize
         target="_blank"
         rel="noreferrer"
         aria-label={`${name} 예약`}
-        onClick={() =>
+        onClick={() => {
           track('booking_click', {
             source: 'studio',
             studio_id: id,
             studio_name: name,
             has_url: studio.bookingUrl != null,
-          })
-        }
+          });
+          if (studio.bookingUrl != null) {
+            rememberBookingClick({ source: 'studio', studio_id: id, studio_name: name });
+          }
+        }}
       >
         <div className="studio-head">
           <StudioAvatar studio={studio.studio} loadImage={nearViewport || prioritizeImage} />
