@@ -1,6 +1,7 @@
 import 'reflect-metadata';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module.js';
+import { startScrapeDispatchTimer } from './scrape-trigger/scrape-dispatch.js';
 import { ApiErrorFilter } from './shared/api-error.filter.js';
 
 async function bootstrap() {
@@ -40,6 +41,9 @@ async function bootstrap() {
   } else {
     await app.listen(port);
   }
+
+  // GitHub schedule 대신 스크랩 워크플로를 30분마다 dispatch 한다(토큰이 있는 prod 에서만 켜짐).
+  startScrapeDispatchTimer();
 }
 
 void bootstrap();

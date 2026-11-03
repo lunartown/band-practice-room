@@ -27,3 +27,7 @@ services:
       # Render 내부 연결은 사설망을 사용하므로 애플리케이션 TLS를 끈다.
       - key: DATABASE_SSL
         value: "false"
+      # 스크랩 워크플로를 30분마다 dispatch 하는 GitHub fine-grained PAT(Actions: Read and write).
+      # prod API 에만 설정한다. 없으면 트리거가 꺼진다(대시보드에서 직접 입력).
+      - key: SCRAPE_DISPATCH_GITHUB_TOKEN
+        sync: false
