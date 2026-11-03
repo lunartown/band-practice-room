@@ -2,11 +2,11 @@ name: Scrape availability
 
 # 네이버·스페이스클라우드 예약 가능 시간(slots)을 무료로 주기 수집한다.
 # - 수동 실행(workflow_dispatch): 대상 DB(prod/dev)를 골라 시드(합주실 89곳·매핑) + 스크랩
-# - 정기 실행(외부 cron → workflow_dispatch, seed=false): 스크랩만 → slots 갱신
+# - 정기 실행(prod API 서버 → workflow_dispatch, seed=false): 스크랩만 → slots 갱신
 #   GitHub schedule 은 예약 실행을 대부분 버려(하루 48회 중 3~4회만 실행) 데이터가 6시간
-#   신선도 기준을 넘겨 빈 화면이 됐다. 그래서 외부 cron(cron-job.org)이 30분마다
+#   신선도 기준을 넘겨 빈 화면이 됐다. 그래서 prod API(src/api/src/scrape-trigger)가 30분마다
 #   GitHub API 로 이 워크플로를 dispatch 한다. 설정은 docs/02_설계/04_시스템_아키텍처.md 2.2 참고.
-# - 예비 실행(schedule): 외부 cron 이 멈췄을 때의 안전망. 스크랩만 수행.
+# - 예비 실행(schedule): API 트리거가 멈췄을 때의 안전망. 스크랩만 수행.
 #
 # 사전 준비: 저장소 Settings → Secrets and variables → Actions 에
 #   DATABASE_URL = Render Postgres prod 외부 연결 문자열 등록
@@ -24,7 +24,7 @@ on:
           - prod
           - dev
       seed:
-        description: '스크랩 전에 시드(합주실·매핑 UPSERT) 실행 — 외부 cron 정기 실행은 false'
+        description: '스크랩 전에 시드(합주실·매핑 UPSERT) 실행 — API 정기 실행은 false'
         required: false
         default: true
         type: boolean
@@ -32,7 +32,7 @@ on:
     # 정각(0분)은 GitHub 전체에서 가장 혼잡해 스케줄 실행이 지연되거나 통째로 버려진다.
     # 실제로 '0 * * * *' 로 두었더니 하루 20회 남짓 돌던 것이 1~2회로 떨어져,
     # 데이터가 최대 13시간까지 묵고 "빈자리인 줄 알고 갔더니 차 있음"이 생겼다.
-    # 붐비지 않는 분으로 옮겼지만 여전히 하루 3~4회만 실행돼, 지금은 외부 cron 의 예비로만 둔다.
+    # 붐비지 않는 분으로 옮겼지만 여전히 하루 3~4회만 실행돼, 지금은 API 트리거의 예비로만 둔다.
     - cron: '7,37 * * * *'
 
 concurrency:
