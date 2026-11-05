@@ -132,6 +132,28 @@ export class SlotsRepository {
     // pos_in_island: 1-indexed position within that run.
     // A slot can start a block of N hours if (island_size - pos_in_island + 1) >= N,
     // i.e. pos_in_island <= island_size - N + 1.
+    // 1시간 조회는 모든 슬롯이 조건을 통과하므로 비용이 큰 윈도우 함수를 건너뛴다.
+    const needsConsecutiveRuns = minDuration > 1;
+    const islandKeyColumn = needsConsecutiveRuns
+      ? `,
+          EXTRACT(HOUR FROM sl.start_time)::int
+            - ROW_NUMBER() OVER (PARTITION BY r.id, sl.date ORDER BY sl.start_time)::int
+            AS island_key`
+      : '';
+    const islandStatsCte = needsConsecutiveRuns
+      ? `,
+      with_island_stats AS (
+        SELECT *,
+          COUNT(*) OVER (PARTITION BY room_id, date, island_key)       AS island_size,
+          ROW_NUMBER() OVER (PARTITION BY room_id, date, island_key ORDER BY start_time) AS pos_in_island
+        FROM base
+      )`
+      : '';
+    const slotSource = needsConsecutiveRuns
+      ? `with_island_stats
+      WHERE pos_in_island <= island_size - ${durationParam} + 1`
+      : 'base';
+
     const sql = `
       WITH base AS (
         SELECT
@@ -156,9 +178,9 @@ export class SlotsRepository {
                    || 'startDate=' || sl.date::text
             WHEN ss.url IS NOT NULL AND rs.external_key IS NOT NULL
               THEN 'https://m.booking.naver.com/booking/'
-                   || COALESCE(substring(ss.url from '/booking/([0-9]+)/'), '10')
+                   || ss.booking_type
                    || '/bizes/'
-                   || COALESCE(ss.external_key, substring(ss.url from '/bizes/([0-9]+)'))
+                   || ss.biz_key
                    || '/items/' || rs.external_key
                    || '?startDate=' || sl.date::text
             WHEN ss.url IS NOT NULL
@@ -167,10 +189,7 @@ export class SlotsRepository {
             ELSE ss.url
           END AS booking_url,
           s.id      AS studio_id,
-          r.id      AS room_id,
-          EXTRACT(HOUR FROM sl.start_time)::int
-            - ROW_NUMBER() OVER (PARTITION BY r.id, sl.date ORDER BY sl.start_time)::int
-            AS island_key
+          r.id      AS room_id${islandKeyColumn}
         FROM slots sl
         INNER JOIN rooms r ON r.id = sl.room_id
         INNER JOIN studios s ON s.id = r.studio_id
@@ -181,19 +200,16 @@ export class SlotsRepository {
           WHERE rsx.room_id = r.id ORDER BY rsx.id ASC LIMIT 1
         ) rs ON true
         LEFT JOIN LATERAL (
-          SELECT ssx.url, ssx.external_key, src.code
+          -- 정규식을 슬롯 행마다 돌리지 않도록 합주실 단위 LATERAL 에서 한 번만 계산한다.
+          SELECT ssx.url, ssx.external_key, src.code,
+            COALESCE(substring(ssx.url from '/booking/([0-9]+)/'), '10') AS booking_type,
+            COALESCE(ssx.external_key, substring(ssx.url from '/bizes/([0-9]+)')) AS biz_key
           FROM studio_sources ssx
           JOIN sources src ON src.id = ssx.source_id
           WHERE ssx.studio_id = s.id ORDER BY ssx.id ASC LIMIT 1
         ) ss ON true
         WHERE ${baseConditions.join(' AND ')}
-      ),
-      with_island_stats AS (
-        SELECT *,
-          COUNT(*) OVER (PARTITION BY room_id, date, island_key)       AS island_size,
-          ROW_NUMBER() OVER (PARTITION BY room_id, date, island_key ORDER BY start_time) AS pos_in_island
-        FROM base
-      )
+      )${islandStatsCte}
       SELECT
         date::text                                                       AS date,
         start_time::text                                                 AS start_time,
@@ -209,8 +225,7 @@ export class SlotsRepository {
         booking_url,
         studio_id,
         room_id
-      FROM with_island_stats
-      WHERE pos_in_island <= island_size - ${durationParam} + 1
+      FROM ${slotSource}
       ORDER BY date ASC, start_time ASC, studio_id ASC, room_id ASC
     `;
 
