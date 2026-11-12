@@ -9,25 +9,27 @@ const variantConfig: Record<
   {
     appId: string;
     appName: string;
-    capgoChannel?: string;
+    // 자체 호스팅 OTA 업데이트 확인 엔드포인트(src/api 의 /app-updates). 빈 문자열이면 확인 안 함.
+    updateUrl: string;
     autoUpdate: boolean;
   }
 > = {
   prod: {
     appId: 'com.hapjusil.app',
     appName: '합주실',
-    capgoChannel: 'production',
+    updateUrl: 'https://hapjusil-api.onrender.com/api/v1/app-updates',
     autoUpdate: true,
   },
   dev: {
     appId: 'com.hapjusil.app.dev',
     appName: '합주실 Dev',
-    capgoChannel: 'dev',
+    updateUrl: 'https://hapjusil-api-dev.onrender.com/api/v1/app-updates',
     autoUpdate: true,
   },
   local: {
     appId: 'com.hapjusil.app.local',
     appName: '합주실 Local',
+    updateUrl: '',
     autoUpdate: false,
   },
 };
@@ -67,13 +69,17 @@ const config: CapacitorConfig = {
       style: 'LIGHT',
       insetsHandling: 'css',
     },
-    // Capgo 라이브 업데이트(OTA). autoUpdate=true 면 앱 실행/복귀 때마다
-    // Capgo 클라우드에서 새 웹 번들을 받아 다음 실행 때 자동 적용한다.
+    // 라이브 업데이트(OTA). Capgo 클라우드 대신 자체 서버를 쓴다(.github/workflows/ota.yml).
+    // autoUpdate=true 면 앱 실행/복귀 때마다 updateUrl 에 새 웹 번들이 있는지 묻고,
+    // 버전이 다르면 받아 두었다가 다음 실행 때 적용한다.
     // 스토어 재심사 없이 JS/CSS/HTML 변경을 배포할 수 있다(네이티브 변경은 제외).
+    // updateUrl/statsUrl 은 네이티브 설정이라 바꾸면 스토어 재빌드가 필요하다.
     CapacitorUpdater: {
       appId: selectedVariant.appId,
       autoUpdate: selectedVariant.autoUpdate,
-      defaultChannel: selectedVariant.capgoChannel,
+      updateUrl: selectedVariant.updateUrl,
+      // 배포 통계(Capgo 대시보드용)는 받는 서버가 없으므로 끈다.
+      statsUrl: '',
       // 스토어로 네이티브 앱이 새로 깔리면 쌓여 있던 OTA 번들을 버리고 내장
       // 번들로 리셋한다 — 구버전 OTA 가 신버전 바이너리를 덮는 일을 막는다.
       resetWhenUpdate: true,

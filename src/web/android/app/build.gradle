@@ -23,10 +23,13 @@ android {
         // 업데이트마다 versionCode 는 단조 증가해야 한다(Play 요구).
         // def 로 먼저 풀어 쓴다 — `versionCode (...)` 처럼 메서드명 뒤 공백+괄호는
         // Groovy 가 호출 구문으로 오해해 null 이 들어갈 수 있다.
+        // versionName 기본값은 src/web/native-version(iOS MARKETING_VERSION 과 같은 값)이다.
+        // 자체 OTA 서버는 네이티브 버전이 정확히 같은 번들만 내려주므로 두 OS 가 같아야 한다.
         def envVersionCode = System.getenv("ANDROID_VERSION_CODE")
         def envVersionName = System.getenv("ANDROID_VERSION_NAME")
+        def nativeVersion = new File(rootDir.parentFile, "native-version").text.trim()
         versionCode envVersionCode ? envVersionCode.toInteger() : 1
-        versionName envVersionName ?: "1.0"
+        versionName envVersionName ?: nativeVersion
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
