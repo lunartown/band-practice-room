@@ -1,10 +1,10 @@
 import { Capacitor } from '@capacitor/core';
 import { CapacitorUpdater } from '@capgo/capacitor-updater';
 
-// Capgo 라이브 업데이트(OTA) 부팅 신호.
+// 라이브 업데이트(OTA) 부팅 신호. 플러그인은 Capgo 것을 쓰지만 서버는 자체 운영한다.
 //
 // capacitor.config 의 autoUpdate 모드에서, 플러그인은 앱 실행/복귀 때마다
-// Capgo 클라우드에 새 웹 번들이 있는지 확인하고 백그라운드로 받아 둔 뒤
+// updateUrl(우리 API /app-updates)에 새 웹 번들이 있는지 확인하고 백그라운드로 받아 둔 뒤
 // 다음 실행 때 갈아끼운다. 단, 새 번들이 켜진 직후 일정 시간 안에
 // notifyAppReady() 가 호출되지 않으면 "번들이 깨졌다"고 판단해 직전(또는
 // 스토어에 심사된 내장) 번들로 자동 롤백한다.

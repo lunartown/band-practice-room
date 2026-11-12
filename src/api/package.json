@@ -10,6 +10,7 @@
     "db:seed:visuals": "tsx src/database/seed-visuals.ts",
     "notify:dispatch": "tsx src/notifications/dispatch.ts",
     "db:prune": "tsx src/database/prune.ts",
+    "ota:register": "tsx src/app-updates/register-bundle.ts",
     "dev": "tsx watch src/main.ts",
     "admin:hash-password": "tsx src/admin/hash-password.ts",
     "start": "tsx src/main.ts",

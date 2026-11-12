@@ -35,7 +35,7 @@ on:
           - dev
           - local
       version_name:
-        description: 'prod versionName (예: 1.0.1). 비우면 1.0'
+        description: 'prod versionName. 비우면 src/web/native-version (OTA 매칭 때문에 다른 값은 거절)'
         required: false
         default: ''
       version_code:
@@ -104,8 +104,15 @@ jobs:
         run: |
           VC="${{ github.event.inputs.version_code }}"
           [ -z "$VC" ] && VC="${{ github.run_number }}"
+          # 자체 OTA 서버는 네이티브 버전이 정확히 같은 번들만 내려준다.
+          # 기준 파일과 다른 versionName 으로 빌드하면 그 바이너리는 OTA 를 영영 못 받는다.
+          NATIVE_VERSION="$(tr -d '[:space:]' < src/web/native-version)"
           VN="${{ github.event.inputs.version_name }}"
-          [ -z "$VN" ] && VN="1.0"
+          [ -z "$VN" ] && VN="$NATIVE_VERSION"
+          if [ "$VN" != "$NATIVE_VERSION" ]; then
+            echo "::error::versionName($VN)이 src/web/native-version($NATIVE_VERSION)과 다릅니다. 기준 파일을 먼저 올리세요."
+            exit 1
+          fi
           echo "ANDROID_VERSION_CODE=$VC" >> "$GITHUB_ENV"
           echo "ANDROID_VERSION_NAME=$VN" >> "$GITHUB_ENV"
           echo "versionCode=$VC versionName=$VN"
