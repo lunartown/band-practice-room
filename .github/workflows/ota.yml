@@ -1,29 +1,31 @@
-name: OTA deploy (Capgo)
+name: OTA deploy (self-hosted)
 
-# 프런트(JS/CSS/HTML) 변경을 스토어 재심사 없이 Capgo 라이브 업데이트로 배포한다.
-# capacitor.config.ts 의 CapacitorUpdater.autoUpdate=true 라서, 새 번들을 올리면
-# 사용자가 앱을 실행/복귀할 때 받아 다음 실행에 자동 적용된다(네이티브 변경은 제외).
+# 프런트(JS/CSS/HTML) 변경을 스토어 재심사 없이 라이브 업데이트로 배포한다.
+# Capgo 클라우드 대신 직접 운영한다(플러그인 @capgo/capacitor-updater 는 오픈소스라 그대로 쓴다).
+#   1) 앱 번들을 빌드해 zip 으로 묶고 sha256 을 계산한다.
+#   2) zip 을 GitHub Release 자산으로 올린다(공개 저장소라 기기가 인증 없이 받는다).
+#   3) 대상 DB 의 app_bundles 에 행을 추가한다.
+#   4) 앱은 실행/복귀 때 capacitor.config 의 updateUrl(우리 API /app-updates)로 묻고,
+#      버전이 다르면 zip 을 받아 다음 실행 때 적용한다.
 #
-# 채널 매핑 (브랜치 = 채널)
-#   - push(main) → com.hapjusil.app / production 채널: 실유저용.
-#   - push(dev)  → com.hapjusil.app.dev / dev 채널: 테스트 앱 전용.
-#   - Release 워크플로 성공 → production 채널: GitHub Actions 토큰 push 는
-#     push 워크플로를 재트리거하지 않으므로 릴리스 완료 이벤트도 받는다.
+# 채널 매핑 (브랜치 = 대상)
+#   - push(main) → com.hapjusil.app / prod DB(prod API 가 응답): 실유저용.
+#   - push(dev)  → com.hapjusil.app.dev / dev DB(dev API 가 응답): 테스트 앱 전용.
+#   - Release 워크플로 성공 → prod: GitHub Actions 토큰 push 는 push 워크플로를
+#     재트리거하지 않으므로 릴리스 완료 이벤트도 받는다.
 #   - workflow_dispatch: target 을 직접 지정(비우면 브랜치로 자동 판별).
 #
-# prod/dev는 Capgo 채널만 다른 것이 아니라 네이티브 appId도 다르다.
-# 그래서 dev OTA는 테스트 앱(com.hapjusil.app.dev)에만 내려가고,
-# 스토어 앱(com.hapjusil.app)을 덮지 않는다.
+# 네이티브 버전 매칭: 번들에는 src/web/native-version 의 값을 기록하고, 서버는 기기의
+# 네이티브 버전과 정확히 같은 번들만 내려준다. 네이티브 버전을 올리면 그 뒤에 만든 번들만
+# 새 바이너리에 내려간다. 스토어 빌드는 버전을 올린 커밋 이후의 main 에서만 만든다.
 #
-# 사전 준비:
-#   - 저장소 Settings → Secrets and variables → Actions 에
-#     CAPGO_TOKEN = Capgo API 키(All / Upload 권한) 등록
-#     → https://web.capgo.app 의 Account → API keys 에서 발급
-#   - Capgo 앱/채널 생성(최초 1회):
-#     npx @capgo/cli app add com.hapjusil.app
-#     npx @capgo/cli channel add production com.hapjusil.app --default
-#     npx @capgo/cli app add com.hapjusil.app.dev
-#     npx @capgo/cli channel add dev com.hapjusil.app.dev --default
+# 롤백: 대상 DB 에서 문제 번들의 is_active 를 false 로 끈다. 직전 활성 번들이 다시
+# 최신이 되고, 활성 번들이 하나도 없으면 기기는 스토어 내장 번들로 돌아간다.
+#   UPDATE app_bundles SET is_active = false WHERE app_id = 'com.hapjusil.app' AND version = '1.2.0-123';
+#
+# 사전 준비: 저장소 Settings → Secrets and variables → Actions 에
+#   DATABASE_URL     = Render Postgres prod 외부 연결 문자열 (scrape.yml 과 공용)
+#   DATABASE_URL_DEV = Render Postgres dev 외부 연결 문자열 (scrape.yml 과 공용)
 
 on:
   workflow_dispatch:
@@ -50,28 +52,29 @@ concurrency:
   group: ota
   cancel-in-progress: false
 
+permissions:
+  contents: write # GitHub Release 생성
+
 jobs:
   ota:
     if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     env:
-      CAPGO_TOKEN: ${{ secrets.CAPGO_TOKEN }}
+      GH_TOKEN: ${{ github.token }}
+      PROD_DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      DEV_DATABASE_URL: ${{ secrets.DATABASE_URL_DEV }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          # 릴리스 완료 이벤트는 fast-forward 된 main 을 배포한다.
+          ref: ${{ github.event_name == 'workflow_run' && 'main' || '' }}
 
       - uses: actions/setup-node@v4
         with:
           node-version: 22
 
-      - name: Guard - CAPGO_TOKEN 누락 시 친절히 실패
-        run: |
-          if [ -z "$CAPGO_TOKEN" ]; then
-            echo "::error::CAPGO_TOKEN 시크릿이 없습니다. Settings → Secrets and variables → Actions 에 등록하세요."
-            exit 1
-          fi
-
-      - name: Resolve Capgo target
+      - name: Resolve target
         run: |
           TARGET="${{ github.event.inputs.target }}"
           [ -z "$TARGET" ] && TARGET="auto"
@@ -90,14 +93,12 @@ jobs:
 
           case "$TARGET" in
             prod)
-              echo "CAPACITOR_APP_VARIANT=prod" >> "$GITHUB_ENV"
-              echo "CAPGO_CHANNEL=production" >> "$GITHUB_ENV"
-              echo "CAPGO_APP_ID=com.hapjusil.app" >> "$GITHUB_ENV"
+              APP_ID="com.hapjusil.app"
+              RESOLVED_DATABASE_URL="$PROD_DATABASE_URL"
               ;;
             dev)
-              echo "CAPACITOR_APP_VARIANT=dev" >> "$GITHUB_ENV"
-              echo "CAPGO_CHANNEL=dev" >> "$GITHUB_ENV"
-              echo "CAPGO_APP_ID=com.hapjusil.app.dev" >> "$GITHUB_ENV"
+              APP_ID="com.hapjusil.app.dev"
+              RESOLVED_DATABASE_URL="$DEV_DATABASE_URL"
               ;;
             *)
               echo "::error::target은 auto/prod/dev 중 하나여야 합니다: $TARGET"
@@ -105,26 +106,94 @@ jobs:
               ;;
           esac
 
+          if [ -z "$RESOLVED_DATABASE_URL" ]; then
+            echo "::error::${TARGET} DATABASE_URL 시크릿이 없습니다."
+            exit 1
+          fi
+
+          echo "::add-mask::$RESOLVED_DATABASE_URL"
+          echo "DATABASE_URL=$RESOLVED_DATABASE_URL" >> "$GITHUB_ENV"
+          echo "OTA_TARGET=$TARGET" >> "$GITHUB_ENV"
+          echo "OTA_APP_ID=$APP_ID" >> "$GITHUB_ENV"
+          echo "CAPACITOR_APP_VARIANT=$TARGET" >> "$GITHUB_ENV"
+          echo "OTA_GIT_SHA=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
+
+      # 번들 버전 = <네이티브 버전>-<run_number>. 서버는 버전 문자열을 정렬하지 않고
+      # 같은지만 비교하므로(최신은 id 순서) 형식은 사람이 읽기 위한 것이다.
+      - name: Resolve versions
+        run: |
+          NATIVE_VERSION="$(tr -d '[:space:]' < src/web/native-version)"
+          if ! printf '%s' "$NATIVE_VERSION" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+$'; then
+            echo "::error::src/web/native-version 은 x.y.z 형식이어야 합니다: '$NATIVE_VERSION'"
+            exit 1
+          fi
+
+          # iOS 는 pbxproj 의 MARKETING_VERSION 이 바이너리 버전이다. 기준 파일과 다르면
+          # 새 바이너리가 이 번들을 영영 받지 못하므로 배포를 막는다.
+          IOS_VERSIONS="$(grep -Eo 'MARKETING_VERSION = [^;]+' src/web/ios/App/App.xcodeproj/project.pbxproj | awk '{print $3}' | sort -u)"
+          if [ "$IOS_VERSIONS" != "$NATIVE_VERSION" ]; then
+            echo "::error::iOS MARKETING_VERSION($(echo $IOS_VERSIONS))이 src/web/native-version($NATIVE_VERSION)과 다릅니다."
+            exit 1
+          fi
+
+          BUNDLE_VERSION="$NATIVE_VERSION-${{ github.run_number }}"
+          echo "OTA_NATIVE_VERSION=$NATIVE_VERSION" >> "$GITHUB_ENV"
+          echo "OTA_BUNDLE_VERSION=$BUNDLE_VERSION" >> "$GITHUB_ENV"
+          echo "OTA_TAG=ota-$OTA_TARGET-$BUNDLE_VERSION" >> "$GITHUB_ENV"
+          echo "target=$OTA_TARGET app=$OTA_APP_ID native=$NATIVE_VERSION bundle=$BUNDLE_VERSION"
+
       - name: Build (capacitor 모드)
         working-directory: src/web
         run: |
           npm ci
           npm run build:app
 
-      # 번들 버전 규칙: 네이티브 앱과 같은 메이저.마이너(현재 1.0)를 유지하고
-      # patch 만 run_number 로 단조 증가시킨다 → 1.0.<run_number>.
-      # Capgo 는 기본적으로 메이저가 다른 번들의 자동 적용을 막으므로(채널 기본 정책),
-      # 네이티브 버전(iOS MARKETING_VERSION / Android versionName, 현재 1.0)과
-      # 메이저를 반드시 맞춰야 기기에 실제로 내려간다.
-      # 네이티브 앱 버전을 올리면(예: 1.1) 아래 BASE 도 같이 바꾼다.
-      - name: Upload bundle to Capgo
-        working-directory: src/web
+      # 플러그인은 zip 루트에 index.html 이 있어야 한다. checksum 은 zip 파일의 sha256(16진수).
+      - name: Package bundle
         run: |
-          BASE="1.0"
-          BUNDLE="$BASE.${{ github.run_number }}"
-          echo "Uploading bundle $BUNDLE to $CAPGO_APP_ID / $CAPGO_CHANNEL"
-          npx @capgo/cli@^8 bundle upload \
-            --apikey "$CAPGO_TOKEN" \
-            --channel "$CAPGO_CHANNEL" \
-            --bundle "$BUNDLE" \
-            --ignore-metadata-check
+          (cd src/web/dist && zip -qr "$RUNNER_TEMP/bundle.zip" .)
+          unzip -l "$RUNNER_TEMP/bundle.zip" | grep -q ' index.html$' || { echo "::error::zip 루트에 index.html 이 없습니다"; exit 1; }
+          CHECKSUM="$(sha256sum "$RUNNER_TEMP/bundle.zip" | cut -d' ' -f1)"
+          echo "OTA_BUNDLE_CHECKSUM=$CHECKSUM" >> "$GITHUB_ENV"
+          ls -l "$RUNNER_TEMP/bundle.zip"
+
+      # 행을 넣기 전에 app_bundles 테이블을 보장한다(scrape.yml 과 같은 방식, 멱등).
+      - name: Migrate (idempotent)
+        working-directory: src/api
+        run: |
+          npm ci
+          npm run db:migrate
+
+      # dev 번들은 prerelease 로 구분하고, 어느 쪽도 저장소의 "Latest" 릴리스로 잡히지 않게 한다.
+      # re-run 이면 같은 태그가 이미 있으므로 자산만 덮어쓴다.
+      - name: Upload bundle to GitHub Release
+        run: |
+          PRERELEASE=""
+          [ "$OTA_TARGET" = "dev" ] && PRERELEASE="--prerelease"
+          if gh release view "$OTA_TAG" >/dev/null 2>&1; then
+            gh release upload "$OTA_TAG" "$RUNNER_TEMP/bundle.zip" --clobber
+          else
+            gh release create "$OTA_TAG" "$RUNNER_TEMP/bundle.zip" \
+              --target "$OTA_GIT_SHA" \
+              --title "OTA $OTA_TARGET $OTA_BUNDLE_VERSION" \
+              --notes "자동 생성된 OTA 번들(${OTA_APP_ID}, native ${OTA_NATIVE_VERSION})." \
+              --latest=false $PRERELEASE
+          fi
+          echo "OTA_BUNDLE_URL=https://github.com/${{ github.repository }}/releases/download/$OTA_TAG/bundle.zip" >> "$GITHUB_ENV"
+
+      # 기기와 같은 조건(인증 없이, 리다이렉트를 따라)으로 받아 checksum 이 맞는지 확인한 뒤에만 등록한다.
+      - name: Verify public download
+        run: |
+          for i in 1 2 3 4 5; do
+            if curl -sfL "$OTA_BUNDLE_URL" -o "$RUNNER_TEMP/check.zip"; then break; fi
+            sleep 5
+          done
+          ACTUAL="$(sha256sum "$RUNNER_TEMP/check.zip" | cut -d' ' -f1)"
+          if [ "$ACTUAL" != "$OTA_BUNDLE_CHECKSUM" ]; then
+            echo "::error::내려받은 zip 의 checksum 이 다릅니다 ($ACTUAL != $OTA_BUNDLE_CHECKSUM)"
+            exit 1
+          fi
+
+      - name: Register bundle
+        working-directory: src/api
+        run: npm run ota:register

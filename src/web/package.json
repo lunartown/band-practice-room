@@ -28,10 +28,7 @@
     "app:ios:open:dev": "npm run app:sync:dev && cap open ios",
     "app:ios:open:local": "npm run app:sync:local && cap open ios",
     "app:ios:run:dev": "CAPACITOR_APP_VARIANT=dev npm run build:app && CAPACITOR_APP_VARIANT=dev cap run ios --scheme \"Hapjusil Dev\" --configuration \"Debug Dev\"",
-    "app:ios:run:local": "CAPACITOR_APP_VARIANT=local npm run build:app && CAPACITOR_APP_VARIANT=local cap run ios --scheme \"Hapjusil Local\" --configuration Debug",
-    "app:ota": "npm run app:ota:dev",
-    "app:ota:prod": "CAPACITOR_APP_VARIANT=prod npm run build:app && CAPACITOR_APP_VARIANT=prod npx @capgo/cli bundle upload --channel production",
-    "app:ota:dev": "CAPACITOR_APP_VARIANT=dev npm run build:app && CAPACITOR_APP_VARIANT=dev npx @capgo/cli bundle upload --channel dev"
+    "app:ios:run:local": "CAPACITOR_APP_VARIANT=local npm run build:app && CAPACITOR_APP_VARIANT=local cap run ios --scheme \"Hapjusil Local\" --configuration Debug"
   },
   "dependencies": {
     "@capacitor-firebase/messaging": "^8.3.0",
