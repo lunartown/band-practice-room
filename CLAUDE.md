@@ -54,11 +54,12 @@
 - 로컬 도구와 GitHub Actions에는 외부 연결 문자열인 `DATABASE_URL`, `DATABASE_URL_PROD`, `DATABASE_URL_DEV`를 사용한다. `RENDER_DATABASE_URL_*_INTERNAL`은 Render 서비스 내부에서만 사용한다.
 - 접속 문자열을 로그나 응답에 출력하지 않는다. 폐기된 Neon 접속 문자열은 다시 사용하지 않는다.
 
-## 알려진 실패 (무시)
+## 앱 OTA (자체 호스팅)
 
-- `main`에 푸시하면 **`ota.yml`(OTA deploy · Capgo)이 실패한다.** 요금 미납으로 Capgo 배포가 막혀 있기 때문이다. 당분간 무시하고, 이 실패를 고치려 들거나 릴리스가 실패했다고 보고하지 않는다.
-- 웹(Vercel) 배포와 무관하다. 릴리스 성공 여부는 Vercel 배포와 `hapjusil.com` 응답으로 판단한다.
-- 이 기간에 앱(iOS·Android)에 웹 변경을 반영하려면 스토어 재빌드·재제출뿐이다. 배경은 [앱 스토어 출시](docs/04_개발/04_앱_스토어_출시.md) 참고.
+- Capgo 클라우드 대신 직접 운영한다. `ota.yml`이 번들을 GitHub Release에 올리고 `app_bundles`에 등록하면, 앱이 우리 API(`/api/v1/app-updates`)에서 받는다. 상세·롤백은 [앱 스토어 출시](docs/04_개발/04_앱_스토어_출시.md) "라이브 업데이트" 참고.
+- 네이티브 버전 1.1.0 이하 바이너리는 Capgo를 바라보므로 OTA를 받지 못한다. 그 사용자에게 웹 변경을 반영하려면 스토어 업데이트뿐이다.
+- 네이티브 버전 기준은 `src/web/native-version` 하나다. 스토어 재제출할 때만 올리고, iOS `MARKETING_VERSION`도 같은 값으로 맞춘다.
+- `ota.yml` 실패는 앱 OTA만의 문제다. 웹 릴리스 성공 여부는 Vercel 배포와 `hapjusil.com` 응답으로 판단한다.
 
 ## 커밋 규칙
 
